@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.routers import auth, llm_admin, scans, tenants, tokens, uploads
+from app.routers import analyze, auth, llm_admin, scans, tenants, tokens, uploads
 
 
 router = APIRouter()
@@ -17,4 +17,7 @@ router.include_router(tenants.router)
 router.include_router(uploads.router)
 router.include_router(scans.router)
 router.include_router(llm_admin.router)
+router.include_router(analyze.analyze_router)
+router.include_router(analyze.files_router)
+router.include_router(analyze.webhook_router)
 

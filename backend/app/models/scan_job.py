@@ -16,6 +16,8 @@ class ScanJob(UUIDTimestampMixin, Base):
     risk_level: Mapped[str | None] = mapped_column(String(16), nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    integration_meta_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rag_markdown_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     tenant = relationship("Tenant", back_populates="scan_jobs")

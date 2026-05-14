@@ -1,4 +1,4 @@
-from app.routers import api, auth, llm_admin, scans, tenants, tokens, uploads
+from app.routers import analyze, api, auth, llm_admin, scans, tenants, tokens, uploads
 
-__all__ = ["api", "auth", "llm_admin", "scans", "tenants", "tokens", "uploads"]
+__all__ = ["analyze", "api", "auth", "llm_admin", "scans", "tenants", "tokens", "uploads"]
 
