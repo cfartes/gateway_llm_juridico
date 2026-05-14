@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     allowed_hosts: str = "localhost,127.0.0.1"
     force_https: bool = False
     hsts_seconds: int = 31536000
+    webhook_callback_timeout_seconds: float = 15.0
+    webhook_callback_max_retries: int = 3
+    webhook_callback_backoff_seconds: float = 1.0
     refresh_cookie_name: str = "nexus_refresh_token"
     refresh_cookie_secure: bool = False
     refresh_cookie_samesite: str = "lax"

@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.types import ScanStatus
 from app.models.scan_job import ScanJob
@@ -115,7 +116,22 @@ def analyze_gateway_task(scan_job_id: str, file_path: str) -> dict:
                 "result": payload,
                 "external_reference": metadata.get("external_reference"),
             }
-            trigger_result_webhook(str(callback_url), webhook_payload)
+            delivery = trigger_result_webhook(
+                str(callback_url),
+                webhook_payload,
+                callback_secret=metadata.get("callback_secret"),
+                callback_auth_bearer=metadata.get("callback_auth_bearer"),
+                timeout_seconds=settings.webhook_callback_timeout_seconds,
+                max_retries=settings.webhook_callback_max_retries,
+                base_backoff_seconds=settings.webhook_callback_backoff_seconds,
+            )
+            if not delivery.get("ok"):
+                scan_job.error_message = (
+                    f"Webhook callback delivery failed after {delivery.get('attempt')} attempts: "
+                    f"{delivery.get('error') or delivery.get('status_code')}"
+                )
+                db.add(scan_job)
+                db.commit()
 
         return {"scan_job_id": scan_job_id, "status": "completed"}
     except Exception as exc:

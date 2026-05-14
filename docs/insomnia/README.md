@@ -25,6 +25,8 @@ Base environment already includes:
 - `job_id`
 - `file_id`
 - `callback_url`
+- `callback_secret`
+- `callback_auth_bearer`
 
 ## Suggested run order
 
@@ -41,3 +43,5 @@ Base environment already includes:
 
 - In `Analyze Sync (file/rag_markdown)`, choose the local file in the multipart `file` field before sending.
 - If you do not need strict tenant assertion, keep `tenant_id` empty.
+- `callback_secret` habilita assinatura HMAC em `X-Nexus-Webhook-Signature`.
+- `callback_auth_bearer` envia `Authorization: Bearer ...` no callback.

@@ -1,5 +1,8 @@
 import base64
+import hashlib
+import hmac
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -311,6 +314,49 @@ def parse_integration_meta(scan_job: ScanJob) -> dict[str, Any]:
             return {}
 
 
-def trigger_result_webhook(callback_url: str, payload: dict[str, Any]) -> None:
-    with httpx.Client(timeout=15.0) as client:
-        client.post(callback_url, json=payload)
+def _build_webhook_signature(secret: str, timestamp: int, raw_body: str) -> str:
+    signed_payload = f"{timestamp}.{raw_body}".encode("utf-8")
+    digest = hmac.new(secret.encode("utf-8"), signed_payload, hashlib.sha256).hexdigest()
+    return f"t={timestamp},v1={digest}"
+
+
+def trigger_result_webhook(
+    callback_url: str,
+    payload: dict[str, Any],
+    *,
+    callback_secret: str | None = None,
+    callback_auth_bearer: str | None = None,
+    timeout_seconds: float = 15.0,
+    max_retries: int = 3,
+    base_backoff_seconds: float = 1.0,
+) -> dict[str, Any]:
+    raw_body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    headers = {"Content-Type": "application/json"}
+    timestamp = int(time.time())
+
+    if callback_secret:
+        headers["X-Nexus-Webhook-Timestamp"] = str(timestamp)
+        headers["X-Nexus-Webhook-Signature"] = _build_webhook_signature(callback_secret, timestamp, raw_body)
+    if callback_auth_bearer:
+        headers["Authorization"] = f"Bearer {callback_auth_bearer}"
+
+    attempts = max(1, int(max_retries))
+    last_error = None
+
+    with httpx.Client(timeout=timeout_seconds) as client:
+        for attempt in range(1, attempts + 1):
+            try:
+                response = client.post(callback_url, content=raw_body.encode("utf-8"), headers=headers)
+                if response.status_code < 400:
+                    return {"ok": True, "status_code": response.status_code, "attempt": attempt}
+                if response.status_code not in {408, 409, 425, 429} and response.status_code < 500:
+                    return {"ok": False, "status_code": response.status_code, "attempt": attempt}
+                last_error = f"HTTP {response.status_code}"
+            except Exception as exc:
+                last_error = str(exc)
+
+            if attempt < attempts:
+                delay = base_backoff_seconds * (2 ** (attempt - 1))
+                time.sleep(delay)
+
+    return {"ok": False, "status_code": None, "attempt": attempts, "error": last_error}

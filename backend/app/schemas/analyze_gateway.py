@@ -26,6 +26,8 @@ class AnalyzeRequest(BaseModel):
     tenant_id: str | None = None
     external_reference: str | None = None
     callback_url: HttpUrl | None = None
+    callback_secret: str | None = Field(default=None, min_length=8, max_length=256)
+    callback_auth_bearer: str | None = Field(default=None, min_length=8, max_length=2048)
     metadata: dict[str, Any] | None = None
 
     url: HttpUrl | None = None

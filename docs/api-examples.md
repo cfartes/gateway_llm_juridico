@@ -128,6 +128,8 @@ curl -X POST http://localhost:8000/api/v1/analyze/jobs \
     "generate_rag_md": true,
     "external_reference": "vendor_policy_22",
     "callback_url": "https://cliente.com/webhook/resultado",
+    "callback_secret": "super-secret-shared-key",
+    "callback_auth_bearer": "token-do-sistema-receptor",
     "metadata": {"origin_system": "siem", "priority": "high"},
     "url": "https://example.com/vendor-policy.pdf"
   }'
@@ -201,6 +203,14 @@ curl -X POST http://localhost:8000/api/v1/webhooks/result \
 - `risk_only`: returns threat presence, risk score/level, and `safe_for_rag`.
 - `full_report`: includes full evidence and technical explanation.
 - `rag_markdown`: includes report + sanitized markdown + RAG chunk suggestions.
+
+### Secure callback delivery (optional)
+
+- Send `callback_secret` to enable HMAC signing.
+- Send `callback_auth_bearer` to include `Authorization: Bearer ...` in callback.
+- Callback headers sent by Nexus:
+  - `X-Nexus-Webhook-Timestamp`
+  - `X-Nexus-Webhook-Signature` (`t=<unix_ts>,v1=<hmac_sha256>`)
 
 ## Postman Collection
 

@@ -66,6 +66,8 @@ async def _extract_request_payload(request: Request, upload_file: UploadFile | N
             "tenant_id": form.get("tenant_id"),
             "external_reference": form.get("external_reference"),
             "callback_url": form.get("callback_url"),
+            "callback_secret": form.get("callback_secret"),
+            "callback_auth_bearer": form.get("callback_auth_bearer"),
             "url": form.get("url"),
             "text": form.get("text"),
             "base64_content": form.get("base64_content"),
@@ -156,6 +158,8 @@ async def analyze_sync(
         "generate_rag_md": req.generate_rag_md,
         "external_reference": req.external_reference,
         "callback_url": str(req.callback_url) if req.callback_url else None,
+        "callback_secret": req.callback_secret,
+        "callback_auth_bearer": req.callback_auth_bearer,
         "metadata": req.metadata or {},
     }
     scan = create_scan_job(db, auth.tenant_id, document.id, integration_meta)
@@ -224,6 +228,8 @@ async def analyze_async(
         "generate_rag_md": req.generate_rag_md,
         "external_reference": req.external_reference,
         "callback_url": str(req.callback_url) if req.callback_url else None,
+        "callback_secret": req.callback_secret,
+        "callback_auth_bearer": req.callback_auth_bearer,
         "metadata": req.metadata or {},
     }
     scan = create_scan_job(db, auth.tenant_id, document.id, integration_meta)

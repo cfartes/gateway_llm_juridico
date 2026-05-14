@@ -316,7 +316,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"source_type\": \"url\",\n  \"return_mode\": \"full_report\",\n  \"sanitize\": true,\n  \"generate_rag_md\": true,\n  \"tenant_id\": \"{{tenantId}}\",\n  \"external_reference\": \"vendor_policy_22\",\n  \"callback_url\": \"{{callbackUrl}}\",\n  \"metadata\": {\n    \"origin_system\": \"siem\",\n    \"priority\": \"high\"\n  },\n  \"url\": \"https://example.com/vendor-policy.pdf\"\n}",
+              "raw": "{\n  \"source_type\": \"url\",\n  \"return_mode\": \"full_report\",\n  \"sanitize\": true,\n  \"generate_rag_md\": true,\n  \"tenant_id\": \"{{tenantId}}\",\n  \"external_reference\": \"vendor_policy_22\",\n  \"callback_url\": \"{{callbackUrl}}\",\n  \"callback_secret\": \"{{callbackSecret}}\",\n  \"callback_auth_bearer\": \"{{callbackAuthBearer}}\",\n  \"metadata\": {\n    \"origin_system\": \"siem\",\n    \"priority\": \"high\"\n  },\n  \"url\": \"https://example.com/vendor-policy.pdf\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

@@ -28,7 +28,9 @@
         "api_token": "",
         "job_id": "",
         "file_id": "",
-        "callback_url": "https://cliente.com/webhook/resultado"
+        "callback_url": "https://cliente.com/webhook/resultado",
+        "callback_secret": "super-secret-shared-key",
+        "callback_auth_bearer": ""
       }
     },
     {
@@ -262,7 +264,7 @@
       "url": "{{ _.base_url }}/analyze/jobs",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"source_type\": \"url\",\n  \"return_mode\": \"full_report\",\n  \"sanitize\": true,\n  \"generate_rag_md\": true,\n  \"tenant_id\": \"{{ _.tenant_id }}\",\n  \"external_reference\": \"vendor_policy_22\",\n  \"callback_url\": \"{{ _.callback_url }}\",\n  \"metadata\": {\n    \"origin_system\": \"siem\",\n    \"priority\": \"high\"\n  },\n  \"url\": \"https://example.com/vendor-policy.pdf\"\n}"
+        "text": "{\n  \"source_type\": \"url\",\n  \"return_mode\": \"full_report\",\n  \"sanitize\": true,\n  \"generate_rag_md\": true,\n  \"tenant_id\": \"{{ _.tenant_id }}\",\n  \"external_reference\": \"vendor_policy_22\",\n  \"callback_url\": \"{{ _.callback_url }}\",\n  \"callback_secret\": \"{{ _.callback_secret }}\",\n  \"callback_auth_bearer\": \"{{ _.callback_auth_bearer }}\",\n  \"metadata\": {\n    \"origin_system\": \"siem\",\n    \"priority\": \"high\"\n  },\n  \"url\": \"https://example.com/vendor-policy.pdf\"\n}"
       },
       "headers": [
         {

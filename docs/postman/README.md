@@ -24,3 +24,5 @@
 - `jobId` and `fileId` are auto-saved after async job creation.
 - For `Analyze Sync (file/rag_markdown)`, choose a file in the `file` form-data field before sending.
 - Keep `tenantId` empty unless you need strict tenant assertion in payload.
+- Use `callbackSecret` to enable signed callbacks (`X-Nexus-Webhook-Signature`).
+- Use `callbackAuthBearer` when the receiver webhook requires bearer auth.
