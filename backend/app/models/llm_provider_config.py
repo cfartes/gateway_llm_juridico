@@ -8,10 +8,10 @@ from app.models.base import UUIDTimestampMixin
 class LLMProviderConfig(UUIDTimestampMixin, Base):
     __tablename__ = "llm_provider_configs"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "provider_key", name="uq_llm_provider_tenant_key"),
+        UniqueConstraint("provider_key", name="uq_llm_provider_key"),
     )
 
-    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True)
     provider_key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     provider_label: Mapped[str] = mapped_column(String(120), nullable=False)
     base_url: Mapped[str] = mapped_column(String(255), nullable=False)

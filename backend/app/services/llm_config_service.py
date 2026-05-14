@@ -209,10 +209,9 @@ def _mask_token(token: str | None) -> str | None:
     return f"{token[:4]}***{token[-4:]}"
 
 
-def list_configs(db: Session, tenant_id: str) -> list[dict[str, Any]]:
+def list_configs(db: Session) -> list[dict[str, Any]]:
     rows = (
         db.query(LLMProviderConfig)
-        .filter(LLMProviderConfig.tenant_id == tenant_id)
         .order_by(LLMProviderConfig.provider_label.asc())
         .all()
     )
@@ -246,7 +245,7 @@ def list_configs(db: Session, tenant_id: str) -> list[dict[str, Any]]:
 def upsert_config(
     db: Session,
     *,
-    tenant_id: str,
+    tenant_id: str | None,
     provider_key: str,
     provider_label: str,
     base_url: str,
@@ -256,7 +255,7 @@ def upsert_config(
 ) -> dict[str, Any]:
     row = (
         db.query(LLMProviderConfig)
-        .filter(LLMProviderConfig.tenant_id == tenant_id, LLMProviderConfig.provider_key == provider_key)
+        .filter(LLMProviderConfig.provider_key == provider_key)
         .first()
     )
 
@@ -302,10 +301,10 @@ def upsert_config(
     }
 
 
-def resolve_config_token(db: Session, tenant_id: str, provider_key: str) -> str | None:
+def resolve_config_token(db: Session, provider_key: str) -> str | None:
     row = (
         db.query(LLMProviderConfig)
-        .filter(LLMProviderConfig.tenant_id == tenant_id, LLMProviderConfig.provider_key == provider_key)
+        .filter(LLMProviderConfig.provider_key == provider_key)
         .first()
     )
     if not row or not row.api_token_encrypted:
@@ -316,10 +315,10 @@ def resolve_config_token(db: Session, tenant_id: str, provider_key: str) -> str 
         return None
 
 
-def resolve_config_base_url(db: Session, tenant_id: str, provider_key: str) -> str | None:
+def resolve_config_base_url(db: Session, provider_key: str) -> str | None:
     row = (
         db.query(LLMProviderConfig)
-        .filter(LLMProviderConfig.tenant_id == tenant_id, LLMProviderConfig.provider_key == provider_key)
+        .filter(LLMProviderConfig.provider_key == provider_key)
         .first()
     )
     return row.base_url if row else None

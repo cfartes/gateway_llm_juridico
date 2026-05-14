@@ -242,7 +242,7 @@ export default function LLMConfigPage() {
             <Card className="rounded-xl p-4">
               <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin LLM Configuration</h1>
               <p className="mt-1 text-sm text-[#667896]">
-                Configure provider token, endpoint, model selection, and activation per tenant.
+                Configure provider token, endpoint, model selection, and activation app-wide.
               </p>
             </Card>
 
@@ -250,7 +250,7 @@ export default function LLMConfigPage() {
               <Card className="rounded-xl border-red-200 bg-red-50 p-4">
                 <h2 className="text-lg font-semibold text-red-700">Access denied</h2>
                 <p className="mt-1 text-sm text-red-700">
-                  This page is available only for tenant admins/superadmins.
+                  This page is available only for app admins/superadmins.
                 </p>
               </Card>
             ) : (
@@ -390,7 +390,7 @@ export default function LLMConfigPage() {
                           onChange={(e) => setForm((prev) => ({ ...prev, is_enabled: e.target.checked }))}
                           className="h-4 w-4"
                         />
-                        Enable this provider for tenant analysis workflows
+                        Enable this provider for app-wide analysis workflows
                       </label>
 
                       <div className="flex flex-wrap gap-2">

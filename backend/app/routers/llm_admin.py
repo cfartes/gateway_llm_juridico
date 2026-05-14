@@ -33,7 +33,7 @@ def get_providers(auth=Depends(require_roles(UserRole.ADMIN))):
 
 @router.get("/configs", response_model=list[LLMConfigOut])
 def get_configs(auth=Depends(require_roles(UserRole.ADMIN)), db: Session = Depends(get_db)):
-    return list_configs(db, auth.tenant_id)
+    return list_configs(db)
 
 
 @router.put("/configs/{provider_key}", response_model=LLMConfigOut)
@@ -89,10 +89,10 @@ def fetch_provider_models(
 
         raise HTTPException(status_code=404, detail="Unknown provider")
 
-    resolved_base_url = payload.base_url or resolve_config_base_url(db, auth.tenant_id, provider_key) or spec.default_base_url
+    resolved_base_url = payload.base_url or resolve_config_base_url(db, provider_key) or spec.default_base_url
     resolved_token = payload.api_token
     if resolved_token is None:
-        resolved_token = resolve_config_token(db, auth.tenant_id, provider_key)
+        resolved_token = resolve_config_token(db, provider_key)
 
     models = fetch_models(provider_key, resolved_base_url, resolved_token)
     return FetchModelsResponse(provider_key=provider_key, models=models)
