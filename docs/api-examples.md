@@ -205,6 +205,12 @@ curl -X POST http://localhost:8000/api/v1/webhooks/result \
 - `full_report`: includes full evidence and technical explanation.
 - `rag_markdown`: includes report + sanitized markdown + RAG chunk suggestions.
 
+Policy enforcement fields in responses:
+
+- `policy_action`: `allow | quarantine | block`
+- `policy_reason`: technical reason for the decision
+- For `quarantine` or `block`, RAG markdown export is not generated.
+
 ### Secure callback delivery (optional)
 
 - Send `callback_secret` to enable HMAC signing.

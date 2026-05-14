@@ -51,8 +51,10 @@ def classify_with_ollama(text: str) -> dict[str, str] | None:
         return None
 
 
-def classify_hybrid(text: str, evidences: list[EvidenceItem]) -> dict[str, Any]:
-    llm_result = classify_with_openai(text) or classify_with_ollama(text)
+def classify_hybrid(text: str, evidences: list[EvidenceItem], *, allow_llm: bool = True) -> dict[str, Any]:
+    llm_result = None
+    if allow_llm:
+        llm_result = classify_with_openai(text) or classify_with_ollama(text)
     if llm_result:
         return llm_result
 

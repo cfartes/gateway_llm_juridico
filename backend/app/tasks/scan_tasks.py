@@ -7,6 +7,7 @@ from app.core.types import ScanStatus
 from app.models.scan_job import ScanJob
 from app.schemas.analyze_gateway import AnalyzeReturnMode
 from app.pipelines.analysis_graph import analyze_document_bytes
+from app.services.policy_enforcement import decide_policy_action
 from app.services.analyze_gateway_service import (
     format_analyze_payload,
     generate_rag_markdown,
@@ -67,12 +68,13 @@ def analyze_gateway_task(scan_job_id: str, file_path: str) -> dict:
 
         content = Path(file_path).read_bytes()
         result = analyze_document_bytes(Path(file_path).name, content)
+        policy = decide_policy_action(result)
 
         rag_path = None
         chunks = []
         metadata = parse_integration_meta(scan_job)
         generate_rag = bool(metadata.get("generate_rag_md"))
-        if generate_rag:
+        if generate_rag and policy.safe_for_rag:
             rag_path, chunks = generate_rag_markdown(scan_job.document, result)
 
         scan_job.status = ScanStatus.COMPLETED

@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     webhook_callback_timeout_seconds: float = 15.0
     webhook_callback_max_retries: int = 3
     webhook_callback_backoff_seconds: float = 1.0
+    policy_llm_skip_high_hits_threshold: int = 2
+    policy_quarantine_score_threshold: float = 55.0
+    policy_block_score_threshold: float = 80.0
     refresh_cookie_name: str = "nexus_refresh_token"
     refresh_cookie_secure: bool = False
     refresh_cookie_samesite: str = "lax"

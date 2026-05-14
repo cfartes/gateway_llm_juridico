@@ -32,6 +32,7 @@ from app.services.analyze_gateway_service import (
     parse_integration_meta,
 )
 from app.services.file_validation import validate_file_metadata
+from app.services.policy_enforcement import decide_policy_action
 from app.services.queue_policy_service import (
     classify_file_tier,
     enforce_scan_enqueue_policy,
@@ -180,11 +181,12 @@ async def analyze_sync(
     from app.pipelines.analysis_graph import analyze_document_bytes
 
     result = analyze_document_bytes(filename, content)
+    policy = decide_policy_action(result)
     rag_markdown = None
     rag_markdown_url = None
     chunks = []
 
-    if req.generate_rag_md:
+    if req.generate_rag_md and policy.safe_for_rag:
         rag_path, chunks = generate_rag_markdown(document, result)
         scan.rag_markdown_path = rag_path
         rag_markdown = Path(rag_path).read_text(encoding="utf-8")

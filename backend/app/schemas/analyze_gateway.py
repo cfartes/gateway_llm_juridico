@@ -52,6 +52,8 @@ class AnalyzeResultPayload(BaseModel):
     threats: list[ThreatItem]
     safe_for_rag: bool
     recommendation: str
+    policy_action: str | None = None
+    policy_reason: str | None = None
 
     content_classification: str | None = None
     technical_explanation: str | None = None

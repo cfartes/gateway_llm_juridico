@@ -17,6 +17,7 @@ from app.schemas.analysis import AnalysisResult
 from app.schemas.analyze_gateway import AnalyzeRequest, AnalyzeResultPayload, AnalyzeReturnMode, ThreatItem
 from app.services.document_parser import parse_document_bytes
 from app.services.ocr_service import extract_ocr_text
+from app.services.policy_enforcement import PolicyDecision, decide_policy_action
 from app.services.sanitizer import sanitize_text
 from app.utils.common import ensure_dir, sha256_bytes
 from app.utils.crypto import decrypt_text, encrypt_text
@@ -132,15 +133,15 @@ def build_threats(result: AnalysisResult) -> list[ThreatItem]:
 
 
 def is_safe_for_rag(result: AnalysisResult) -> bool:
-    if result.threat_score >= 35:
-        return False
-    for evidence in result.evidences:
-        if evidence.severity.lower() in {"critical", "high"}:
-            return False
-    return True
+    decision = decide_policy_action(result)
+    return decision.safe_for_rag
 
 
-def build_recommendation(safe_for_rag: bool) -> str:
+def build_recommendation(safe_for_rag: bool, policy: PolicyDecision | None = None) -> str:
+    if policy and policy.action == "block":
+        return "Documento bloqueado. Nao enviar para LLM/RAG e iniciar fluxo de resposta a incidente."
+    if policy and policy.action == "quarantine":
+        return "Documento em quarentena. Revisao manual obrigatoria antes de qualquer uso em IA."
     if safe_for_rag:
         return "Documento liberado para ingestao em RAG apos sanitizacao."
     return "Documento nao deve ser enviado diretamente para uma LLM."
@@ -188,7 +189,8 @@ def generate_rag_markdown(document: Document, result: AnalysisResult) -> tuple[s
     sanitized_text = sanitize_text(combined_text)
 
     chunks = build_chunks(sanitized_text)
-    safe_for_rag = is_safe_for_rag(result)
+    policy = decide_policy_action(result)
+    safe_for_rag = policy.safe_for_rag
 
     frontmatter = {
         "document_id": document.id,
@@ -260,7 +262,7 @@ def generate_rag_markdown(document: Document, result: AnalysisResult) -> tuple[s
 
 ## Recomendacoes
 
-{build_recommendation(safe_for_rag)}
+{build_recommendation(safe_for_rag, policy)}
 """
 
     rag_path = Path(document.storage_path).with_suffix(Path(document.storage_path).suffix + ".rag.md")
@@ -277,7 +279,8 @@ def format_analyze_payload(
     chunks: list[dict[str, Any]] | None = None,
 ) -> AnalyzeResultPayload:
     threats = build_threats(result)
-    safe = is_safe_for_rag(result)
+    policy = decide_policy_action(result)
+    safe = policy.safe_for_rag
 
     payload = AnalyzeResultPayload(
         has_threat=len(threats) > 0,
@@ -285,7 +288,9 @@ def format_analyze_payload(
         risk_score=int(round(result.threat_score)),
         threats=threats,
         safe_for_rag=safe,
-        recommendation=build_recommendation(safe),
+        recommendation=build_recommendation(safe, policy),
+        policy_action=policy.action,
+        policy_reason=policy.reason,
     )
 
     if return_mode in {AnalyzeReturnMode.FULL_REPORT, AnalyzeReturnMode.RAG_MARKDOWN}:

@@ -9,6 +9,7 @@ from app.services.document_parser import parse_document_bytes
 from app.services.heuristics import run_heuristics
 from app.services.llm_classifier import classify_hybrid
 from app.services.ocr_service import extract_ocr_text
+from app.services.policy_enforcement import decide_pre_llm_from_heuristics
 from app.services.sanitizer import sanitize_text
 from app.services.scoring import compute_threat_score, risk_from_score
 
@@ -25,6 +26,8 @@ class AnalysisState(TypedDict, total=False):
     suspicious_segments: list[str]
     exfiltration_indicators: list[str]
     llm_result: dict[str, Any]
+    llm_processing_mode: str
+    llm_skip_reason: str
     threat_score: float
     risk_level: str
     final_result: AnalysisResult
@@ -61,9 +64,18 @@ def heuristic_node(state: AnalysisState) -> AnalysisState:
 def llm_node(state: AnalysisState) -> AnalysisState:
     from app.schemas.analysis import EvidenceItem
 
+    pre_llm = decide_pre_llm_from_heuristics(state.get("evidences", []))
     evidence_models = [EvidenceItem(**item) for item in state.get("evidences", [])]
+    if not pre_llm.should_call_llm:
+        llm_result = classify_hybrid("", evidence_models, allow_llm=False)
+        return {
+            "llm_result": llm_result,
+            "llm_processing_mode": pre_llm.mode,
+            "llm_skip_reason": pre_llm.reason,
+        }
+
     llm_result = classify_hybrid(state.get("combined_text", ""), evidence_models)
-    return {"llm_result": llm_result}
+    return {"llm_result": llm_result, "llm_processing_mode": pre_llm.mode, "llm_skip_reason": pre_llm.reason}
 
 
 def scoring_node(state: AnalysisState) -> AnalysisState:
@@ -88,6 +100,8 @@ def report_node(state: AnalysisState) -> AnalysisState:
         sanitized_text_preview=state.get("sanitized_text", "")[:1200],
         exfiltration_indicators=state.get("exfiltration_indicators", []),
     )
+    if state.get("llm_skip_reason"):
+        result.technical_explanation = f"{result.technical_explanation} LLM guard: {state.get('llm_skip_reason')}"
     return {"final_result": result}
 
 
