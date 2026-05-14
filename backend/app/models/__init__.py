@@ -2,6 +2,7 @@ from app.core.database import Base
 from app.models.api_token import APIToken
 from app.models.audit_log import AuditLog
 from app.models.document import Document
+from app.models.llm_provider_config import LLMProviderConfig
 from app.models.password_reset_token import PasswordResetToken
 from app.models.refresh_token import RefreshToken
 from app.models.scan_job import ScanJob
@@ -15,6 +16,7 @@ __all__ = [
     "APIToken",
     "RefreshToken",
     "PasswordResetToken",
+    "LLMProviderConfig",
     "Document",
     "ScanJob",
     "AuditLog",
