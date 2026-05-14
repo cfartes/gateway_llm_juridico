@@ -7,6 +7,7 @@ celery_app = Celery(
     "nexus_llm_shield",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
+    include=["app.tasks.scan_tasks"],
 )
 
 celery_app.conf.update(
