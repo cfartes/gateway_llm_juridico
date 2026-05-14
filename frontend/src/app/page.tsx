@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import Link from "next/link";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,10 @@ type ScanResponse = {
     updated_at: string;
   };
   result: AnalysisResult | null;
+};
+
+type QuarantineItem = {
+  scan_id: string;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -113,6 +118,7 @@ export default function Home() {
   const [files, setFiles] = useState<FileList | null>(null);
   const [scans, setScans] = useState<ScanResponse[]>([]);
   const [selectedScan, setSelectedScan] = useState<ScanResponse | null>(null);
+  const [pendingQuarantineCount, setPendingQuarantineCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -164,6 +170,25 @@ export default function Home() {
     }
   }
 
+  async function loadPendingQuarantineCount(activeToken: string) {
+    try {
+      const data = await authenticatedJson<QuarantineItem[]>(
+        API_BASE,
+        "/quarantine?status=pending_review",
+        activeToken,
+      );
+      setPendingQuarantineCount(data.length);
+    } catch {
+      setPendingQuarantineCount(0);
+    }
+  }
+
+  useEffect(() => {
+    if (!token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadPendingQuarantineCount(token);
+  }, [token]);
+
   async function handleScanUpload(e: FormEvent) {
     e.preventDefault();
     if (!files || files.length === 0 || !token) {
@@ -214,6 +239,21 @@ export default function Home() {
                 API token usage only via endpoint (Bearer header)
               </div>
             </header>
+
+            <Card className="mb-4 rounded-xl border-[#f0e3bf] bg-[#fffdf6] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#785a12]">Pending Quarantine Reviews</p>
+                  <p className="mt-1 text-3xl font-bold text-[#6b5112]">{pendingQuarantineCount}</p>
+                  <p className="mt-1 text-xs text-[#8a6e2a]">
+                    Documents waiting manual decision before secure RAG release.
+                  </p>
+                </div>
+                <Link href="/quarantine">
+                  <Button className="bg-[#1f3f72] hover:bg-[#183561]">Open Quarantine Queue</Button>
+                </Link>
+              </div>
+            </Card>
 
             <div className="grid gap-4 xl:grid-cols-[1.7fr_0.8fr]">
               <section className="space-y-4">
