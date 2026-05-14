@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 14
+    password_reset_token_expire_minutes: int = 30
+    password_min_length: int = 12
     encryption_key: str = "6L4v8hktqf5YfQ1X0vC1r2lQ7Q2mL8xA1F1yQf4L2i0="
+    previous_secret_keys: str = ""
 
     openai_api_key: str | None = None
     ollama_base_url: str = "http://localhost:11434"
@@ -28,6 +32,9 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 120
 
     cors_origins: str = "http://localhost:3000"
+    allowed_hosts: str = "localhost,127.0.0.1"
+    force_https: bool = False
+    hsts_seconds: int = 31536000
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

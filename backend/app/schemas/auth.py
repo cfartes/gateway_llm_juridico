@@ -6,7 +6,31 @@ from app.core.types import UserRole
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
+
+class PasswordResetRequest(BaseModel):
+    tenant_slug: str
+    email: EmailStr
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    reset_token: str
+    new_password: str
+
+
+class PasswordResetResponse(BaseModel):
+    message: str
+    reset_token: str | None = None
 
 
 class RegisterRequest(BaseModel):
@@ -33,4 +57,3 @@ class UserOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
-

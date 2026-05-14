@@ -51,6 +51,10 @@ Backend em `http://localhost:8000` e frontend em `http://localhost:3000`.
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/password-reset/request`
+- `POST /api/v1/auth/password-reset/confirm`
 - `GET /api/v1/auth/me`
 - `POST /api/v1/tokens`
 - `GET /api/v1/tokens`

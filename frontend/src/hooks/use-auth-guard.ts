@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAccessToken } from "@/lib/auth";
+import { ensureAccessToken } from "@/lib/auth";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
 export function useAuthGuard() {
   const router = useRouter();
@@ -10,14 +12,17 @@ export function useAuthGuard() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const stored = getAccessToken();
-    if (!stored) {
-      router.replace("/login");
+    async function bootstrap() {
+      const stored = await ensureAccessToken(API_BASE);
+      if (!stored) {
+        router.replace("/login");
+        setReady(true);
+        return;
+      }
+      setToken(stored);
       setReady(true);
-      return;
     }
-    setToken(stored);
-    setReady(true);
+    void bootstrap();
   }, [router]);
 
   return { token, ready };

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { getAccessToken, setAccessToken } from "@/lib/auth";
+import { ensureAccessToken, setSessionTokens } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -25,10 +25,13 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState("Acme Admin");
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (token) {
-      router.replace("/");
+    async function checkSession() {
+      const token = await ensureAccessToken(API_BASE);
+      if (token) {
+        router.replace("/");
+      }
     }
+    void checkSession();
   }, [router]);
 
   async function submit(e: FormEvent) {
@@ -59,8 +62,8 @@ export default function LoginPage() {
         throw new Error(await response.text());
       }
 
-      const data = (await response.json()) as { access_token: string };
-      setAccessToken(data.access_token);
+      const data = (await response.json()) as { access_token: string; refresh_token: string };
+      setSessionTokens(data.access_token, data.refresh_token);
       router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
