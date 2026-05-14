@@ -3,9 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.database import Base, SessionLocal, engine
 from app.core.middleware import EnforceHTTPSMiddleware, SecurityHeadersMiddleware
 from app.routers import api
+from app.services.superadmin_service import ensure_superadmin_account
 
 
 Base.metadata.create_all(bind=engine)
@@ -31,6 +32,17 @@ app.add_middleware(EnforceHTTPSMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(api.router, prefix=settings.api_v1_prefix)
+
+
+@app.on_event("startup")
+def startup_bootstrap_superadmin() -> None:
+    if not settings.superadmin_auto_bootstrap:
+        return
+    db = SessionLocal()
+    try:
+        ensure_superadmin_account(db)
+    finally:
+        db.close()
 
 
 @app.get("/")

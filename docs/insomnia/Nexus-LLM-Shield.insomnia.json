@@ -73,7 +73,7 @@
       "url": "{{ _.base_url }}/auth/login",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"email\": \"{{ _.admin_email }}\",\n  \"password\": \"{{ _.admin_password }}\",\n  \"tenant_slug\": \"{{ _.tenant_slug }}\"\n}"
+        "text": "{\n  \"email\": \"{{ _.admin_email }}\",\n  \"password\": \"{{ _.admin_password }}\"\n}"
       },
       "headers": [
         {
@@ -376,3 +376,4 @@
     }
   ]
 }
+

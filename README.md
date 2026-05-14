@@ -42,7 +42,7 @@ Backend em `http://localhost:8000` e frontend em `http://localhost:3000`.
 ## Fluxo mÃ­nimo de uso
 
 1. Criar tenant+admin via `POST /api/v1/auth/register`
-2. Logar via `POST /api/v1/auth/login` e pegar JWT
+2. Logar via `POST /api/v1/auth/login` com `email` + `password` e pegar JWT
 3. No app web, colar o JWT em "Conectar"
 4. Gerar API token no painel "API Bearer Token"
 5. Consumir endpoint de anÃ¡lise com `Authorization: Bearer <token>`
@@ -65,6 +65,13 @@ Backend em `http://localhost:8000` e frontend em `http://localhost:3000`.
 - `GET /api/v1/scans`
 - `GET /api/v1/scans/{scan_id}`
 - `GET /api/v1/scans/{scan_id}/sanitized.txt`
+
+## SuperAdmin global (bootstrap)
+
+- Login padrÃƒÂ£o (alterar por variÃƒÂ¡veis de ambiente):
+  - `SUPERADMIN_EMAIL=superadmin@nexusshield.ai`
+  - `SUPERADMIN_PASSWORD=StrongPass#2026`
+- Essa conta ÃƒÂ© criada automaticamente no startup quando `SUPERADMIN_AUTO_BOOTSTRAP=true`.
 
 ## ObservaÃ§Ãµes de produÃ§Ã£o
 

@@ -45,3 +45,4 @@ Base environment already includes:
 - If you do not need strict tenant assertion, keep `tenant_id` empty.
 - `callback_secret` habilita assinatura HMAC em `X-Nexus-Webhook-Signature`.
 - `callback_auth_bearer` envia `Authorization: Bearer ...` no callback.
+- `Login` now requires only `email` + `password` (no `tenant_slug`).

@@ -27,12 +27,12 @@ router = APIRouter(prefix="/admin/llm-config", tags=["llm-config"])
 
 
 @router.get("/providers", response_model=list[LLMProviderInfo])
-def get_providers(auth=Depends(require_roles(UserRole.ADMIN))):
+def get_providers(auth=Depends(require_roles(UserRole.SUPERADMIN))):
     return list_provider_specs()
 
 
 @router.get("/configs", response_model=list[LLMConfigOut])
-def get_configs(auth=Depends(require_roles(UserRole.ADMIN)), db: Session = Depends(get_db)):
+def get_configs(auth=Depends(require_roles(UserRole.SUPERADMIN)), db: Session = Depends(get_db)):
     return list_configs(db)
 
 
@@ -41,7 +41,7 @@ def save_config(
     provider_key: str,
     payload: LLMConfigUpsertRequest,
     request: Request,
-    auth=Depends(require_roles(UserRole.ADMIN)),
+    auth=Depends(require_roles(UserRole.SUPERADMIN)),
     db: Session = Depends(get_db),
 ):
     spec = PROVIDER_SPECS.get(provider_key)
@@ -80,7 +80,7 @@ def save_config(
 def fetch_provider_models(
     provider_key: str,
     payload: FetchModelsRequest,
-    auth=Depends(require_roles(UserRole.ADMIN)),
+    auth=Depends(require_roles(UserRole.SUPERADMIN)),
     db: Session = Depends(get_db),
 ):
     spec = PROVIDER_SPECS.get(provider_key)

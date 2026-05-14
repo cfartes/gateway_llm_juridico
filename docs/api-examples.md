@@ -19,7 +19,7 @@ curl -X POST http://localhost:8000/api/v1/auth/register \
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@acme.com","password":"StrongPass#2026","tenant_slug":"acme"}'
+  -d '{"email":"admin@acme.com","password":"StrongPass#2026"}'
 ```
 
 Response now returns `access_token`; `refresh_token` is set as HttpOnly cookie.
@@ -70,7 +70,7 @@ curl -X POST http://localhost:8000/api/v1/uploads/scan-url \
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/password-reset/request \
   -H "Content-Type: application/json" \
-  -d '{"tenant_slug":"acme","email":"admin@acme.com"}'
+  -d '{"email":"admin@acme.com"}'
 ```
 
 ```bash
@@ -258,6 +258,15 @@ curl -X POST "http://localhost:8000/api/v1/quarantine/<SCAN_ID>/review" \
     "generate_rag_md": true
   }'
 ```
+
+## Global SuperAdmin (bootstrap)
+
+When `SUPERADMIN_AUTO_BOOTSTRAP=true`, the API creates a global superadmin user at startup.
+
+Default credentials (override in environment variables):
+
+- email: `superadmin@nexusshield.ai`
+- password: `StrongPass#2026`
 
 ### Reject document
 

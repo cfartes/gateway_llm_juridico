@@ -19,7 +19,6 @@ class LogoutRequest(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    tenant_slug: str
     email: EmailStr
 
 
@@ -44,7 +43,6 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    tenant_slug: str
 
 
 class UserOut(BaseModel):

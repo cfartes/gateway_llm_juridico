@@ -26,6 +26,10 @@ from app.schemas.auth import LoginRequest, RegisterRequest
 def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
     validate_password_strength(payload.password)
 
+    existing_email = db.query(User).filter(User.email == payload.email).first()
+    if existing_email:
+        raise ValueError("Email already in use")
+
     existing_tenant = (
         db.query(Tenant)
         .filter((Tenant.slug == payload.tenant_slug) | (Tenant.name == payload.tenant_name))
@@ -53,8 +57,7 @@ def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
 def authenticate_user(db: Session, payload: LoginRequest) -> User | None:
     user = (
         db.query(User)
-        .join(Tenant, Tenant.id == User.tenant_id)
-        .filter(User.email == payload.email, Tenant.slug == payload.tenant_slug, User.is_active.is_(True))
+        .filter(User.email == payload.email, User.is_active.is_(True))
         .first()
     )
     if not user:
@@ -134,11 +137,10 @@ def revoke_refresh_token(db: Session, raw_refresh_token: str | None) -> bool:
     return True
 
 
-def create_password_reset_flow(db: Session, tenant_slug: str, email: str) -> str | None:
+def create_password_reset_flow(db: Session, email: str) -> str | None:
     user = (
         db.query(User)
-        .join(Tenant, Tenant.id == User.tenant_id)
-        .filter(Tenant.slug == tenant_slug, User.email == email, User.is_active.is_(True))
+        .filter(User.email == email, User.is_active.is_(True))
         .first()
     )
     if not user:

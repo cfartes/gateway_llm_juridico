@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,23 +13,6 @@ type UserMe = {
   id: string;
   role: string;
   email: string;
-};
-
-type TenantCurrent = {
-  id: string;
-  name: string;
-  slug: string;
-  plan: "starter" | "growth" | "business" | "enterprise";
-};
-
-type TenantQueuePolicy = {
-  plan: TenantCurrent["plan"];
-  max_inflight_jobs: number;
-  max_pending_jobs: number;
-  burst_per_minute: number;
-  current_running_jobs: number;
-  current_pending_jobs: number;
-  current_inflight_jobs: number;
 };
 
 type LLMProviderInfo = {
@@ -92,8 +75,6 @@ function providerGroupTone(family: string): string {
 export default function LLMConfigPage() {
   const { token, ready } = useAuthGuard();
   const [me, setMe] = useState<UserMe | null>(null);
-  const [tenant, setTenant] = useState<TenantCurrent | null>(null);
-  const [queuePolicy, setQueuePolicy] = useState<TenantQueuePolicy | null>(null);
   const [providers, setProviders] = useState<LLMProviderInfo[]>([]);
   const [configs, setConfigs] = useState<Record<string, LLMConfigOut>>({});
   const [selectedProviderKey, setSelectedProviderKey] = useState("");
@@ -108,7 +89,6 @@ export default function LLMConfigPage() {
   const [loading, setLoading] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [savingPlan, setSavingPlan] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -122,15 +102,44 @@ export default function LLMConfigPage() {
     [configs, selectedProviderKey],
   );
 
+  const bootstrap = useCallback(async (accessToken: string) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [meData, providersData, configsData] = await Promise.all([
+        authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
+        authenticatedJson<LLMProviderInfo[]>(API_BASE, "/admin/llm-config/providers", accessToken),
+        authenticatedJson<LLMConfigOut[]>(API_BASE, "/admin/llm-config/configs", accessToken),
+      ]);
+
+      setMe(meData);
+      setProviders(providersData);
+
+      const byProvider = configsData.reduce<Record<string, LLMConfigOut>>((acc, row) => {
+        acc[row.provider_key] = row;
+        return acc;
+      }, {});
+      setConfigs(byProvider);
+      setSelectedProviderKey((prev) => prev || providersData[0]?.key || "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load SuperAdmin settings");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void bootstrap(token);
-  }, [token]);
+  }, [token, bootstrap]);
 
   useEffect(() => {
     if (!selectedProvider) return;
     const existing = configs[selectedProvider.key];
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       provider_label: existing?.provider_label ?? selectedProvider.label,
       base_url: existing?.base_url ?? selectedProvider.default_base_url,
@@ -142,63 +151,6 @@ export default function LLMConfigPage() {
     setError("");
     setSuccess("");
   }, [selectedProvider, configs]);
-
-  async function bootstrap(accessToken: string) {
-    setLoading(true);
-    setError("");
-
-    try {
-      const [meData, tenantData, queuePolicyData, providersData, configsData] = await Promise.all([
-        authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
-        authenticatedJson<TenantCurrent>(API_BASE, "/tenants/current", accessToken),
-        authenticatedJson<TenantQueuePolicy>(API_BASE, "/tenants/current/queue-policy", accessToken),
-        authenticatedJson<LLMProviderInfo[]>(API_BASE, "/admin/llm-config/providers", accessToken),
-        authenticatedJson<LLMConfigOut[]>(API_BASE, "/admin/llm-config/configs", accessToken),
-      ]);
-
-      setMe(meData);
-      setTenant(tenantData);
-      setQueuePolicy(queuePolicyData);
-      setProviders(providersData);
-
-      const byProvider = configsData.reduce<Record<string, LLMConfigOut>>((acc, row) => {
-        acc[row.provider_key] = row;
-        return acc;
-      }, {});
-      setConfigs(byProvider);
-
-      if (!selectedProviderKey && providersData.length > 0) {
-        setSelectedProviderKey(providersData[0].key);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load SuperAdmin settings");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function saveTenantPlan(plan: TenantCurrent["plan"]) {
-    if (!token || !tenant) return;
-
-    setSavingPlan(true);
-    setError("");
-    setSuccess("");
-    try {
-      const updated = await authenticatedJson<TenantCurrent>(API_BASE, "/tenants/current/plan", token, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const policy = await authenticatedJson<TenantQueuePolicy>(API_BASE, "/tenants/current/queue-policy", token);
-      setTenant(updated);
-      setQueuePolicy(policy);
-      setSuccess(`Tenant plan updated to ${updated.plan}.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update tenant plan");
-    } finally {
-      setSavingPlan(false);
-    }
-  }
 
   async function fetchModels() {
     if (!token || !selectedProvider) return;
@@ -277,7 +229,7 @@ export default function LLMConfigPage() {
     );
   }
 
-  const isAdmin = me ? me.role === "admin" : true;
+  const isSuperAdmin = me ? me.role === "superadmin" : true;
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
@@ -291,59 +243,13 @@ export default function LLMConfigPage() {
               <p className="mt-1 text-sm text-[#667896]">
                 Configure provider token, endpoint, model selection, and activation app-wide.
               </p>
-              {tenant ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#e7edf8] bg-[#f8fbff] p-3">
-                  <div className="min-w-[220px]">
-                    <p className="text-xs text-[#5d7194]">Tenant</p>
-                    <p className="text-sm font-semibold text-[#213552]">{tenant.name}</p>
-                  </div>
-                  <div className="min-w-[180px]">
-                    <p className="text-xs text-[#5d7194]">Current Plan</p>
-                    <select
-                      value={tenant.plan}
-                      onChange={(e) => {
-                        const nextPlan = e.target.value as TenantCurrent["plan"];
-                        void saveTenantPlan(nextPlan);
-                      }}
-                      className="mt-1 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
-                      disabled={savingPlan}
-                    >
-                      <option value="starter">Starter</option>
-                      <option value="growth">Growth</option>
-                      <option value="business">Business</option>
-                      <option value="enterprise">Enterprise</option>
-                    </select>
-                  </div>
-                  {savingPlan ? <Badge className="bg-amber-100 text-amber-700">Saving plan...</Badge> : null}
-                </div>
-              ) : null}
-              {queuePolicy ? (
-                <div className="mt-3 grid gap-2 rounded-lg border border-[#e7edf8] bg-white p-3 text-xs text-[#4f6386] md:grid-cols-3">
-                  <div>
-                    <p className="text-[#7789a7]">Inflight</p>
-                    <p className="font-semibold text-[#213552]">
-                      {queuePolicy.current_inflight_jobs} / {queuePolicy.max_inflight_jobs}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[#7789a7]">Pending Queue</p>
-                    <p className="font-semibold text-[#213552]">
-                      {queuePolicy.current_pending_jobs} / {queuePolicy.max_pending_jobs}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[#7789a7]">Burst (60s)</p>
-                    <p className="font-semibold text-[#213552]">{queuePolicy.burst_per_minute}</p>
-                  </div>
-                </div>
-              ) : null}
             </Card>
 
-            {!isAdmin ? (
+            {!isSuperAdmin ? (
               <Card className="rounded-xl border-red-200 bg-red-50 p-4">
                 <h2 className="text-lg font-semibold text-red-700">Access denied</h2>
                 <p className="mt-1 text-sm text-red-700">
-                  This page is available only for app admins/superadmins.
+                  This page is available only for global superadmin users.
                 </p>
               </Card>
             ) : (

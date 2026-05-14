@@ -26,3 +26,4 @@
 - Keep `tenantId` empty unless you need strict tenant assertion in payload.
 - Use `callbackSecret` to enable signed callbacks (`X-Nexus-Webhook-Signature`).
 - Use `callbackAuthBearer` when the receiver webhook requires bearer auth.
+- `Login` now requires only `email` + `password` (no `tenantSlug`).

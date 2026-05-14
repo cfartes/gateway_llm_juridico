@@ -43,7 +43,7 @@ export default function LoginPage() {
       const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
       const payload =
         mode === "login"
-          ? { tenant_slug: tenantSlug, email, password }
+          ? { email, password }
           : {
               tenant_name: tenantName,
               tenant_slug: tenantSlug,
@@ -82,7 +82,7 @@ export default function LoginPage() {
             <p className="text-sm font-semibold text-blue-100">LLM SHIELD</p>
             <h1 className="mt-10 text-3xl font-bold">Secure AI Document Pipeline</h1>
             <p className="mt-3 text-sm text-blue-100">
-              Authenticate your tenant and start scanning files for prompt injections, hidden instructions, and exfiltration attempts.
+              Authenticate with your user email and start scanning files for prompt injections, hidden instructions, and exfiltration attempts.
             </p>
           </div>
 
@@ -114,12 +114,14 @@ export default function LoginPage() {
                 />
               ) : null}
 
-              <Input
-                value={tenantSlug}
-                onChange={(e) => setTenantSlug(e.target.value)}
-                placeholder="Tenant slug"
-                required
-              />
+              {mode === "register" ? (
+                <Input
+                  value={tenantSlug}
+                  onChange={(e) => setTenantSlug(e.target.value)}
+                  placeholder="Tenant slug"
+                  required
+                />
+              ) : null}
 
               <Input
                 type="email"

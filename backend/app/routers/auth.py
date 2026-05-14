@@ -173,7 +173,7 @@ def logout(
 @router.post("/password-reset/request", response_model=PasswordResetResponse)
 def request_password_reset(payload: PasswordResetRequest, request: Request, db: Session = Depends(get_db)):
     _rate_limit(request, "password-reset-request")
-    token = create_password_reset_flow(db, payload.tenant_slug, str(payload.email))
+    token = create_password_reset_flow(db, str(payload.email))
 
     # For production this should be sent by email provider; debug mode may return token for test automation.
     if settings.debug and token:

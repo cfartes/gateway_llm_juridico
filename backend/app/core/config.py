@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     refresh_cookie_samesite: str = "lax"
     refresh_cookie_domain: str = ""
     refresh_cookie_path: str = "/api/v1/auth"
+    superadmin_auto_bootstrap: bool = True
+    superadmin_email: str = "superadmin@nexusshield.ai"
+    superadmin_password: str = "StrongPass#2026"
+    superadmin_full_name: str = "Nexus SuperAdmin"
+    superadmin_tenant_name: str = "Nexus Platform"
+    superadmin_tenant_slug: str = "nexus-platform"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
