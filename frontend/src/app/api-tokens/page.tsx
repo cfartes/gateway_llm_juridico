@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { authenticatedJson } from "@/lib/auth";
 
 type ApiToken = {
   id: string;
@@ -18,7 +20,6 @@ type ApiToken = {
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
-const AUTH_TOKEN_KEY = "nexus_admin_jwt";
 
 function formatDate(input?: string | null): string {
   if (!input) return "-";
@@ -28,7 +29,7 @@ function formatDate(input?: string | null): string {
 }
 
 export default function ApiTokensPage() {
-  const [jwt, setJwt] = useState("");
+  const { token, ready } = useAuthGuard();
   const [tokenName, setTokenName] = useState("SIEM Integration");
   const [generatedToken, setGeneratedToken] = useState("");
   const [tokens, setTokens] = useState<ApiToken[]>([]);
@@ -36,37 +37,16 @@ export default function ApiTokensPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const existing = window.localStorage.getItem(AUTH_TOKEN_KEY) ?? "";
-    setJwt(existing);
-    if (existing) {
-      void loadTokens(existing);
+    if (token) {
+      void loadTokens(token);
     }
-  }, []);
+  }, [token]);
 
-  async function apiCall<T>(path: string, token: string, init?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(init?.headers ?? {}),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(await response.text());
-    }
-
-    return (await response.json()) as T;
-  }
-
-  async function loadTokens(currentToken: string = jwt) {
-    if (!currentToken) {
-      return;
-    }
+  async function loadTokens(activeToken: string) {
     setLoading(true);
     setError("");
     try {
-      const data = await apiCall<ApiToken[]>("/tokens", currentToken);
+      const data = await authenticatedJson<ApiToken[]>(API_BASE, "/tokens", activeToken);
       setTokens(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tokens");
@@ -75,34 +55,35 @@ export default function ApiTokensPage() {
     }
   }
 
-  function saveJwtLocally(e: FormEvent) {
-    e.preventDefault();
-    window.localStorage.setItem(AUTH_TOKEN_KEY, jwt.trim());
-    void loadTokens(jwt.trim());
-  }
-
   async function generateToken(e: FormEvent) {
     e.preventDefault();
-    if (!jwt.trim()) {
-      setError("Add JWT first.");
+    if (!token) {
       return;
     }
 
     setLoading(true);
     setError("");
     try {
-      const data = await apiCall<{ token: string }>("/tokens", jwt.trim(), {
+      const data = await authenticatedJson<{ token: string }>(API_BASE, "/tokens", token, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: tokenName, scopes: ["scan:write", "scan:read"] }),
       });
       setGeneratedToken(data.token);
-      await loadTokens(jwt.trim());
+      await loadTokens(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate token");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!ready || !token) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fc] grid place-items-center text-[#4c5f82]">
+        Preparing your workspace...
+      </div>
+    );
   }
 
   return (
@@ -114,19 +95,8 @@ export default function ApiTokensPage() {
             <Card className="rounded-xl p-4">
               <h1 className="text-2xl font-semibold text-[#213552]">API Tokens</h1>
               <p className="mt-1 text-sm text-[#667896]">
-                Configure admin JWT for dashboard operations and generate integration Bearer tokens.
+                Create and manage integration bearer tokens. Use these tokens only in API calls.
               </p>
-              <form onSubmit={saveJwtLocally} className="mt-4 flex flex-wrap items-center gap-2">
-                <Input
-                  value={jwt}
-                  onChange={(e) => setJwt(e.target.value)}
-                  placeholder="Paste admin JWT"
-                  className="h-10 min-w-[360px] flex-1"
-                />
-                <Button type="submit" className="h-10" disabled={loading || !jwt.trim()}>
-                  Save JWT
-                </Button>
-              </form>
             </Card>
 
             <Card className="rounded-xl p-4">
@@ -138,7 +108,7 @@ export default function ApiTokensPage() {
                     onChange={(e) => setTokenName(e.target.value)}
                     className="h-9 w-[220px]"
                   />
-                  <Button type="submit" className="h-9" disabled={loading || !jwt.trim()}>
+                  <Button type="submit" className="h-9" disabled={loading}>
                     Generate New Token
                   </Button>
                 </form>
@@ -156,15 +126,15 @@ export default function ApiTokensPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {tokens.map((token) => (
-                      <tr key={token.id} className="border-b border-[#eff3f8]">
-                        <td className="py-2 text-[#2c3f5f]">{token.name}</td>
-                        <td className="py-2 text-[#4f6386]">{token.token_prefix}</td>
-                        <td className="py-2 text-[#4f6386]">{formatDate(token.created_at)}</td>
-                        <td className="py-2 text-[#4f6386]">{formatDate(token.last_used_at)}</td>
+                    {tokens.map((item) => (
+                      <tr key={item.id} className="border-b border-[#eff3f8]">
+                        <td className="py-2 text-[#2c3f5f]">{item.name}</td>
+                        <td className="py-2 text-[#4f6386]">{item.token_prefix}</td>
+                        <td className="py-2 text-[#4f6386]">{formatDate(item.created_at)}</td>
+                        <td className="py-2 text-[#4f6386]">{formatDate(item.last_used_at)}</td>
                         <td className="py-2">
-                          <Badge className={token.revoked_at ? "bg-gray-100 text-gray-700" : "bg-emerald-100 text-emerald-700"}>
-                            {token.revoked_at ? "Revoked" : "Active"}
+                          <Badge className={item.revoked_at ? "bg-gray-100 text-gray-700" : "bg-emerald-100 text-emerald-700"}>
+                            {item.revoked_at ? "Revoked" : "Active"}
                           </Badge>
                         </td>
                       </tr>

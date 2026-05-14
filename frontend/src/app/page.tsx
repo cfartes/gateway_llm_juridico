@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { authenticatedJson } from "@/lib/auth";
 
 type Evidence = {
   category: string;
@@ -48,7 +49,6 @@ type ScanResponse = {
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
-const AUTH_TOKEN_KEY = "nexus_admin_jwt";
 
 const SAMPLE_EVIDENCE = [
   {
@@ -109,17 +109,12 @@ function formatDate(input?: string): string {
 }
 
 export default function Home() {
-  const [sessionToken, setSessionToken] = useState("");
+  const { token, ready } = useAuthGuard();
   const [files, setFiles] = useState<FileList | null>(null);
   const [scans, setScans] = useState<ScanResponse[]>([]);
   const [selectedScan, setSelectedScan] = useState<ScanResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const token = window.localStorage.getItem(AUTH_TOKEN_KEY) ?? "";
-    setSessionToken(token);
-  }, []);
 
   const stats = useMemo(() => {
     const total = scans.length;
@@ -151,31 +146,13 @@ export default function Home() {
     }));
   }, [selectedScan]);
 
-  async function apiCall<T>(path: string, init?: RequestInit): Promise<T> {
-    if (!sessionToken) {
-      throw new Error("Configure JWT in API Tokens page first.");
-    }
-
-    const response = await fetch(`${API_BASE}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${sessionToken}`,
-        ...(init?.headers ?? {}),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(await response.text());
-    }
-
-    return (await response.json()) as T;
-  }
-
   async function loadScans() {
+    if (!token) return;
+
     setLoading(true);
     setError("");
     try {
-      const data = await apiCall<ScanResponse[]>("/scans");
+      const data = await authenticatedJson<ScanResponse[]>(API_BASE, "/scans", token);
       setScans(data);
       if (data.length > 0) {
         setSelectedScan(data[0]);
@@ -189,7 +166,7 @@ export default function Home() {
 
   async function handleScanUpload(e: FormEvent) {
     e.preventDefault();
-    if (!files || files.length === 0) {
+    if (!files || files.length === 0 || !token) {
       return;
     }
 
@@ -198,7 +175,7 @@ export default function Home() {
     try {
       const form = new FormData();
       Array.from(files).forEach((file) => form.append("files", file));
-      const data = await apiCall<ScanResponse[]>("/uploads/scan-sync", {
+      const data = await authenticatedJson<ScanResponse[]>(API_BASE, "/uploads/scan-sync", token, {
         method: "POST",
         body: form,
       });
@@ -209,6 +186,14 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!ready || !token) {
+    return (
+      <div className="min-h-screen bg-[#f7f9fc] grid place-items-center text-[#4c5f82]">
+        Preparing your workspace...
+      </div>
+    );
   }
 
   return (
@@ -273,7 +258,7 @@ export default function Home() {
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h2 className="text-2xl font-semibold text-[#213552]">Recent Scans</h2>
-                    <Button variant="outline" onClick={loadScans} disabled={loading || !sessionToken}>
+                    <Button variant="outline" onClick={loadScans} disabled={loading}>
                       Refresh
                     </Button>
                   </div>
@@ -311,7 +296,7 @@ export default function Home() {
                         {!scans.length ? (
                           <tr>
                             <td colSpan={5} className="py-6 text-center text-[#7586a3]">
-                              No scan data yet. Configure JWT in API Tokens and upload files.
+                              No scan data yet. Upload files and press refresh to see history.
                             </td>
                           </tr>
                         ) : null}
