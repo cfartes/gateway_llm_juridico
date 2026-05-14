@@ -201,3 +201,9 @@ curl -X POST http://localhost:8000/api/v1/webhooks/result \
 - `risk_only`: returns threat presence, risk score/level, and `safe_for_rag`.
 - `full_report`: includes full evidence and technical explanation.
 - `rag_markdown`: includes report + sanitized markdown + RAG chunk suggestions.
+
+## Postman Collection
+
+- Collection: `docs/postman/Nexus-LLM-Shield.postman_collection.json`
+- Environment: `docs/postman/Nexus-LLM-Shield.local.postman_environment.json`
+- Quick guide: `docs/postman/README.md`
