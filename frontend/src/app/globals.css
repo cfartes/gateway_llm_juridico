@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #2f6fff;
+  --color-primary-strong: #1f5ae0;
+  --color-primary-soft: rgba(47, 111, 255, 0.2);
+  --color-emerald: #05a87c;
+  --color-danger: #ef5350;
+  --color-border: #dce4f3;
+  --color-border-strong: #c2d0ea;
+  --color-text: #182742;
+  --color-text-soft: #5e6f8f;
+  --color-surface-alt: #f4f8ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-manrope), "Segoe UI", sans-serif;
+}
+

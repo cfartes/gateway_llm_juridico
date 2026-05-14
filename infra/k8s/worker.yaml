@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus-worker
+  template:
+    metadata:
+      labels:
+        app: nexus-worker
+    spec:
+      containers:
+        - name: worker
+          image: your-registry/nexus-backend:latest
+          command: ["celery", "-A", "app.tasks.celery_app.celery_app", "worker", "--loglevel=INFO"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nexus-secrets
+                  key: database_url
+            - name: REDIS_URL
+              value: redis://nexus-redis:6379/0
+
