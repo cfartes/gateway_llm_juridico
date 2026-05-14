@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     allowed_hosts: str = "localhost,127.0.0.1"
     force_https: bool = False
     hsts_seconds: int = 31536000
+    refresh_cookie_name: str = "nexus_refresh_token"
+    refresh_cookie_secure: bool = False
+    refresh_cookie_samesite: str = "lax"
+    refresh_cookie_domain: str = ""
+    refresh_cookie_path: str = "/api/v1/auth"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

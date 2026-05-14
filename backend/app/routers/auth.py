@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -37,8 +37,33 @@ def _rate_limit(request: Request, suffix: str) -> None:
     rate_limit_dependency(request, key=f"auth:{suffix}:{ip}")
 
 
+def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
+    response.set_cookie(
+        key=settings.refresh_cookie_name,
+        value=refresh_token,
+        httponly=True,
+        secure=settings.refresh_cookie_secure,
+        samesite=settings.refresh_cookie_samesite,
+        domain=settings.refresh_cookie_domain or None,
+        path=settings.refresh_cookie_path,
+        max_age=settings.refresh_token_expire_days * 24 * 3600,
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.refresh_cookie_name,
+        domain=settings.refresh_cookie_domain or None,
+        path=settings.refresh_cookie_path,
+    )
+
+
+def _resolve_refresh_token(request: Request, payload_token: str | None) -> str | None:
+    return payload_token or request.cookies.get(settings.refresh_cookie_name)
+
+
 @router.post("/register", response_model=TokenResponse)
-def register(payload: RegisterRequest, request: Request, db: Session = Depends(get_db)):
+def register(payload: RegisterRequest, response: Response, request: Request, db: Session = Depends(get_db)):
     _rate_limit(request, "register")
     try:
         user = register_tenant_admin(db, payload)
@@ -46,6 +71,7 @@ def register(payload: RegisterRequest, request: Request, db: Session = Depends(g
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     access, refresh = issue_token_pair(db, user)
+    _set_refresh_cookie(response, refresh)
     write_audit_log(
         db,
         tenant_id=user.tenant_id,
@@ -57,17 +83,18 @@ def register(payload: RegisterRequest, request: Request, db: Session = Depends(g
         source_ip=request.client.host if request.client else None,
         details={"email": user.email},
     )
-    return TokenResponse(access_token=access, refresh_token=refresh)
+    return TokenResponse(access_token=access)
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, response: Response, request: Request, db: Session = Depends(get_db)):
     _rate_limit(request, "login")
     user = authenticate_user(db, payload)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     access, refresh = issue_token_pair(db, user)
+    _set_refresh_cookie(response, refresh)
     write_audit_log(
         db,
         tenant_id=user.tenant_id,
@@ -79,17 +106,28 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
         source_ip=request.client.host if request.client else None,
         details={"tenant_id": user.tenant_id},
     )
-    return TokenResponse(access_token=access, refresh_token=refresh)
+    return TokenResponse(access_token=access)
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(payload: RefreshTokenRequest, request: Request, db: Session = Depends(get_db)):
+def refresh(
+    response: Response,
+    request: Request,
+    payload: RefreshTokenRequest | None = Body(default=None),
+    db: Session = Depends(get_db),
+):
     _rate_limit(request, "refresh")
-    refreshed = rotate_refresh_token(db, payload.refresh_token)
+    raw_refresh = _resolve_refresh_token(request, payload.refresh_token if payload else None)
+    if not raw_refresh:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token is required")
+
+    refreshed = rotate_refresh_token(db, raw_refresh)
     if not refreshed:
+        _clear_refresh_cookie(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
     user, access, refresh_token = refreshed
+    _set_refresh_cookie(response, refresh_token)
     write_audit_log(
         db,
         tenant_id=user.tenant_id,
@@ -101,13 +139,22 @@ def refresh(payload: RefreshTokenRequest, request: Request, db: Session = Depend
         source_ip=request.client.host if request.client else None,
         details={},
     )
-    return TokenResponse(access_token=access, refresh_token=refresh_token)
+    return TokenResponse(access_token=access)
 
 
 @router.post("/logout")
-def logout(payload: LogoutRequest, request: Request, auth=Depends(get_auth_context), db: Session = Depends(get_db)):
+def logout(
+    response: Response,
+    request: Request,
+    payload: LogoutRequest | None = Body(default=None),
+    auth=Depends(get_auth_context),
+    db: Session = Depends(get_db),
+):
     _rate_limit(request, "logout")
-    revoked = revoke_refresh_token(db, payload.refresh_token)
+    raw_refresh = _resolve_refresh_token(request, payload.refresh_token if payload else None)
+    revoked = revoke_refresh_token(db, raw_refresh) if raw_refresh else False
+    _clear_refresh_cookie(response)
+
     if revoked:
         write_audit_log(
             db,

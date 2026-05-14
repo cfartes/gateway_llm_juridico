@@ -54,6 +54,7 @@ export default function LoginPage() {
 
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -62,8 +63,8 @@ export default function LoginPage() {
         throw new Error(await response.text());
       }
 
-      const data = (await response.json()) as { access_token: string; refresh_token: string };
-      setSessionTokens(data.access_token, data.refresh_token);
+      const data = (await response.json()) as { access_token: string };
+      setSessionTokens(data.access_token);
       router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");

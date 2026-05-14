@@ -22,14 +22,13 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
   -d '{"email":"admin@acme.com","password":"StrongPass#2026","tenant_slug":"acme"}'
 ```
 
-Response now returns `access_token` and `refresh_token`.
+Response now returns `access_token`; `refresh_token` is set as HttpOnly cookie.
 
 ## Refresh session
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refresh_token":"<REFRESH_TOKEN>"}'
+  --cookie "nexus_refresh_token=<REFRESH_TOKEN>"
 ```
 
 ## Logout
@@ -37,8 +36,7 @@ curl -X POST http://localhost:8000/api/v1/auth/refresh \
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/logout \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"refresh_token":"<REFRESH_TOKEN>"}'
+  --cookie "nexus_refresh_token=<REFRESH_TOKEN>"
 ```
 
 ## Create API Token

@@ -114,7 +114,9 @@ def rotate_refresh_token(db: Session, raw_refresh_token: str) -> tuple[User, str
     return user, access, refresh
 
 
-def revoke_refresh_token(db: Session, raw_refresh_token: str) -> bool:
+def revoke_refresh_token(db: Session, raw_refresh_token: str | None) -> bool:
+    if not raw_refresh_token:
+        return False
     parts = raw_refresh_token.split(".", 1)
     if len(parts) != 2:
         return False
