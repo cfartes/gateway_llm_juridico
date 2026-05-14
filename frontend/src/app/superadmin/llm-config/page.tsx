@@ -22,6 +22,16 @@ type TenantCurrent = {
   plan: "starter" | "growth" | "business" | "enterprise";
 };
 
+type TenantQueuePolicy = {
+  plan: TenantCurrent["plan"];
+  max_inflight_jobs: number;
+  max_pending_jobs: number;
+  burst_per_minute: number;
+  current_running_jobs: number;
+  current_pending_jobs: number;
+  current_inflight_jobs: number;
+};
+
 type LLMProviderInfo = {
   key: string;
   label: string;
@@ -83,6 +93,7 @@ export default function LLMConfigPage() {
   const { token, ready } = useAuthGuard();
   const [me, setMe] = useState<UserMe | null>(null);
   const [tenant, setTenant] = useState<TenantCurrent | null>(null);
+  const [queuePolicy, setQueuePolicy] = useState<TenantQueuePolicy | null>(null);
   const [providers, setProviders] = useState<LLMProviderInfo[]>([]);
   const [configs, setConfigs] = useState<Record<string, LLMConfigOut>>({});
   const [selectedProviderKey, setSelectedProviderKey] = useState("");
@@ -137,15 +148,17 @@ export default function LLMConfigPage() {
     setError("");
 
     try {
-      const [meData, tenantData, providersData, configsData] = await Promise.all([
+      const [meData, tenantData, queuePolicyData, providersData, configsData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
         authenticatedJson<TenantCurrent>(API_BASE, "/tenants/current", accessToken),
+        authenticatedJson<TenantQueuePolicy>(API_BASE, "/tenants/current/queue-policy", accessToken),
         authenticatedJson<LLMProviderInfo[]>(API_BASE, "/admin/llm-config/providers", accessToken),
         authenticatedJson<LLMConfigOut[]>(API_BASE, "/admin/llm-config/configs", accessToken),
       ]);
 
       setMe(meData);
       setTenant(tenantData);
+      setQueuePolicy(queuePolicyData);
       setProviders(providersData);
 
       const byProvider = configsData.reduce<Record<string, LLMConfigOut>>((acc, row) => {
@@ -176,7 +189,9 @@ export default function LLMConfigPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
+      const policy = await authenticatedJson<TenantQueuePolicy>(API_BASE, "/tenants/current/queue-policy", token);
       setTenant(updated);
+      setQueuePolicy(policy);
       setSuccess(`Tenant plan updated to ${updated.plan}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update tenant plan");
@@ -300,6 +315,26 @@ export default function LLMConfigPage() {
                     </select>
                   </div>
                   {savingPlan ? <Badge className="bg-amber-100 text-amber-700">Saving plan...</Badge> : null}
+                </div>
+              ) : null}
+              {queuePolicy ? (
+                <div className="mt-3 grid gap-2 rounded-lg border border-[#e7edf8] bg-white p-3 text-xs text-[#4f6386] md:grid-cols-3">
+                  <div>
+                    <p className="text-[#7789a7]">Inflight</p>
+                    <p className="font-semibold text-[#213552]">
+                      {queuePolicy.current_inflight_jobs} / {queuePolicy.max_inflight_jobs}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[#7789a7]">Pending Queue</p>
+                    <p className="font-semibold text-[#213552]">
+                      {queuePolicy.current_pending_jobs} / {queuePolicy.max_pending_jobs}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[#7789a7]">Burst (60s)</p>
+                    <p className="font-semibold text-[#213552]">{queuePolicy.burst_per_minute}</p>
+                  </div>
                 </div>
               ) : null}
             </Card>

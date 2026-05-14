@@ -18,3 +18,13 @@ class TenantOut(BaseModel):
 class TenantPlanUpdateRequest(BaseModel):
     plan: TenantPlan
 
+
+class TenantQueuePolicyOut(BaseModel):
+    plan: TenantPlan
+    max_inflight_jobs: int
+    max_pending_jobs: int
+    burst_per_minute: int
+    current_running_jobs: int
+    current_pending_jobs: int
+    current_inflight_jobs: int
+

@@ -58,9 +58,7 @@ def tier_to_queue(tier: str) -> str:
     return QUEUE_BY_TIER.get(tier, "scan_standard")
 
 
-def enforce_scan_enqueue_policy(db: Session, tenant_id: str, plan: TenantPlan) -> None:
-    policy = PLAN_POLICIES.get(plan, PLAN_POLICIES[TenantPlan.STARTER])
-
+def get_tenant_scan_counters(db: Session, tenant_id: str) -> tuple[int, int]:
     pending_count = (
         db.query(func.count(ScanJob.id))
         .filter(ScanJob.tenant_id == tenant_id, ScanJob.status == ScanStatus.PENDING)
@@ -73,7 +71,30 @@ def enforce_scan_enqueue_policy(db: Session, tenant_id: str, plan: TenantPlan) -
         .scalar()
         or 0
     )
+    return pending_count, running_count
 
+
+def get_tenant_queue_policy_snapshot(db: Session, tenant_id: str, plan: TenantPlan | None = None) -> dict[str, int | str]:
+    resolved_plan = plan or resolve_tenant_plan(db, tenant_id)
+    policy = PLAN_POLICIES.get(resolved_plan, PLAN_POLICIES[TenantPlan.STARTER])
+    pending_count, running_count = get_tenant_scan_counters(db, tenant_id)
+    inflight = pending_count + running_count
+
+    return {
+        "plan": str(resolved_plan),
+        "max_inflight_jobs": policy.max_inflight_jobs,
+        "max_pending_jobs": policy.max_pending_jobs,
+        "burst_per_minute": policy.burst_per_minute,
+        "current_running_jobs": running_count,
+        "current_pending_jobs": pending_count,
+        "current_inflight_jobs": inflight,
+    }
+
+
+def enforce_scan_enqueue_policy(db: Session, tenant_id: str, plan: TenantPlan) -> None:
+    policy = PLAN_POLICIES.get(plan, PLAN_POLICIES[TenantPlan.STARTER])
+
+    pending_count, running_count = get_tenant_scan_counters(db, tenant_id)
     inflight = pending_count + running_count
     if inflight >= policy.max_inflight_jobs:
         raise HTTPException(
