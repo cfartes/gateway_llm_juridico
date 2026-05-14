@@ -7,6 +7,13 @@ class UserRole(StrEnum):
     VIEWER = "viewer"
 
 
+class TenantPlan(StrEnum):
+    STARTER = "starter"
+    GROWTH = "growth"
+    BUSINESS = "business"
+    ENTERPRISE = "enterprise"
+
+
 class ScanStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"

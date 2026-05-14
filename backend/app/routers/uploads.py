@@ -17,6 +17,12 @@ from app.schemas.analysis import AnalysisResult, EvidenceItem, ScanJobOut, ScanR
 from app.schemas.document import DocumentOut
 from app.services.audit_service import write_audit_log
 from app.services.file_validation import detect_office_macro, inspect_zip_for_blocked_files, validate_file_metadata
+from app.services.queue_policy_service import (
+    classify_file_tier,
+    enforce_scan_enqueue_policy,
+    resolve_tenant_plan,
+    tier_to_queue,
+)
 from app.services.remote_fetch import download_url_content
 from app.services.scoring import compute_threat_score, risk_from_score
 from app.tasks.scan_tasks import scan_document_task
@@ -160,9 +166,12 @@ async def scan_async(
     db: Session = Depends(get_db),
 ):
     rate_limit_dependency(request, key=f"{auth.tenant_id}:scan-async")
+    tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
 
     responses: list[ScanResponse] = []
     for upload in files:
+        enforce_scan_enqueue_policy(db, auth.tenant_id, tenant_plan)
+
         content = await upload.read()
         validate_file_metadata(upload.filename or "file.bin", upload.content_type, len(content))
 
@@ -175,7 +184,9 @@ async def scan_async(
             content=content,
         )
         scan = _create_scan_job(db, auth.tenant_id, document.id)
-        scan_document_task.delay(scan.id, document.storage_path)
+        queue_tier = classify_file_tier(document.original_name)
+        queue_name = tier_to_queue(queue_tier)
+        scan_document_task.apply_async(args=[scan.id, document.storage_path], queue=queue_name, routing_key=queue_name)
 
         write_audit_log(
             db,
@@ -186,7 +197,7 @@ async def scan_async(
             actor_user_id=auth.user_id,
             actor_api_token_id=auth.api_token_id,
             source_ip=get_request_ip(request),
-            details={"filename": document.original_name},
+            details={"filename": document.original_name, "queue": queue_name, "plan": str(tenant_plan)},
         )
 
         responses.append(_build_scan_response(document, scan, None))
@@ -202,6 +213,7 @@ def scan_from_url(
     db: Session = Depends(get_db),
 ):
     rate_limit_dependency(request, key=f"{auth.tenant_id}:scan-url")
+    tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
 
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
     content, filename, content_type = download_url_content(str(payload.url), max_bytes)
@@ -219,7 +231,10 @@ def scan_from_url(
     scan = _create_scan_job(db, auth.tenant_id, document.id)
 
     if payload.async_mode:
-        scan_document_task.delay(scan.id, document.storage_path)
+        enforce_scan_enqueue_policy(db, auth.tenant_id, tenant_plan)
+        queue_tier = classify_file_tier(document.original_name)
+        queue_name = tier_to_queue(queue_tier)
+        scan_document_task.apply_async(args=[scan.id, document.storage_path], queue=queue_name, routing_key=queue_name)
         result = None
     else:
         result = analyze_document_bytes(document.original_name, content)
@@ -241,7 +256,11 @@ def scan_from_url(
         actor_user_id=auth.user_id,
         actor_api_token_id=auth.api_token_id,
         source_ip=get_request_ip(request),
-        details={"url": str(payload.url), "async_mode": payload.async_mode},
+        details={
+            "url": str(payload.url),
+            "async_mode": payload.async_mode,
+            "plan": str(tenant_plan),
+        },
     )
 
     return _build_scan_response(document, scan, result)

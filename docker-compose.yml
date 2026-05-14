@@ -37,7 +37,7 @@ services:
   worker:
     build:
       context: ./backend
-    command: celery -A app.tasks.celery_app.celery_app worker --loglevel=INFO
+    command: celery -A app.tasks.celery_app.celery_app worker --loglevel=INFO -Q scan_light,scan_standard,scan_heavy,celery
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/nexus_llm_shield
       REDIS_URL: redis://redis:6379/0
