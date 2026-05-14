@@ -14,3 +14,7 @@ class TenantOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
+class TenantPlanUpdateRequest(BaseModel):
+    plan: TenantPlan
+

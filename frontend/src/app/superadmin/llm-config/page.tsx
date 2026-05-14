@@ -15,6 +15,13 @@ type UserMe = {
   email: string;
 };
 
+type TenantCurrent = {
+  id: string;
+  name: string;
+  slug: string;
+  plan: "starter" | "growth" | "business" | "enterprise";
+};
+
 type LLMProviderInfo = {
   key: string;
   label: string;
@@ -75,6 +82,7 @@ function providerGroupTone(family: string): string {
 export default function LLMConfigPage() {
   const { token, ready } = useAuthGuard();
   const [me, setMe] = useState<UserMe | null>(null);
+  const [tenant, setTenant] = useState<TenantCurrent | null>(null);
   const [providers, setProviders] = useState<LLMProviderInfo[]>([]);
   const [configs, setConfigs] = useState<Record<string, LLMConfigOut>>({});
   const [selectedProviderKey, setSelectedProviderKey] = useState("");
@@ -89,6 +97,7 @@ export default function LLMConfigPage() {
   const [loading, setLoading] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingPlan, setSavingPlan] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -128,13 +137,15 @@ export default function LLMConfigPage() {
     setError("");
 
     try {
-      const [meData, providersData, configsData] = await Promise.all([
+      const [meData, tenantData, providersData, configsData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
+        authenticatedJson<TenantCurrent>(API_BASE, "/tenants/current", accessToken),
         authenticatedJson<LLMProviderInfo[]>(API_BASE, "/admin/llm-config/providers", accessToken),
         authenticatedJson<LLMConfigOut[]>(API_BASE, "/admin/llm-config/configs", accessToken),
       ]);
 
       setMe(meData);
+      setTenant(tenantData);
       setProviders(providersData);
 
       const byProvider = configsData.reduce<Record<string, LLMConfigOut>>((acc, row) => {
@@ -150,6 +161,27 @@ export default function LLMConfigPage() {
       setError(err instanceof Error ? err.message : "Failed to load SuperAdmin settings");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveTenantPlan(plan: TenantCurrent["plan"]) {
+    if (!token || !tenant) return;
+
+    setSavingPlan(true);
+    setError("");
+    setSuccess("");
+    try {
+      const updated = await authenticatedJson<TenantCurrent>(API_BASE, "/tenants/current/plan", token, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      setTenant(updated);
+      setSuccess(`Tenant plan updated to ${updated.plan}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update tenant plan");
+    } finally {
+      setSavingPlan(false);
     }
   }
 
@@ -244,6 +276,32 @@ export default function LLMConfigPage() {
               <p className="mt-1 text-sm text-[#667896]">
                 Configure provider token, endpoint, model selection, and activation app-wide.
               </p>
+              {tenant ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#e7edf8] bg-[#f8fbff] p-3">
+                  <div className="min-w-[220px]">
+                    <p className="text-xs text-[#5d7194]">Tenant</p>
+                    <p className="text-sm font-semibold text-[#213552]">{tenant.name}</p>
+                  </div>
+                  <div className="min-w-[180px]">
+                    <p className="text-xs text-[#5d7194]">Current Plan</p>
+                    <select
+                      value={tenant.plan}
+                      onChange={(e) => {
+                        const nextPlan = e.target.value as TenantCurrent["plan"];
+                        void saveTenantPlan(nextPlan);
+                      }}
+                      className="mt-1 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
+                      disabled={savingPlan}
+                    >
+                      <option value="starter">Starter</option>
+                      <option value="growth">Growth</option>
+                      <option value="business">Business</option>
+                      <option value="enterprise">Enterprise</option>
+                    </select>
+                  </div>
+                  {savingPlan ? <Badge className="bg-amber-100 text-amber-700">Saving plan...</Badge> : null}
+                </div>
+              ) : null}
             </Card>
 
             {!isAdmin ? (
