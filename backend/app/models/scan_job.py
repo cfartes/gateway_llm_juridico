@@ -1,4 +1,6 @@
-from sqlalchemy import Enum, ForeignKey, Float, String, Text
+from datetime import datetime
+
+from sqlalchemy import DateTime, Enum, ForeignKey, Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -18,6 +20,12 @@ class ScanJob(UUIDTimestampMixin, Base):
     result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     integration_meta_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     rag_markdown_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    policy_action: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    policy_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    quarantine_status: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    quarantine_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_by_user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     tenant = relationship("Tenant", back_populates="scan_jobs")

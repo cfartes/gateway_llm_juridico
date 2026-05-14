@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.core.types import QuarantineStatus
 from app.core.config import settings
 from app.schemas.analysis import AnalysisResult
 
@@ -18,6 +19,15 @@ class PolicyDecision:
     action: str
     reason: str
     safe_for_rag: bool
+
+
+def quarantine_status_from_action(action: str) -> str:
+    normalized = str(action).lower()
+    if normalized == "allow":
+        return str(QuarantineStatus.NOT_REQUIRED)
+    if normalized == "quarantine":
+        return str(QuarantineStatus.PENDING_REVIEW)
+    return str(QuarantineStatus.REJECTED)
 
 
 def decide_pre_llm_from_heuristics(evidences: list[dict]) -> PreLLMDecision:

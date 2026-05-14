@@ -230,3 +230,45 @@ Policy enforcement fields in responses:
 - Collection: `docs/insomnia/Nexus-LLM-Shield.insomnia.json`
 - Quick guide: `docs/insomnia/README.md`
 
+## Quarantine Workflow
+
+### List quarantine queue (pending review)
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/quarantine?status=pending_review" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
+```
+
+### Get quarantine item detail
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/quarantine/<SCAN_ID>" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
+```
+
+### Approve and generate RAG markdown
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/quarantine/<SCAN_ID>/review" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "approve",
+    "note": "Reviewed by SecOps. Approved for sanitized RAG ingest.",
+    "generate_rag_md": true
+  }'
+```
+
+### Reject document
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/quarantine/<SCAN_ID>/review" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "reject",
+    "note": "Confirmed injection pattern. Keep blocked.",
+    "generate_rag_md": false
+  }'
+```
+

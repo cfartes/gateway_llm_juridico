@@ -20,3 +20,10 @@ class ScanStatus(StrEnum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+
+class QuarantineStatus(StrEnum):
+    NOT_REQUIRED = "not_required"
+    PENDING_REVIEW = "pending_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+

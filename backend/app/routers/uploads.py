@@ -17,6 +17,7 @@ from app.schemas.analysis import AnalysisResult, EvidenceItem, ScanJobOut, ScanR
 from app.schemas.document import DocumentOut
 from app.services.audit_service import write_audit_log
 from app.services.file_validation import detect_office_macro, inspect_zip_for_blocked_files, validate_file_metadata
+from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
 from app.services.queue_policy_service import (
     classify_file_tier,
     enforce_scan_enqueue_policy,
@@ -137,6 +138,10 @@ async def scan_sync(
         scan.risk_level = result.risk_level
         scan.summary = result.technical_explanation
         scan.result_json = encrypt_text(json.dumps(result.model_dump(), ensure_ascii=False))
+        policy = decide_policy_action(result)
+        scan.policy_action = policy.action
+        scan.policy_reason = policy.reason
+        scan.quarantine_status = quarantine_status_from_action(policy.action)
         db.add(scan)
         db.commit()
         db.refresh(scan)
@@ -243,6 +248,10 @@ def scan_from_url(
         scan.risk_level = result.risk_level
         scan.summary = result.technical_explanation
         scan.result_json = encrypt_text(json.dumps(result.model_dump(), ensure_ascii=False))
+        policy = decide_policy_action(result)
+        scan.policy_action = policy.action
+        scan.policy_reason = policy.reason
+        scan.quarantine_status = quarantine_status_from_action(policy.action)
         db.add(scan)
         db.commit()
         db.refresh(scan)

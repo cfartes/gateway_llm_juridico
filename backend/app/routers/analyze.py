@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import require_roles
 from app.core.limiter import rate_limit_dependency
-from app.core.types import ScanStatus, UserRole
+from app.core.types import QuarantineStatus, ScanStatus, UserRole
 from app.models.scan_job import ScanJob
 from app.schemas.analysis import AnalysisResult
 from app.schemas.analyze_gateway import (
@@ -32,7 +32,7 @@ from app.services.analyze_gateway_service import (
     parse_integration_meta,
 )
 from app.services.file_validation import validate_file_metadata
-from app.services.policy_enforcement import decide_policy_action
+from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
 from app.services.queue_policy_service import (
     classify_file_tier,
     enforce_scan_enqueue_policy,
@@ -131,12 +131,23 @@ def _build_payload_for_scan(scan: ScanJob, return_mode: AnalyzeReturnMode) -> An
             rag_markdown = path.read_text(encoding="utf-8")
             rag_markdown_url = f"/api/v1/files/{scan.document_id}/rag-md"
 
+    safe_for_rag_override: bool | None = None
+    if scan.policy_action == "allow":
+        safe_for_rag_override = True
+    elif scan.policy_action in {"quarantine", "block"}:
+        safe_for_rag_override = False
+    if scan.quarantine_status == str(QuarantineStatus.APPROVED):
+        safe_for_rag_override = True
+
     return format_analyze_payload(
         result=result,
         return_mode=return_mode,
         rag_markdown=rag_markdown,
         rag_markdown_url=rag_markdown_url,
         chunks=chunks,
+        policy_action_override=scan.policy_action,
+        policy_reason_override=scan.policy_reason,
+        safe_for_rag_override=safe_for_rag_override,
     )
 
 
@@ -197,6 +208,9 @@ async def analyze_sync(
     scan.risk_level = result.risk_level
     scan.summary = result.technical_explanation
     scan.result_json = encrypt_text(json.dumps(result.model_dump(), ensure_ascii=False))
+    scan.policy_action = policy.action
+    scan.policy_reason = policy.reason
+    scan.quarantine_status = quarantine_status_from_action(policy.action)
     db.add(scan)
     db.commit()
 

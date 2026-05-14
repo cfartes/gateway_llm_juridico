@@ -29,6 +29,12 @@ class ScanJobOut(BaseModel):
     threat_score: float | None
     risk_level: str | None
     summary: str | None
+    policy_action: str | None = None
+    policy_reason: str | None = None
+    quarantine_status: str | None = None
+    quarantine_note: str | None = None
+    reviewed_by_user_id: str | None = None
+    reviewed_at: datetime | None = None
     error_message: str | None
     created_at: datetime
     updated_at: datetime

@@ -7,7 +7,7 @@ from app.core.types import ScanStatus
 from app.models.scan_job import ScanJob
 from app.schemas.analyze_gateway import AnalyzeReturnMode
 from app.pipelines.analysis_graph import analyze_document_bytes
-from app.services.policy_enforcement import decide_policy_action
+from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
 from app.services.analyze_gateway_service import (
     format_analyze_payload,
     generate_rag_markdown,
@@ -32,12 +32,16 @@ def scan_document_task(scan_job_id: str, file_path: str) -> dict:
 
         content = Path(file_path).read_bytes()
         result = analyze_document_bytes(Path(file_path).name, content)
+        policy = decide_policy_action(result)
 
         scan_job.status = ScanStatus.COMPLETED
         scan_job.threat_score = result.threat_score
         scan_job.risk_level = result.risk_level
         scan_job.summary = result.technical_explanation
         scan_job.result_json = encrypt_text(json.dumps(result.model_dump(), ensure_ascii=False))
+        scan_job.policy_action = policy.action
+        scan_job.policy_reason = policy.reason
+        scan_job.quarantine_status = quarantine_status_from_action(policy.action)
         db.add(scan_job)
         db.commit()
 
@@ -83,6 +87,9 @@ def analyze_gateway_task(scan_job_id: str, file_path: str) -> dict:
         scan_job.summary = result.technical_explanation
         scan_job.result_json = encrypt_text(json.dumps(result.model_dump(), ensure_ascii=False))
         scan_job.rag_markdown_path = rag_path
+        scan_job.policy_action = policy.action
+        scan_job.policy_reason = policy.reason
+        scan_job.quarantine_status = quarantine_status_from_action(policy.action)
         db.add(scan_job)
         db.commit()
         db.refresh(scan_job)

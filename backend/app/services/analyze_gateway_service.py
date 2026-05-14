@@ -137,10 +137,11 @@ def is_safe_for_rag(result: AnalysisResult) -> bool:
     return decision.safe_for_rag
 
 
-def build_recommendation(safe_for_rag: bool, policy: PolicyDecision | None = None) -> str:
-    if policy and policy.action == "block":
+def build_recommendation(safe_for_rag: bool, policy: PolicyDecision | None = None, policy_action: str | None = None) -> str:
+    action = policy_action or (policy.action if policy else None)
+    if action == "block":
         return "Documento bloqueado. Nao enviar para LLM/RAG e iniciar fluxo de resposta a incidente."
-    if policy and policy.action == "quarantine":
+    if action == "quarantine":
         return "Documento em quarentena. Revisao manual obrigatoria antes de qualquer uso em IA."
     if safe_for_rag:
         return "Documento liberado para ingestao em RAG apos sanitizacao."
@@ -277,10 +278,15 @@ def format_analyze_payload(
     rag_markdown: str | None = None,
     rag_markdown_url: str | None = None,
     chunks: list[dict[str, Any]] | None = None,
+    policy_action_override: str | None = None,
+    policy_reason_override: str | None = None,
+    safe_for_rag_override: bool | None = None,
 ) -> AnalyzeResultPayload:
     threats = build_threats(result)
     policy = decide_policy_action(result)
-    safe = policy.safe_for_rag
+    policy_action = policy_action_override or policy.action
+    policy_reason = policy_reason_override or policy.reason
+    safe = safe_for_rag_override if safe_for_rag_override is not None else policy.safe_for_rag
 
     payload = AnalyzeResultPayload(
         has_threat=len(threats) > 0,
@@ -288,9 +294,9 @@ def format_analyze_payload(
         risk_score=int(round(result.threat_score)),
         threats=threats,
         safe_for_rag=safe,
-        recommendation=build_recommendation(safe, policy),
-        policy_action=policy.action,
-        policy_reason=policy.reason,
+        recommendation=build_recommendation(safe, policy, policy_action),
+        policy_action=policy_action,
+        policy_reason=policy_reason,
     )
 
     if return_mode in {AnalyzeReturnMode.FULL_REPORT, AnalyzeReturnMode.RAG_MARKDOWN}:
