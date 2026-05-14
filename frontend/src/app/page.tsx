@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Sidebar } from "@/components/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 
 type Evidence = {
   category: string;
@@ -46,29 +47,8 @@ type ScanResponse = {
   result: AnalysisResult | null;
 };
 
-type ApiToken = {
-  id: string;
-  name: string;
-  token_prefix: string;
-  scopes: string[];
-  last_used_at: string | null;
-  revoked_at: string | null;
-  created_at: string;
-};
-
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
-
-const MENU_ITEMS = [
-  "Overview",
-  "Scans",
-  "Files",
-  "API Tokens",
-  "Policies",
-  "Allow / Block Lists",
-  "Integrations",
-  "Audit Log",
-  "Settings",
-];
+const AUTH_TOKEN_KEY = "nexus_admin_jwt";
 
 const SAMPLE_EVIDENCE = [
   {
@@ -130,14 +110,16 @@ function formatDate(input?: string): string {
 
 export default function Home() {
   const [sessionToken, setSessionToken] = useState("");
-  const [tokenName, setTokenName] = useState("SIEM Integration");
-  const [generatedToken, setGeneratedToken] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
   const [scans, setScans] = useState<ScanResponse[]>([]);
-  const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [selectedScan, setSelectedScan] = useState<ScanResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const token = window.localStorage.getItem(AUTH_TOKEN_KEY) ?? "";
+    setSessionToken(token);
+  }, []);
 
   const stats = useMemo(() => {
     const total = scans.length;
@@ -170,6 +152,10 @@ export default function Home() {
   }, [selectedScan]);
 
   async function apiCall<T>(path: string, init?: RequestInit): Promise<T> {
+    if (!sessionToken) {
+      throw new Error("Configure JWT in API Tokens page first.");
+    }
+
     const response = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: {
@@ -186,32 +172,16 @@ export default function Home() {
   }
 
   async function loadScans() {
-    const data = await apiCall<ScanResponse[]>("/scans");
-    setScans(data);
-    if (data.length > 0) {
-      setSelectedScan(data[0]);
-    }
-  }
-
-  async function loadTokens() {
-    const data = await apiCall<ApiToken[]>("/tokens");
-    setTokens(data);
-  }
-
-  async function handleGenerateToken(e: FormEvent) {
-    e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      const data = await apiCall<{ token: string }>("/tokens", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: tokenName, scopes: ["scan:write", "scan:read"] }),
-      });
-      setGeneratedToken(data.token);
-      await loadTokens();
+      const data = await apiCall<ScanResponse[]>("/scans");
+      setScans(data);
+      if (data.length > 0) {
+        setSelectedScan(data[0]);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Token generation failed");
+      setError(err instanceof Error ? err.message : "Failed to load scans");
     } finally {
       setLoading(false);
     }
@@ -241,49 +211,10 @@ export default function Home() {
     }
   }
 
-  async function bootstrap() {
-    if (!sessionToken) {
-      return;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      await Promise.all([loadScans(), loadTokens()]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
       <div className="flex min-h-screen">
-        <aside className="hidden w-[238px] flex-col border-r border-[#e6ebf3] bg-white lg:flex">
-          <div className="px-6 pb-4 pt-5">
-            <p className="text-[33px] font-extrabold leading-none text-[var(--color-primary)]">NEXUS</p>
-            <p className="text-xs font-semibold tracking-wide text-[#8292af]">LLM SHIELD</p>
-          </div>
-          <nav className="px-3">
-            {MENU_ITEMS.map((item, idx) => (
-              <div
-                key={item}
-                className={`mb-1 flex cursor-default items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                  idx === 0 ? "bg-[#edf3ff] text-[var(--color-primary)]" : "text-[#4c5f82]"
-                }`}
-              >
-                <span className="inline-block h-4 w-4 rounded-full border border-current opacity-80" />
-                {item}
-              </div>
-            ))}
-          </nav>
-          <div className="mt-auto p-3">
-            <Card className="rounded-xl bg-[#f5f8ff] p-3">
-              <p className="text-sm font-semibold text-[var(--color-primary)]">Enterprise Plan</p>
-              <p className="mt-1 text-xs text-[#6a7a95]">Unlimited scans</p>
-            </Card>
-          </div>
-        </aside>
+        <Sidebar />
 
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px]">
@@ -294,16 +225,8 @@ export default function Home() {
                   Acme Corporation
                 </div>
               </div>
-              <div className="flex min-w-[330px] items-center gap-2">
-                <Input
-                  placeholder="Paste JWT to enable API actions"
-                  value={sessionToken}
-                  onChange={(e) => setSessionToken(e.target.value)}
-                  className="h-9"
-                />
-                <Button className="h-9" onClick={bootstrap} disabled={loading || !sessionToken}>
-                  Connect
-                </Button>
+              <div className="rounded-lg bg-[#f8fbff] px-3 py-2 text-xs text-[#607495]">
+                API token usage only via endpoint (Bearer header)
               </div>
             </header>
 
@@ -349,75 +272,6 @@ export default function Home() {
 
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-[#213552]">API Token Management</h2>
-                    <form onSubmit={handleGenerateToken} className="flex items-center gap-2">
-                      <Input
-                        value={tokenName}
-                        onChange={(e) => setTokenName(e.target.value)}
-                        className="h-9 w-[180px]"
-                      />
-                      <Button type="submit" className="h-9" disabled={loading || !sessionToken}>
-                        Generate New Token
-                      </Button>
-                    </form>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[620px] text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
-                          <th className="py-2">Token Name</th>
-                          <th className="py-2">Prefix</th>
-                          <th className="py-2">Created</th>
-                          <th className="py-2">Last Used</th>
-                          <th className="py-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(tokens.length
-                          ? tokens
-                          : [
-                              {
-                                id: "sample",
-                                name: "CI/CD Pipeline",
-                                token_prefix: "nxlm_****************",
-                                scopes: [],
-                                last_used_at: null,
-                                revoked_at: null,
-                                created_at: new Date().toISOString(),
-                              },
-                            ]
-                        ).map((token) => (
-                          <tr key={token.id} className="border-b border-[#eff3f8]">
-                            <td className="py-2 text-[#2c3f5f]">{token.name}</td>
-                            <td className="py-2 text-[#4f6386]">{token.token_prefix}</td>
-                            <td className="py-2 text-[#4f6386]">{formatDate(token.created_at)}</td>
-                            <td className="py-2 text-[#4f6386]">{formatDate(token.last_used_at ?? undefined)}</td>
-                            <td className="py-2">
-                              <Badge
-                                className={
-                                  token.revoked_at
-                                    ? "bg-gray-100 text-gray-700"
-                                    : "bg-emerald-100 text-emerald-700"
-                                }
-                              >
-                                {token.revoked_at ? "Revoked" : "Active"}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {generatedToken ? (
-                    <div className="mt-3 rounded-lg border border-[#dce4f2] bg-[#f8fbff] p-2 text-xs text-[#314765]">
-                      <p className="font-semibold">Generated token (shown only once)</p>
-                      <code className="break-all">{generatedToken}</code>
-                    </div>
-                  ) : null}
-                </Card>
-
-                <Card className="rounded-xl p-4">
-                  <div className="mb-3 flex items-center justify-between">
                     <h2 className="text-2xl font-semibold text-[#213552]">Recent Scans</h2>
                     <Button variant="outline" onClick={loadScans} disabled={loading || !sessionToken}>
                       Refresh
@@ -457,7 +311,7 @@ export default function Home() {
                         {!scans.length ? (
                           <tr>
                             <td colSpan={5} className="py-6 text-center text-[#7586a3]">
-                              No scan data yet. Connect a JWT and upload files.
+                              No scan data yet. Configure JWT in API Tokens and upload files.
                             </td>
                           </tr>
                         ) : null}
