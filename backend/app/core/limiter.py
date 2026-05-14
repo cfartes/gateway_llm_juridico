@@ -30,6 +30,10 @@ class RedisRateLimiter:
 rate_limiter = RedisRateLimiter()
 
 
-def rate_limit_dependency(request: Request, key: str) -> None:
-    rate_limiter.enforce(key=key, limit=settings.rate_limit_per_minute)
+def rate_limit_dependency(request: Request, key: str, limit: int | None = None, window_seconds: int = 60) -> None:
+    rate_limiter.enforce(
+        key=key,
+        limit=limit if limit is not None else settings.rate_limit_per_minute,
+        window_seconds=window_seconds,
+    )
 

@@ -84,6 +84,7 @@ curl -X POST http://localhost:8000/api/v1/auth/password-reset/confirm \
 Base path: `http://localhost:8000/api/v1`
 
 Use `Authorization: Bearer <API_TOKEN>` (gerado em `API Tokens`).
+Gateway requests are rate-limited per actor (`API Token` or user session) and may return `429` when burst exceeds policy.
 
 ### 1) POST /analyze (sync) - source_type=text (risk_only)
 

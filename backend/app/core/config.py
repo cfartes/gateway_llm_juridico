@@ -30,6 +30,8 @@ class Settings(BaseSettings):
 
     max_upload_size_mb: int = 50
     rate_limit_per_minute: int = 120
+    api_token_gateway_rate_limit_per_minute: int = 180
+    user_gateway_rate_limit_per_minute: int = 90
 
     cors_origins: str = "http://localhost:3000"
     allowed_hosts: str = "localhost,127.0.0.1"

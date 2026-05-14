@@ -6,8 +6,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import require_roles
+from app.core.limiter import rate_limit_dependency
 from app.core.types import ScanStatus, UserRole
 from app.models.scan_job import ScanJob
 from app.schemas.analysis import AnalysisResult
@@ -51,6 +53,16 @@ def _to_bool(value: Any, default: bool = False) -> bool:
     if isinstance(value, bool):
         return value
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _enforce_gateway_actor_rate_limit(request: Request, auth: Any, operation: str) -> None:
+    if auth.api_token_id:
+        key = f"{auth.tenant_id}:gateway:{operation}:api-token:{auth.api_token_id}"
+        rate_limit_dependency(request, key=key, limit=settings.api_token_gateway_rate_limit_per_minute)
+        return
+
+    key = f"{auth.tenant_id}:gateway:{operation}:user:{auth.user_id or 'unknown'}"
+    rate_limit_dependency(request, key=key, limit=settings.user_gateway_rate_limit_per_minute)
 
 
 async def _extract_request_payload(request: Request, upload_file: UploadFile | None) -> tuple[AnalyzeRequest, UploadFile | None]:
@@ -134,6 +146,7 @@ async def analyze_sync(
     auth=Depends(require_roles(UserRole.ADMIN, UserRole.ANALYST)),
     db: Session = Depends(get_db),
 ):
+    _enforce_gateway_actor_rate_limit(request, auth, "analyze-sync")
     req, upload_file = await _extract_request_payload(request, file)
 
     if req.tenant_id and req.tenant_id != auth.tenant_id:
@@ -201,6 +214,7 @@ async def analyze_async(
     auth=Depends(require_roles(UserRole.ADMIN, UserRole.ANALYST)),
     db: Session = Depends(get_db),
 ):
+    _enforce_gateway_actor_rate_limit(request, auth, "analyze-async")
     req, upload_file = await _extract_request_payload(request, file)
 
     if req.tenant_id and req.tenant_id != auth.tenant_id:
