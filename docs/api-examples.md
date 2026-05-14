@@ -207,3 +207,9 @@ curl -X POST http://localhost:8000/api/v1/webhooks/result \
 - Collection: `docs/postman/Nexus-LLM-Shield.postman_collection.json`
 - Environment: `docs/postman/Nexus-LLM-Shield.local.postman_environment.json`
 - Quick guide: `docs/postman/README.md`
+
+## Insomnia Collection
+
+- Collection: `docs/insomnia/Nexus-LLM-Shield.insomnia.json`
+- Quick guide: `docs/insomnia/README.md`
+
