@@ -52,3 +52,20 @@ class SupportTicketMessageOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SupportTicketAttachmentOut(BaseModel):
+    id: str
+    ticket_id: str
+    tenant_id: str
+    uploaded_by_user_id: str | None = None
+    uploaded_by_role: str
+    original_name: str
+    mime_type: str
+    size_bytes: int
+    sha256: str
+    is_internal: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}

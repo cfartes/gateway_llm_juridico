@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,20 @@ type SupportTicketMessage = {
   created_at: string;
 };
 
+type SupportTicketAttachment = {
+  id: string;
+  ticket_id: string;
+  tenant_id: string;
+  uploaded_by_user_id: string | null;
+  uploaded_by_role: string;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  sha256: string;
+  is_internal: boolean;
+  created_at: string;
+};
+
 type UserMe = { role: string };
 
 export default function SupportPage() {
@@ -50,8 +64,10 @@ export default function SupportPage() {
   const [saving, setSaving] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState("");
   const [thread, setThread] = useState<SupportTicketMessage[]>([]);
+  const [attachments, setAttachments] = useState<SupportTicketAttachment[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -115,7 +131,9 @@ export default function SupportPage() {
     setError("");
     try {
       const items = await authenticatedJson<SupportTicketMessage[]>(API_BASE, `/support/tickets/${ticketId}/messages`, token);
+      const att = await authenticatedJson<SupportTicketAttachment[]>(API_BASE, `/support/tickets/${ticketId}/attachments`, token);
       setThread(items);
+      setAttachments(att);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load ticket thread");
     }
@@ -139,6 +157,57 @@ export default function SupportPage() {
       setError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
       setSendingMessage(false);
+    }
+  }
+
+  async function uploadAttachment(event: ChangeEvent<HTMLInputElement>) {
+    if (!token || !selectedTicketId) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingAttachment(true);
+    setError("");
+    setSuccess("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(`${API_BASE}/support/tickets/${selectedTicketId}/attachments`, {
+        method: "POST",
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!response.ok) throw new Error(await response.text());
+      setSuccess("Attachment uploaded.");
+      await loadThread(selectedTicketId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload attachment");
+    } finally {
+      event.target.value = "";
+      setUploadingAttachment(false);
+    }
+  }
+
+  async function downloadAttachment(attachmentId: string, filename: string) {
+    if (!token || !selectedTicketId) return;
+    setError("");
+    try {
+      const response = await fetch(`${API_BASE}/support/tickets/${selectedTicketId}/attachments/${attachmentId}/download`, {
+        method: "GET",
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download attachment");
     }
   }
 
@@ -251,6 +320,24 @@ export default function SupportPage() {
                       No messages yet.
                     </div>
                   ) : null}
+                </div>
+                <div className="mt-4 rounded-lg border border-[#e6edf8] bg-[#fbfdff] p-3">
+                  <h3 className="text-sm font-semibold text-[#2c3f5f]">Attachments</h3>
+                  <div className="mt-2 space-y-2">
+                    {attachments.map((att) => (
+                      <div key={att.id} className="flex items-center justify-between rounded border border-[#e8edf6] bg-white px-3 py-2 text-sm">
+                        <span className="text-[#334766]">{att.original_name} ({Math.round(att.size_bytes / 1024)} KB)</span>
+                        <Button type="button" variant="outline" onClick={() => void downloadAttachment(att.id, att.original_name)}>
+                          Download
+                        </Button>
+                      </div>
+                    ))}
+                    {!attachments.length ? <p className="text-xs text-[#7586a3]">No attachments yet.</p> : null}
+                  </div>
+                  <div className="mt-3">
+                    <input type="file" onChange={uploadAttachment} disabled={!canCreate || uploadingAttachment} />
+                    <p className="mt-1 text-xs text-[#6f80a0]">Allowed formats follow secure upload policy. Max 20MB per attachment.</p>
+                  </div>
                 </div>
                 <textarea
                   className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"

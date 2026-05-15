@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,20 @@ type TicketMessage = {
   created_at: string;
 };
 
+type TicketAttachment = {
+  id: string;
+  ticket_id: string;
+  tenant_id: string;
+  uploaded_by_user_id: string | null;
+  uploaded_by_role: string;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  sha256: string;
+  is_internal: boolean;
+  created_at: string;
+};
+
 type UserMe = { role: string };
 
 export default function SuperAdminSupportPage() {
@@ -44,9 +58,11 @@ export default function SuperAdminSupportPage() {
   const [note, setNote] = useState("");
   const [selectedTicketId, setSelectedTicketId] = useState("");
   const [thread, setThread] = useState<TicketMessage[]>([]);
+  const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
   const [threadMessage, setThreadMessage] = useState("");
   const [threadInternal, setThreadInternal] = useState(false);
   const [sendingThread, setSendingThread] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
   const [error, setError] = useState("");
@@ -104,7 +120,9 @@ export default function SuperAdminSupportPage() {
     setError("");
     try {
       const data = await authenticatedJson<TicketMessage[]>(API_BASE, `/admin/support/tickets/${ticketId}/messages`, token);
+      const att = await authenticatedJson<TicketAttachment[]>(API_BASE, `/admin/support/tickets/${ticketId}/attachments`, token);
       setThread(data);
+      setAttachments(att);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load thread");
     }
@@ -129,6 +147,58 @@ export default function SuperAdminSupportPage() {
       setError(err instanceof Error ? err.message : "Failed to post message");
     } finally {
       setSendingThread(false);
+    }
+  }
+
+  async function uploadAttachment(event: ChangeEvent<HTMLInputElement>) {
+    if (!token || !selectedTicketId) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingAttachment(true);
+    setError("");
+    setSuccess("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("is_internal", threadInternal ? "true" : "false");
+      const response = await fetch(`${API_BASE}/admin/support/tickets/${selectedTicketId}/attachments`, {
+        method: "POST",
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!response.ok) throw new Error(await response.text());
+      setSuccess("Attachment uploaded.");
+      await loadThread(selectedTicketId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload attachment");
+    } finally {
+      event.target.value = "";
+      setUploadingAttachment(false);
+    }
+  }
+
+  async function downloadAttachment(attachmentId: string, filename: string) {
+    if (!token || !selectedTicketId) return;
+    setError("");
+    try {
+      const response = await fetch(`${API_BASE}/admin/support/tickets/${selectedTicketId}/attachments/${attachmentId}/download`, {
+        method: "GET",
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download attachment");
     }
   }
 
@@ -235,6 +305,26 @@ export default function SuperAdminSupportPage() {
                       No messages yet.
                     </div>
                   ) : null}
+                </div>
+                <div className="mt-4 rounded-lg border border-[#e6edf8] bg-[#fbfdff] p-3">
+                  <h3 className="text-sm font-semibold text-[#2c3f5f]">Attachments</h3>
+                  <div className="mt-2 space-y-2">
+                    {attachments.map((att) => (
+                      <div key={att.id} className={`flex items-center justify-between rounded border px-3 py-2 text-sm ${att.is_internal ? "border-amber-200 bg-amber-50" : "border-[#e8edf6] bg-white"}`}>
+                        <span className="text-[#334766]">
+                          {att.original_name} ({Math.round(att.size_bytes / 1024)} KB){att.is_internal ? " [internal]" : ""}
+                        </span>
+                        <Button type="button" variant="outline" onClick={() => void downloadAttachment(att.id, att.original_name)}>
+                          Download
+                        </Button>
+                      </div>
+                    ))}
+                    {!attachments.length ? <p className="text-xs text-[#7586a3]">No attachments yet.</p> : null}
+                  </div>
+                  <div className="mt-3">
+                    <input type="file" onChange={uploadAttachment} disabled={uploadingAttachment} />
+                    <p className="mt-1 text-xs text-[#6f80a0]">Internal flag follows checkbox below when uploading.</p>
+                  </div>
                 </div>
                 <textarea
                   className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"

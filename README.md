@@ -57,8 +57,13 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 - Chamados de suporte:
   - tenant abre/lista: `POST /api/v1/support/tickets`, `GET /api/v1/support/tickets`
   - thread do chamado (tenant): `GET/POST /api/v1/support/tickets/{ticket_id}/messages`
+  - anexos do chamado (tenant): `GET/POST /api/v1/support/tickets/{ticket_id}/attachments`
+  - download de anexo (tenant): `GET /api/v1/support/tickets/{ticket_id}/attachments/{attachment_id}/download`
   - superadmin triagem/atualização: `GET /api/v1/admin/support/tickets`, `PATCH /api/v1/admin/support/tickets/{ticket_id}`
   - thread do chamado (superadmin): `GET/POST /api/v1/admin/support/tickets/{ticket_id}/messages` (com mensagens internas)
+  - anexos do chamado (superadmin): `GET/POST /api/v1/admin/support/tickets/{ticket_id}/attachments`
+  - download de anexo (superadmin): `GET /api/v1/admin/support/tickets/{ticket_id}/attachments/{attachment_id}/download`
+  - visibilidade: anexos `is_internal=true` aparecem somente para superadmin
 - SLA operacional no SuperAdmin Ops:
   - pendências de upgrade de plano acima do SLA
   - chamados abertos aguardando primeira resposta acima do SLA

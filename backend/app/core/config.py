@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     ops_slo_snapshot_cleanup_interval_seconds: int = 3600
     ops_upgrade_request_sla_hours: int = 24
     ops_support_first_response_sla_hours: int = 8
+    support_attachment_max_upload_mb: int = 20
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_username: str = ""

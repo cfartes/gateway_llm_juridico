@@ -10,6 +10,7 @@ from app.models.queue_alert_preference import QueueAlertPreference
 from app.models.refresh_token import RefreshToken
 from app.models.scan_job import ScanJob
 from app.models.support_ticket import SupportTicket
+from app.models.support_ticket_attachment import SupportTicketAttachment
 from app.models.support_ticket_message import SupportTicketMessage
 from app.models.tenant import Tenant
 from app.models.tenant_app_settings import TenantAppSettings
@@ -35,6 +36,7 @@ __all__ = [
     "Document",
     "ScanJob",
     "SupportTicket",
+    "SupportTicketAttachment",
     "SupportTicketMessage",
     "AuditLog",
     "WebhookDelivery",
