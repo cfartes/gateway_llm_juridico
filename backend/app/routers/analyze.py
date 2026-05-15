@@ -33,6 +33,7 @@ from app.services.analyze_gateway_service import (
 )
 from app.services.file_validation import validate_file_metadata
 from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
+from app.services.webhook_security_service import validate_callback_url_security
 from app.services.queue_policy_service import (
     classify_file_tier,
     enforce_scan_enqueue_policy,
@@ -163,6 +164,8 @@ async def analyze_sync(
 
     if req.tenant_id and req.tenant_id != auth.tenant_id:
         raise HTTPException(status_code=403, detail="tenant_id does not match authenticated tenant")
+    if req.callback_url:
+        validate_callback_url_security(str(req.callback_url))
 
     content, filename, mime_type = load_source_content(req, upload_file)
     validate_file_metadata(filename, mime_type, len(content))
@@ -235,6 +238,8 @@ async def analyze_async(
 
     if req.tenant_id and req.tenant_id != auth.tenant_id:
         raise HTTPException(status_code=403, detail="tenant_id does not match authenticated tenant")
+    if req.callback_url:
+        validate_callback_url_security(str(req.callback_url))
 
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
     enforce_scan_enqueue_policy(db, auth.tenant_id, tenant_plan)

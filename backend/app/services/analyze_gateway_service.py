@@ -340,6 +340,7 @@ def trigger_result_webhook(
     timeout_seconds: float = 15.0,
     max_retries: int = 3,
     base_backoff_seconds: float = 1.0,
+    extra_headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     raw_body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     headers = {"Content-Type": "application/json"}
@@ -350,6 +351,11 @@ def trigger_result_webhook(
         headers["X-Nexus-Webhook-Signature"] = _build_webhook_signature(callback_secret, timestamp, raw_body)
     if callback_auth_bearer:
         headers["Authorization"] = f"Bearer {callback_auth_bearer}"
+    if extra_headers:
+        headers.update(extra_headers)
+    event_id = payload.get("event_id")
+    if isinstance(event_id, str) and event_id.strip():
+        headers.setdefault("X-Nexus-Event-Id", event_id.strip())
 
     attempts = max(1, int(max_retries))
     last_error = None

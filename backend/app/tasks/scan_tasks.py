@@ -1,4 +1,5 @@
 import json
+from uuid import uuid4
 from pathlib import Path
 
 from app.core.config import settings
@@ -15,6 +16,7 @@ from app.services.analyze_gateway_service import (
     trigger_result_webhook,
 )
 from app.services.webhook_delivery_service import persist_webhook_delivery_result
+from app.services.webhook_delivery_service import list_dead_letter_retry_candidates, retry_delivery_now
 from app.tasks.celery_app import celery_app
 from app.utils.crypto import encrypt_text
 
@@ -120,6 +122,7 @@ def analyze_gateway_task(scan_job_id: str, file_path: str) -> dict:
                 chunks=chunks,
             ).model_dump()
             webhook_payload = {
+                "event_id": str(uuid4()),
                 "job_id": scan_job.id,
                 "file_id": scan_job.document_id,
                 "status": str(scan_job.status).lower(),
@@ -134,6 +137,7 @@ def analyze_gateway_task(scan_job_id: str, file_path: str) -> dict:
                 timeout_seconds=settings.webhook_callback_timeout_seconds,
                 max_retries=settings.webhook_callback_max_retries,
                 base_backoff_seconds=settings.webhook_callback_backoff_seconds,
+                extra_headers={"X-Nexus-Event-Id": webhook_payload["event_id"]},
             )
             persist_webhook_delivery_result(
                 db,
@@ -162,6 +166,50 @@ def analyze_gateway_task(scan_job_id: str, file_path: str) -> dict:
             db.add(scan_job)
             db.commit()
         return {"scan_job_id": scan_job_id, "status": "failed", "error": str(exc)}
+    finally:
+        db.close()
+
+
+@celery_app.task(name="retry_dead_letter_webhooks_task")
+def retry_dead_letter_webhooks_task() -> dict:
+    if not settings.webhook_dead_letter_auto_retry_enabled:
+        return {"status": "disabled"}
+
+    db = SessionLocal()
+    retried = 0
+    delivered = 0
+    still_dead_letter = 0
+    try:
+        candidates = list_dead_letter_retry_candidates(
+            db,
+            min_age_seconds=settings.webhook_dead_letter_auto_retry_min_age_seconds,
+            batch_size=settings.webhook_dead_letter_auto_retry_batch_size,
+            max_total_attempts=settings.webhook_dead_letter_auto_retry_max_total_attempts,
+        )
+        for delivery in candidates:
+            try:
+                updated, _attempts = retry_delivery_now(
+                    db,
+                    delivery=delivery,
+                    timeout_seconds=settings.webhook_callback_timeout_seconds,
+                    max_retries=settings.webhook_callback_max_retries,
+                    base_backoff_seconds=settings.webhook_callback_backoff_seconds,
+                )
+                retried += 1
+                if updated.status == "delivered":
+                    delivered += 1
+                else:
+                    still_dead_letter += 1
+            except Exception:
+                still_dead_letter += 1
+                continue
+
+        return {
+            "status": "ok",
+            "retried": retried,
+            "delivered": delivered,
+            "still_dead_letter": still_dead_letter,
+        }
     finally:
         db.close()
 

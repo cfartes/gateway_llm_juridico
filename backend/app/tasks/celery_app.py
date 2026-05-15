@@ -28,5 +28,12 @@ celery_app.conf.update(
         Queue("scan_heavy", Exchange("scan", type="direct"), routing_key="scan_heavy"),
         Queue("celery", Exchange("celery", type="direct"), routing_key="celery"),
     ),
+    beat_schedule={
+        "retry-dead-letter-webhooks": {
+            "task": "retry_dead_letter_webhooks_task",
+            "schedule": max(30, int(settings.webhook_dead_letter_auto_retry_interval_seconds)),
+            "options": {"queue": "celery", "routing_key": "celery"},
+        }
+    },
 )
 

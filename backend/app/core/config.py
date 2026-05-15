@@ -40,6 +40,16 @@ class Settings(BaseSettings):
     webhook_callback_timeout_seconds: float = 15.0
     webhook_callback_max_retries: int = 3
     webhook_callback_backoff_seconds: float = 1.0
+    webhook_callback_allowed_domains: str = ""
+    webhook_callback_allow_http_localhost: bool = True
+    webhook_callback_block_private_networks: bool = True
+    webhook_dead_letter_auto_retry_enabled: bool = True
+    webhook_dead_letter_auto_retry_interval_seconds: int = 120
+    webhook_dead_letter_auto_retry_batch_size: int = 25
+    webhook_dead_letter_auto_retry_max_total_attempts: int = 12
+    webhook_dead_letter_auto_retry_min_age_seconds: int = 60
+    ops_alert_webhook_url: str | None = None
+    ops_alert_timeout_seconds: float = 8.0
     policy_llm_skip_high_hits_threshold: int = 2
     policy_quarantine_score_threshold: float = 55.0
     policy_block_score_threshold: float = 80.0

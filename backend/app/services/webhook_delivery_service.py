@@ -2,11 +2,14 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import httpx
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.scan_job import ScanJob
 from app.models.webhook_delivery import WebhookDelivery, WebhookDeliveryAttempt
+from app.services.webhook_security_service import validate_callback_url_security
 from app.utils.crypto import decrypt_text, encrypt_text
 
 
@@ -67,6 +70,21 @@ def persist_webhook_delivery_result(
         db.add(attempt)
     db.commit()
 
+    if not ok:
+        send_ops_alert(
+            "webhook.dead_letter",
+            {
+                "delivery_id": delivery.id,
+                "tenant_id": delivery.tenant_id,
+                "scan_job_id": delivery.scan_job_id,
+                "callback_url": delivery.callback_url,
+                "attempt_count": delivery.attempt_count,
+                "max_attempts": delivery.max_attempts,
+                "last_error": delivery.last_error,
+                "last_http_status": delivery.last_http_status,
+            },
+        )
+
     return delivery
 
 
@@ -103,6 +121,8 @@ def retry_delivery_now(
     base_backoff_seconds: float,
 ) -> tuple[WebhookDelivery, int]:
     from app.services.analyze_gateway_service import trigger_result_webhook
+
+    validate_callback_url_security(delivery.callback_url)
 
     payload_raw = _decode_optional(delivery.payload_json)
     if not payload_raw:
@@ -233,3 +253,42 @@ def compute_delivery_metrics(
         "top_failed_callbacks": top_failed_callbacks,
         "top_failed_tenants": top_failed_tenants,
     }
+
+
+def list_dead_letter_retry_candidates(
+    db: Session,
+    *,
+    min_age_seconds: int,
+    batch_size: int,
+    max_total_attempts: int,
+) -> list[WebhookDelivery]:
+    min_age = max(0, min_age_seconds)
+    limit = max(1, min(batch_size, 200))
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=min_age)
+    max_attempts = max(1, max_total_attempts)
+
+    return (
+        db.query(WebhookDelivery)
+        .filter(
+            WebhookDelivery.status == "dead_letter",
+            WebhookDelivery.discarded_at.is_(None),
+            WebhookDelivery.updated_at <= cutoff,
+            WebhookDelivery.attempt_count < max_attempts,
+        )
+        .order_by(WebhookDelivery.updated_at.asc())
+        .limit(limit)
+        .all()
+    )
+
+
+def send_ops_alert(event_type: str, payload: dict[str, Any]) -> None:
+    alert_url = (settings.ops_alert_webhook_url or "").strip()
+    if not alert_url:
+        return
+
+    body = {"event_type": event_type, "payload": payload, "source": "nexus-gateway-llm-shield"}
+    try:
+        with httpx.Client(timeout=settings.ops_alert_timeout_seconds) as client:
+            client.post(alert_url, json=body)
+    except Exception:
+        return

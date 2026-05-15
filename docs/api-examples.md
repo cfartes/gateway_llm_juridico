@@ -218,6 +218,23 @@ Policy enforcement fields in responses:
 - Callback headers sent by Nexus:
   - `X-Nexus-Webhook-Timestamp`
   - `X-Nexus-Webhook-Signature` (`t=<unix_ts>,v1=<hmac_sha256>`)
+  - `X-Nexus-Event-Id` (idempotency key for dedup on receiver side)
+
+### Callback hardening rules
+
+- `callback_url` must be `https` in production.
+- `http://localhost` is accepted only in `dev` when `WEBHOOK_CALLBACK_ALLOW_HTTP_LOCALHOST=true`.
+- Private/restricted networks are blocked by default (`WEBHOOK_CALLBACK_BLOCK_PRIVATE_NETWORKS=true`).
+- Optional domain allowlist: `WEBHOOK_CALLBACK_ALLOWED_DOMAINS=cliente.com,api.cliente.com`.
+
+### Dead-letter auto-retry (background)
+
+- Enable with `WEBHOOK_DEAD_LETTER_AUTO_RETRY_ENABLED=true`.
+- Runs by Celery Beat every `WEBHOOK_DEAD_LETTER_AUTO_RETRY_INTERVAL_SECONDS`.
+- Controls:
+  - `WEBHOOK_DEAD_LETTER_AUTO_RETRY_BATCH_SIZE`
+  - `WEBHOOK_DEAD_LETTER_AUTO_RETRY_MAX_TOTAL_ATTEMPTS`
+  - `WEBHOOK_DEAD_LETTER_AUTO_RETRY_MIN_AGE_SECONDS`
 
 ## Postman Collection
 
@@ -353,5 +370,28 @@ Discard delivery:
 ```bash
 curl -X POST "http://localhost:8000/api/v1/admin/webhooks/deliveries/<DELIVERY_ID>/discard" \
   -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
+## Tenant Webhook Deliveries
+
+List webhook deliveries for the current tenant:
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/webhooks/deliveries?status=all&limit=100" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
+```
+
+Get one delivery detail:
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/webhooks/deliveries/<DELIVERY_ID>" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
+```
+
+Retry one delivery (admin/analyst):
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/webhooks/deliveries/<DELIVERY_ID>/retry" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
 ```
 
