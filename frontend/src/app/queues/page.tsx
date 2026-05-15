@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
-  acknowledgeAlertSignature,
   appendQueueAlertEvent,
   buildAlertSignature,
   getAcknowledgedSignature,
@@ -15,9 +14,9 @@ import {
   isCriticalEscalation,
   QueueAlertEvent,
   readQueueAlertHistory,
-  setAlertSnooze,
 } from "@/lib/queue-alerts";
 import { authenticatedJson } from "@/lib/auth";
+import { fetchQueueAlertPreference, QueueAlertPreference, updateQueueAlertPreference } from "@/lib/queue-alert-preferences";
 
 type QueueBucket = {
   queue_name: string;
@@ -42,12 +41,6 @@ type QueueOverview = {
   items: QueueBucket[];
 };
 
-type UserMe = {
-  id: string;
-  role: string;
-  email: string;
-};
-
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
 function formatDate(input?: string | null): string {
@@ -65,13 +58,14 @@ function queueTone(name: string): string {
 
 export default function QueuesPage() {
   const { token, ready } = useAuthGuard();
-  const [me, setMe] = useState<UserMe | null>(null);
   const [windowHours, setWindowHours] = useState(24);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
   const [history, setHistory] = useState<QueueAlertEvent[]>(() => readQueueAlertHistory().slice(0, 12));
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
+  const [alertPreference, setAlertPreference] = useState<QueueAlertPreference | null>(null);
   const [overview, setOverview] = useState<QueueOverview>({
     generated_at: "",
     window_hours: 24,
@@ -91,19 +85,19 @@ export default function QueuesPage() {
     setLoading(true);
     setError("");
     try {
-      const [meData, data] = await Promise.all([
-        authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
+      const [data, preferenceData] = await Promise.all([
         authenticatedJson<QueueOverview>(
           API_BASE,
           `/queues/overview?window_hours=${windowHours}`,
           accessToken,
         ),
+        fetchQueueAlertPreference(API_BASE, accessToken, "tenant"),
       ]);
-      setMe(meData);
       setOverview(data);
+      setAlertPreference(preferenceData);
       const alertSignature = buildAlertSignature(data.alert_level, data.tenant_id, data.alerts);
-      const acknowledged = getAcknowledgedSignature(meData.id, "tenant");
-      const snoozed = isAlertSnoozed(meData.id, "tenant");
+      const acknowledged = getAcknowledgedSignature(preferenceData);
+      const snoozed = isAlertSnoozed(preferenceData);
       if (isCriticalEscalation(previousLevelRef.current, data.alert_level) && !snoozed && acknowledged !== alertSignature) {
         const event: QueueAlertEvent = {
           id: `${Date.now()}-tenant`,
@@ -154,19 +148,39 @@ export default function QueuesPage() {
   }
 
   const alertSignature = buildAlertSignature(overview.alert_level, overview.tenant_id, overview.alerts);
-  const acknowledged = me ? getAcknowledgedSignature(me.id, "tenant") : null;
-  const snoozed = me ? isAlertSnoozed(me.id, "tenant") : false;
+  const acknowledged = getAcknowledgedSignature(alertPreference);
+  const snoozed = isAlertSnoozed(alertPreference);
   const showAlertBanner = overview.alert_level !== "normal" && !snoozed && acknowledged !== alertSignature;
 
-  function handleAcknowledge() {
-    if (!me) return;
-    acknowledgeAlertSignature(me.id, "tenant", alertSignature);
+  async function handleAcknowledge() {
+    if (!token) return;
+    setActionLoading(true);
+    try {
+      const updated = await updateQueueAlertPreference(API_BASE, token, "tenant", {
+        acknowledged_signature: alertSignature,
+      });
+      setAlertPreference(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update alert preference");
+    } finally {
+      setActionLoading(false);
+    }
     setToast(null);
   }
 
-  function handleSnooze(minutes: number) {
-    if (!me) return;
-    setAlertSnooze(me.id, "tenant", minutes);
+  async function handleSnooze(minutes: number) {
+    if (!token) return;
+    setActionLoading(true);
+    try {
+      const updated = await updateQueueAlertPreference(API_BASE, token, "tenant", {
+        snooze_minutes: minutes,
+      });
+      setAlertPreference(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update alert preference");
+    } finally {
+      setActionLoading(false);
+    }
     setToast(null);
   }
 
@@ -198,10 +212,10 @@ export default function QueuesPage() {
                   ))}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={handleAcknowledge}>Acknowledge</Button>
-                  <Button variant="outline" onClick={() => handleSnooze(15)}>Snooze 15m</Button>
-                  <Button variant="outline" onClick={() => handleSnooze(30)}>Snooze 30m</Button>
-                  <Button variant="outline" onClick={() => handleSnooze(60)}>Snooze 60m</Button>
+                  <Button variant="outline" onClick={() => void handleAcknowledge()} disabled={actionLoading}>Acknowledge</Button>
+                  <Button variant="outline" onClick={() => void handleSnooze(15)} disabled={actionLoading}>Snooze 15m</Button>
+                  <Button variant="outline" onClick={() => void handleSnooze(30)} disabled={actionLoading}>Snooze 30m</Button>
+                  <Button variant="outline" onClick={() => void handleSnooze(60)} disabled={actionLoading}>Snooze 60m</Button>
                 </div>
               </Card>
             ) : null}

@@ -4,6 +4,7 @@ from app.models.audit_log import AuditLog
 from app.models.document import Document
 from app.models.llm_provider_config import LLMProviderConfig
 from app.models.password_reset_token import PasswordResetToken
+from app.models.queue_alert_preference import QueueAlertPreference
 from app.models.refresh_token import RefreshToken
 from app.models.scan_job import ScanJob
 from app.models.tenant import Tenant
@@ -17,6 +18,7 @@ __all__ = [
     "APIToken",
     "RefreshToken",
     "PasswordResetToken",
+    "QueueAlertPreference",
     "LLMProviderConfig",
     "Document",
     "ScanJob",

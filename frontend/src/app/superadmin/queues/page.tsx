@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import {
-  acknowledgeAlertSignature,
   appendQueueAlertEvent,
   buildAlertSignature,
   getAcknowledgedSignature,
@@ -16,9 +15,9 @@ import {
   isCriticalEscalation,
   QueueAlertEvent,
   readQueueAlertHistory,
-  setAlertSnooze,
 } from "@/lib/queue-alerts";
 import { authenticatedJson } from "@/lib/auth";
+import { fetchQueueAlertPreference, QueueAlertPreference, updateQueueAlertPreference } from "@/lib/queue-alert-preferences";
 
 type UserMe = {
   id: string;
@@ -72,8 +71,10 @@ export default function SuperAdminQueuesPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
   const [history, setHistory] = useState<QueueAlertEvent[]>(() => readQueueAlertHistory().slice(0, 12));
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
+  const [alertPreference, setAlertPreference] = useState<QueueAlertPreference | null>(null);
   const [overview, setOverview] = useState<QueueOverview>({
     generated_at: "",
     window_hours: 24,
@@ -100,15 +101,17 @@ export default function SuperAdminQueuesPage() {
       params.set("window_hours", String(windowHours));
       if (tenantFilter.trim()) params.set("tenant_id", tenantFilter.trim());
 
-      const [meData, data] = await Promise.all([
+      const [meData, data, preferenceData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
         authenticatedJson<QueueOverview>(API_BASE, `/admin/queues/overview?${params.toString()}`, accessToken),
+        fetchQueueAlertPreference(API_BASE, accessToken, "superadmin"),
       ]);
       setMe(meData);
       setOverview(data);
+      setAlertPreference(preferenceData);
       const alertSignature = buildAlertSignature(data.alert_level, data.tenant_id, data.alerts);
-      const acknowledged = getAcknowledgedSignature(meData.id, "superadmin");
-      const snoozed = isAlertSnoozed(meData.id, "superadmin");
+      const acknowledged = getAcknowledgedSignature(preferenceData);
+      const snoozed = isAlertSnoozed(preferenceData);
       if (isCriticalEscalation(previousLevelRef.current, data.alert_level) && !snoozed && acknowledged !== alertSignature) {
         const event: QueueAlertEvent = {
           id: `${Date.now()}-superadmin`,
@@ -164,19 +167,39 @@ export default function SuperAdminQueuesPage() {
 
   const isSuperAdmin = me ? me.role === "superadmin" : true;
   const alertSignature = buildAlertSignature(overview.alert_level, overview.tenant_id, overview.alerts);
-  const acknowledged = me ? getAcknowledgedSignature(me.id, "superadmin") : null;
-  const snoozed = me ? isAlertSnoozed(me.id, "superadmin") : false;
+  const acknowledged = getAcknowledgedSignature(alertPreference);
+  const snoozed = isAlertSnoozed(alertPreference);
   const showAlertBanner = overview.alert_level !== "normal" && !snoozed && acknowledged !== alertSignature;
 
-  function handleAcknowledge() {
-    if (!me) return;
-    acknowledgeAlertSignature(me.id, "superadmin", alertSignature);
+  async function handleAcknowledge() {
+    if (!token) return;
+    setActionLoading(true);
+    try {
+      const updated = await updateQueueAlertPreference(API_BASE, token, "superadmin", {
+        acknowledged_signature: alertSignature,
+      });
+      setAlertPreference(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update alert preference");
+    } finally {
+      setActionLoading(false);
+    }
     setToast(null);
   }
 
-  function handleSnooze(minutes: number) {
-    if (!me) return;
-    setAlertSnooze(me.id, "superadmin", minutes);
+  async function handleSnooze(minutes: number) {
+    if (!token) return;
+    setActionLoading(true);
+    try {
+      const updated = await updateQueueAlertPreference(API_BASE, token, "superadmin", {
+        snooze_minutes: minutes,
+      });
+      setAlertPreference(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update alert preference");
+    } finally {
+      setActionLoading(false);
+    }
     setToast(null);
   }
 
@@ -275,10 +298,10 @@ export default function SuperAdminQueuesPage() {
                       ))}
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={handleAcknowledge}>Acknowledge</Button>
-                      <Button variant="outline" onClick={() => handleSnooze(15)}>Snooze 15m</Button>
-                      <Button variant="outline" onClick={() => handleSnooze(30)}>Snooze 30m</Button>
-                      <Button variant="outline" onClick={() => handleSnooze(60)}>Snooze 60m</Button>
+                      <Button variant="outline" onClick={() => void handleAcknowledge()} disabled={actionLoading}>Acknowledge</Button>
+                      <Button variant="outline" onClick={() => void handleSnooze(15)} disabled={actionLoading}>Snooze 15m</Button>
+                      <Button variant="outline" onClick={() => void handleSnooze(30)} disabled={actionLoading}>Snooze 30m</Button>
+                      <Button variant="outline" onClick={() => void handleSnooze(60)} disabled={actionLoading}>Snooze 60m</Button>
                     </div>
                   </Card>
                 ) : null}
