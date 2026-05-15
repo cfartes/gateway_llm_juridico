@@ -64,6 +64,7 @@ export default function AuditLogPage() {
   const [resourceType, setResourceType] = useState("");
   const [sourceIp, setSourceIp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState("");
 
@@ -116,6 +117,48 @@ export default function AuditLogPage() {
     void load(token, nextOffset);
   }
 
+  async function exportCsv() {
+    if (!token) return;
+    setExporting(true);
+    setError("");
+    try {
+      const params = new URLSearchParams();
+      if (q.trim()) params.set("q", q.trim());
+      if (action.trim()) params.set("action", action.trim());
+      if (resourceType.trim()) params.set("resource_type", resourceType.trim());
+      if (sourceIp.trim()) params.set("source_ip", sourceIp.trim());
+
+      const response = await fetch(`${API_BASE}/audit-logs/export.csv?${params.toString()}`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("content-disposition") || "";
+      const match = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+      const filename = match?.[1] ?? "audit-log-export.csv";
+
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export CSV");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!ready || !token) {
     return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
   }
@@ -134,13 +177,16 @@ export default function AuditLogPage() {
             </Card>
 
             <Card className="rounded-xl p-4">
-              <div className="grid gap-2 md:grid-cols-5">
+              <div className="grid gap-2 md:grid-cols-6">
                 <Input placeholder="Search (q)" value={q} onChange={(e) => setQ(e.target.value)} />
                 <Input placeholder="Action" value={action} onChange={(e) => setAction(e.target.value)} />
                 <Input placeholder="Resource type" value={resourceType} onChange={(e) => setResourceType(e.target.value)} />
                 <Input placeholder="Source IP" value={sourceIp} onChange={(e) => setSourceIp(e.target.value)} />
                 <Button onClick={() => token && load(token, 0)} disabled={loading}>
                   {loading ? "Loading..." : "Apply Filters"}
+                </Button>
+                <Button variant="outline" onClick={() => void exportCsv()} disabled={exporting}>
+                  {exporting ? "Exporting..." : "Export CSV"}
                 </Button>
               </div>
             </Card>
@@ -218,4 +264,3 @@ export default function AuditLogPage() {
     </div>
   );
 }
-
