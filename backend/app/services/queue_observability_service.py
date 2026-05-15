@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.types import ScanStatus
 from app.models.document import Document
 from app.models.scan_job import ScanJob
-from app.services.queue_policy_service import classify_file_tier, tier_to_queue
+from app.services.queue_policy_service import PLAN_POLICIES, classify_file_tier, resolve_tenant_plan, tier_to_queue
 
 
 @dataclass
@@ -118,6 +118,46 @@ def build_queue_overview(db: Session, *, tenant_id: str | None = None, window_ho
 
     total_pending = sum(item["pending_jobs"] for item in items)
     total_running = sum(item["running_jobs"] for item in items)
+    total_eta = sum(item["estimated_wait_seconds"] for item in items)
+
+    alerts: list[str] = []
+    alert_level = "normal"
+
+    if total_eta >= 900:
+        alerts.append("High queue latency detected: estimated wait above 15 minutes.")
+        alert_level = "critical"
+    elif total_eta >= 300:
+        alerts.append("Queue latency warning: estimated wait above 5 minutes.")
+        alert_level = "warning"
+
+    for item in items:
+        completed = int(item["completed_window"])
+        failed = int(item["failed_window"])
+        if failed >= 5 and failed > completed * 0.2:
+            alerts.append(f"Failure ratio elevated in {item['queue_name']}: {failed} failures in selected window.")
+            if alert_level != "critical":
+                alert_level = "warning"
+
+    if tenant_id:
+        plan = resolve_tenant_plan(db, tenant_id)
+        policy = PLAN_POLICIES.get(plan)
+        if policy:
+            inflight = total_pending + total_running
+            if total_pending >= policy.max_pending_jobs:
+                alerts.append(f"Queue backlog limit reached for plan {plan}.")
+                alert_level = "critical"
+            elif total_pending >= int(policy.max_pending_jobs * 0.8):
+                alerts.append(f"Queue backlog above 80% for plan {plan}.")
+                if alert_level != "critical":
+                    alert_level = "warning"
+
+            if inflight >= policy.max_inflight_jobs:
+                alerts.append(f"Concurrent inflight limit reached for plan {plan}.")
+                alert_level = "critical"
+            elif inflight >= int(policy.max_inflight_jobs * 0.8):
+                alerts.append(f"Concurrent inflight usage above 80% for plan {plan}.")
+                if alert_level != "critical":
+                    alert_level = "warning"
 
     return {
         "generated_at": datetime.now(timezone.utc),
@@ -125,5 +165,8 @@ def build_queue_overview(db: Session, *, tenant_id: str | None = None, window_ho
         "tenant_id": tenant_id,
         "total_pending": total_pending,
         "total_running": total_running,
+        "eta_total_seconds": round(float(total_eta), 2),
+        "alert_level": alert_level,
+        "alerts": alerts,
         "items": items,
     }

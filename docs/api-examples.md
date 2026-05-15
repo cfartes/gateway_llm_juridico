@@ -395,6 +395,11 @@ curl -X GET "http://localhost:8000/api/v1/admin/queues/overview?window_hours=24&
   -H "Authorization: Bearer <SUPERADMIN_JWT>"
 ```
 
+Response includes:
+
+- `alert_level`: `normal | warning | critical`
+- `alerts`: list of operational messages (ETA/backlog/failure-pressure)
+
 ## Tenant Webhook Deliveries
 
 List webhook deliveries for the current tenant:

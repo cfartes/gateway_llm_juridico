@@ -20,4 +20,7 @@ class QueueOverviewOut(BaseModel):
     tenant_id: str | None = None
     total_pending: int = Field(ge=0)
     total_running: int = Field(ge=0)
+    eta_total_seconds: float = Field(ge=0)
+    alert_level: str = "normal"
+    alerts: list[str] = Field(default_factory=list)
     items: list[QueueBucketOut]

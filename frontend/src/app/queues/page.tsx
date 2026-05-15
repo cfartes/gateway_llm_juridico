@@ -25,6 +25,9 @@ type QueueOverview = {
   tenant_id: string | null;
   total_pending: number;
   total_running: number;
+  eta_total_seconds: number;
+  alert_level: string;
+  alerts: string[];
   items: QueueBucket[];
 };
 
@@ -55,10 +58,13 @@ export default function QueuesPage() {
     tenant_id: null,
     total_pending: 0,
     total_running: 0,
+    eta_total_seconds: 0,
+    alert_level: "normal",
+    alerts: [],
     items: [],
   });
 
-  const totalEta = useMemo(() => overview.items.reduce((acc, item) => acc + item.estimated_wait_seconds, 0), [overview.items]);
+  const totalEta = useMemo(() => overview.eta_total_seconds || overview.items.reduce((acc, item) => acc + item.estimated_wait_seconds, 0), [overview.eta_total_seconds, overview.items]);
 
   const load = useCallback(async (accessToken: string) => {
     setLoading(true);
@@ -105,6 +111,25 @@ export default function QueuesPage() {
               <h1 className="text-2xl font-semibold text-[#213552]">Queue Overview</h1>
               <p className="mt-1 text-sm text-[#667896]">Monitor current queue pressure and estimated processing wait for your tenant.</p>
             </Card>
+
+            {overview.alert_level !== "normal" ? (
+              <Card
+                className={`rounded-xl p-4 ${
+                  overview.alert_level === "critical"
+                    ? "border-red-200 bg-red-50"
+                    : "border-amber-200 bg-amber-50"
+                }`}
+              >
+                <h2 className={`text-lg font-semibold ${overview.alert_level === "critical" ? "text-red-700" : "text-amber-700"}`}>
+                  {overview.alert_level === "critical" ? "Queue Alert: Critical" : "Queue Alert: Warning"}
+                </h2>
+                <div className="mt-2 space-y-1 text-sm text-[#5f7393]">
+                  {overview.alerts.map((item, index) => (
+                    <p key={`${index}-${item}`}>- {item}</p>
+                  ))}
+                </div>
+              </Card>
+            ) : null}
 
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex flex-wrap items-end gap-2">
