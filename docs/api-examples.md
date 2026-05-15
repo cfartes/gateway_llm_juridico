@@ -302,3 +302,19 @@ curl -X POST "http://localhost:8000/api/v1/quarantine/<SCAN_ID>/review" \
   }'
 ```
 
+## Failed Scan Retry (DLQ style)
+
+### List failed scans
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/scans/failed" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
+```
+
+### Retry a failed scan
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/scans/<SCAN_ID>/retry" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
+```
+

@@ -119,6 +119,7 @@ export default function Home() {
   const [scans, setScans] = useState<ScanResponse[]>([]);
   const [selectedScan, setSelectedScan] = useState<ScanResponse | null>(null);
   const [pendingQuarantineCount, setPendingQuarantineCount] = useState(0);
+  const [retryingScanId, setRetryingScanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -210,6 +211,25 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Upload/analysis failed");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function retryScan(scanId: string) {
+    if (!token) return;
+    setRetryingScanId(scanId);
+    setError("");
+    try {
+      const retried = await authenticatedJson<ScanResponse>(API_BASE, `/scans/${scanId}/retry`, token, {
+        method: "POST",
+      });
+      setScans((prev) => prev.map((item) => (item.scan.id === scanId ? retried : item)));
+      if (selectedScan?.scan.id === scanId) {
+        setSelectedScan(retried);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to retry scan");
+    } finally {
+      setRetryingScanId(null);
     }
   }
 
@@ -327,9 +347,21 @@ export default function Home() {
                             </td>
                             <td className="py-2 text-[#4f6386]">{formatDate(scan.scan.created_at)}</td>
                             <td className="py-2">
-                              <Button variant="ghost" onClick={() => setSelectedScan(scan)}>
-                                View Report
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" onClick={() => setSelectedScan(scan)}>
+                                  View Report
+                                </Button>
+                                {scan.scan.status === "failed" ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={retryingScanId === scan.scan.id}
+                                    onClick={() => void retryScan(scan.scan.id)}
+                                  >
+                                    {retryingScanId === scan.scan.id ? "Retrying..." : "Retry"}
+                                  </Button>
+                                ) : null}
+                              </div>
                             </td>
                           </tr>
                         ))}
