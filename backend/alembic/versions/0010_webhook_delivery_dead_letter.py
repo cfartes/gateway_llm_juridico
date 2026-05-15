@@ -1,6 +1,6 @@
 """add webhook delivery tables for dead-letter operations
 
-Revision ID: 0010_webhook_delivery_dead_letter
+Revision ID: 0010_webhook_deadletter
 Revises: 0009_expand_user_role_length
 Create Date: 2026-05-15
 """
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "0010_webhook_delivery_dead_letter"
+revision = "0010_webhook_deadletter"
 down_revision = "0009_expand_user_role_length"
 branch_labels = None
 depends_on = None
