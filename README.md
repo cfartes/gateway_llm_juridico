@@ -48,6 +48,7 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - limite de arquivos por batch
   - limite de concorrência e backlog de fila
   - endpoint de visibilidade: `GET /api/v1/tenants/current/queue-policy`
+  - recomendação automática de upgrade quando uso de fila >= 80%
 
 ## Segurança de webhook
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.types import TenantPlan
 
@@ -31,4 +31,9 @@ class TenantQueuePolicyOut(BaseModel):
     current_running_jobs: int
     current_pending_jobs: int
     current_inflight_jobs: int
+    inflight_usage_percent: float
+    pending_usage_percent: float
+    upgrade_recommended: bool
+    recommended_plan: TenantPlan | None = None
+    upgrade_reasons: list[str] = Field(default_factory=list)
 

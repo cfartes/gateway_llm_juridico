@@ -69,6 +69,13 @@ QUEUE_BY_TIER = {
     "heavy": "scan_heavy",
 }
 
+PLAN_UPGRADE_ORDER = [
+    TenantPlan.STARTER,
+    TenantPlan.GROWTH,
+    TenantPlan.BUSINESS,
+    TenantPlan.ENTERPRISE,
+]
+
 
 def resolve_tenant_plan(db: Session, tenant_id: str) -> TenantPlan:
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -115,6 +122,25 @@ def get_tenant_queue_policy_snapshot(db: Session, tenant_id: str, plan: TenantPl
     policy = PLAN_POLICIES.get(resolved_plan, PLAN_POLICIES[TenantPlan.STARTER])
     pending_count, running_count = get_tenant_scan_counters(db, tenant_id)
     inflight = pending_count + running_count
+    inflight_usage_percent = round((inflight / policy.max_inflight_jobs) * 100.0, 2) if policy.max_inflight_jobs else 0.0
+    pending_usage_percent = round((pending_count / policy.max_pending_jobs) * 100.0, 2) if policy.max_pending_jobs else 0.0
+
+    reasons: list[str] = []
+    if inflight_usage_percent >= 80.0:
+        reasons.append(
+            f"In-flight usage at {inflight_usage_percent}% ({inflight}/{policy.max_inflight_jobs})."
+        )
+    if pending_usage_percent >= 80.0:
+        reasons.append(
+            f"Pending queue usage at {pending_usage_percent}% ({pending_count}/{policy.max_pending_jobs})."
+        )
+
+    recommended_plan: str | None = None
+    current_index = PLAN_UPGRADE_ORDER.index(resolved_plan) if resolved_plan in PLAN_UPGRADE_ORDER else 0
+    if reasons and current_index < len(PLAN_UPGRADE_ORDER) - 1:
+        recommended_plan = str(PLAN_UPGRADE_ORDER[current_index + 1])
+
+    upgrade_recommended = bool(reasons and recommended_plan)
 
     return {
         "plan": str(resolved_plan),
@@ -128,6 +154,11 @@ def get_tenant_queue_policy_snapshot(db: Session, tenant_id: str, plan: TenantPl
         "current_running_jobs": running_count,
         "current_pending_jobs": pending_count,
         "current_inflight_jobs": inflight,
+        "inflight_usage_percent": inflight_usage_percent,
+        "pending_usage_percent": pending_usage_percent,
+        "upgrade_recommended": upgrade_recommended,
+        "recommended_plan": recommended_plan,
+        "upgrade_reasons": reasons,
     }
 
 

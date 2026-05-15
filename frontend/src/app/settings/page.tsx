@@ -41,6 +41,11 @@ type QueuePolicyResponse = {
   current_running_jobs: number;
   current_pending_jobs: number;
   current_inflight_jobs: number;
+  inflight_usage_percent: number;
+  pending_usage_percent: number;
+  upgrade_recommended: boolean;
+  recommended_plan: "starter" | "growth" | "business" | "enterprise" | null;
+  upgrade_reasons: string[];
 };
 
 type UserMe = {
@@ -213,8 +218,20 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-[#6f80a0]">
-                  Pending queue: {queuePolicy.current_pending_jobs}/{queuePolicy.max_pending_jobs} | Burst/min: {queuePolicy.burst_per_minute}
+                  Pending queue: {queuePolicy.current_pending_jobs}/{queuePolicy.max_pending_jobs} ({queuePolicy.pending_usage_percent}%) | In-flight usage: {queuePolicy.inflight_usage_percent}% | Burst/min: {queuePolicy.burst_per_minute}
                 </p>
+                {queuePolicy.upgrade_recommended ? (
+                  <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    <p className="font-semibold">
+                      Upgrade suggested: {queuePolicy.recommended_plan?.toUpperCase()}
+                    </p>
+                    <ul className="mt-1 list-disc pl-5">
+                      {queuePolicy.upgrade_reasons.map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </Card>
             ) : null}
 
