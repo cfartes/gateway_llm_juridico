@@ -60,3 +60,19 @@ class OpsAlertEvaluationOut(BaseModel):
     updated_items: int
     breaches_sent: int
     recoveries_sent: int
+
+
+class SLOHistoryPointOut(BaseModel):
+    indicator_name: str
+    status: str
+    actual: float
+    target: float
+    unit: str
+    recorded_at: datetime
+
+
+class SLOHistoryResponseOut(BaseModel):
+    scope_key: str
+    window_hours: int
+    limit_per_indicator: int
+    items: list[SLOHistoryPointOut] = Field(default_factory=list)

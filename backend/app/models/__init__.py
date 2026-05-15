@@ -4,6 +4,7 @@ from app.models.audit_log import AuditLog
 from app.models.document import Document
 from app.models.llm_provider_config import LLMProviderConfig
 from app.models.ops_alert_state import OpsAlertState
+from app.models.ops_slo_snapshot import OpsSLOSnapshot
 from app.models.password_reset_token import PasswordResetToken
 from app.models.queue_alert_preference import QueueAlertPreference
 from app.models.refresh_token import RefreshToken
@@ -26,6 +27,7 @@ __all__ = [
     "QueueAlertPreference",
     "LLMProviderConfig",
     "OpsAlertState",
+    "OpsSLOSnapshot",
     "Document",
     "ScanJob",
     "AuditLog",

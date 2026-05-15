@@ -62,6 +62,22 @@ type OpsOverview = {
   }[];
 };
 
+type SLOHistoryPoint = {
+  indicator_name: string;
+  status: "pass" | "warn" | "fail";
+  actual: number;
+  target: number;
+  unit: string;
+  recorded_at: string;
+};
+
+type SLOHistoryResponse = {
+  scope_key: string;
+  window_hours: number;
+  limit_per_indicator: number;
+  items: SLOHistoryPoint[];
+};
+
 type UserMe = {
   role: string;
 };
@@ -89,6 +105,7 @@ export default function SuperAdminOpsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [overview, setOverview] = useState<OpsOverview | null>(null);
+  const [sloHistory, setSloHistory] = useState<SLOHistoryResponse | null>(null);
 
   const load = useCallback(async (accessToken: string) => {
     setLoading(true);
@@ -98,12 +115,14 @@ export default function SuperAdminOpsPage() {
       params.set("window_hours", String(windowHours));
       if (tenantFilter.trim()) params.set("tenant_id", tenantFilter.trim());
 
-      const [meData, data] = await Promise.all([
+      const [meData, data, historyData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
         authenticatedJson<OpsOverview>(API_BASE, `/admin/ops/overview?${params.toString()}`, accessToken),
+        authenticatedJson<SLOHistoryResponse>(API_BASE, `/admin/ops/slo-history?${params.toString()}`, accessToken),
       ]);
       setMe(meData);
       setOverview(data);
+      setSloHistory(historyData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load operations overview");
     } finally {
@@ -142,6 +161,14 @@ export default function SuperAdminOpsPage() {
   const passCount = useMemo(() => (overview ? overview.slo.filter((item) => item.status === "pass").length : 0), [overview]);
   const totalCount = overview?.slo.length ?? 0;
   const isSuperAdmin = me ? me.role === "superadmin" : true;
+  const historyByIndicator = useMemo(() => {
+    const grouped: Record<string, SLOHistoryPoint[]> = {};
+    for (const item of sloHistory?.items ?? []) {
+      if (!grouped[item.indicator_name]) grouped[item.indicator_name] = [];
+      grouped[item.indicator_name].push(item);
+    }
+    return grouped;
+  }, [sloHistory]);
 
   if (!ready || !token) {
     return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
@@ -156,7 +183,7 @@ export default function SuperAdminOpsPage() {
             <Card className="rounded-xl p-4">
               <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin Operations</h1>
               <p className="mt-1 text-sm text-[#667896]">
-                SLO, fila, throughput e saúde operacional para acompanhamento em tempo real.
+                SLO, fila, throughput e saude operacional para acompanhamento em tempo real.
               </p>
             </Card>
 
@@ -282,6 +309,49 @@ export default function SuperAdminOpsPage() {
                         ) : null}
                       </tbody>
                     </table>
+                  </div>
+                </Card>
+
+                <Card className="rounded-xl p-4">
+                  <h2 className="text-lg font-semibold text-[#213552]">SLO History Timeline</h2>
+                  <p className="mt-1 text-xs text-[#667896]">
+                    Recent snapshots per indicator for the selected scope and window.
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    {Object.entries(historyByIndicator).map(([indicator, points]) => (
+                      <div key={indicator} className="rounded-lg border border-[#e8edf5] bg-white p-3">
+                        <h3 className="text-sm font-semibold text-[#2c3f5f]">{indicator}</h3>
+                        <div className="mt-2 overflow-x-auto">
+                          <table className="w-full min-w-[680px] text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-[#eef3fb] text-[#6f80a0]">
+                                <th className="py-2">Recorded At</th>
+                                <th className="py-2">Status</th>
+                                <th className="py-2">Actual</th>
+                                <th className="py-2">Target</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {points.map((point, index) => (
+                                <tr key={`${indicator}-${point.recorded_at}-${index}`} className="border-b border-[#f2f5fa]">
+                                  <td className="py-2 text-[#4f6386]">{fmtDate(point.recorded_at)}</td>
+                                  <td className="py-2">
+                                    <Badge className={sloTone(point.status)}>{point.status.toUpperCase()}</Badge>
+                                  </td>
+                                  <td className="py-2 text-[#334766]">{point.actual} {point.unit}</td>
+                                  <td className="py-2 text-[#334766]">{point.target} {point.unit}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                    {!Object.keys(historyByIndicator).length ? (
+                      <div className="rounded-lg border border-dashed border-[#d9e4f5] bg-[#fbfdff] px-3 py-6 text-center text-sm text-[#7586a3]">
+                        No SLO history available yet. Run an alert evaluation to capture snapshots.
+                      </div>
+                    ) : null}
                   </div>
                 </Card>
               </>
