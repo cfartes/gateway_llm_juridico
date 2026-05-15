@@ -1,6 +1,7 @@
 from app.routers import (
     analyze,
     api,
+    audit_logs,
     auth,
     integrations,
     llm_admin,
@@ -20,6 +21,7 @@ from app.routers import (
 __all__ = [
     "analyze",
     "api",
+    "audit_logs",
     "auth",
     "integrations",
     "llm_admin",

@@ -21,7 +21,7 @@ const ITEMS = [
   { label: "Policies" },
   { label: "Allow / Block Lists" },
   { label: "Integrations", href: "/integrations" },
-  { label: "Audit Log" },
+  { label: "Audit Log", href: "/audit-log" },
   { label: "Settings", href: "/settings" },
 ];
 
