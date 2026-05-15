@@ -1,4 +1,4 @@
-# Nexus Gateway LLM Shield
+﻿# Nexus Gateway LLM Shield
 
 Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e ameaças semânticas em documentos para LLMs.
 
@@ -34,6 +34,7 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 - Dead-letter de webhooks com replay manual e automático
 - Métricas de entrega de webhook para SuperAdmin
 - Painel tenant para acompanhar entregas de webhook
+- Persistência server-side de `acknowledge/snooze` dos alertas de fila
 
 ## Segurança de webhook
 
@@ -68,6 +69,22 @@ Com `SUPERADMIN_AUTO_BOOTSTRAP=true`, o usuário global é criado no startup.
 
 - `SUPERADMIN_EMAIL=superadmin@nexusshield.ai`
 - `SUPERADMIN_PASSWORD=StrongPass#2026`
+
+## Validação E2E do Gateway (matriz de formatos)
+
+Script para validar o fluxo fim a fim `analyze -> report -> rag-md` com múltiplos tipos de arquivo e modos de retorno:
+
+```bash
+python tests/e2e_gateway_matrix.py --base-url http://localhost:8000/api/v1 --email superadmin@nexusshield.ai --password StrongPass#2026
+```
+
+Cobertura do script:
+
+- Tipos de arquivo: `pdf`, `docx`, `pptx`, `xlsx`, `csv`, `txt`, `html`, `md`, `png`, `webp`, `tiff`
+- Fontes: `file`, `text`, `base64`
+- Modos: `risk_only`, `full_report`, `rag_markdown`
+- Async: `POST /analyze/jobs` + polling em `GET /analyze/jobs/{job_id}`
+- Artefatos: valida `/files/{file_id}/report` e `/files/{file_id}/rag-md`
 
 ## Teste de carga (gateway)
 

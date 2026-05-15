@@ -268,7 +268,24 @@ def generate_rag_markdown(document: Document, result: AnalysisResult) -> tuple[s
 
     rag_path = Path(document.storage_path).with_suffix(Path(document.storage_path).suffix + ".rag.md")
     rag_path.write_text(markdown, encoding="utf-8")
+    chunks_path = Path(f"{rag_path}.chunks.json")
+    chunks_path.write_text(json.dumps(chunks, ensure_ascii=False), encoding="utf-8")
     return str(rag_path), chunks
+
+
+def load_rag_chunks(rag_markdown_path: str | None) -> list[dict[str, Any]]:
+    if not rag_markdown_path:
+        return []
+    chunks_path = Path(f"{rag_markdown_path}.chunks.json")
+    if not chunks_path.exists():
+        return []
+    try:
+        parsed = json.loads(chunks_path.read_text(encoding="utf-8"))
+        if isinstance(parsed, list):
+            return [item for item in parsed if isinstance(item, dict)]
+        return []
+    except Exception:
+        return []
 
 
 def format_analyze_payload(

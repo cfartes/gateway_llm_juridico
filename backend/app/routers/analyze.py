@@ -27,6 +27,7 @@ from app.services.analyze_gateway_service import (
     create_scan_job,
     format_analyze_payload,
     generate_rag_markdown,
+    load_rag_chunks,
     load_source_content,
     parse_analyze_json_payload,
     parse_integration_meta,
@@ -131,6 +132,7 @@ def _build_payload_for_scan(scan: ScanJob, return_mode: AnalyzeReturnMode) -> An
         if path.exists():
             rag_markdown = path.read_text(encoding="utf-8")
             rag_markdown_url = f"/api/v1/files/{scan.document_id}/rag-md"
+            chunks = load_rag_chunks(scan.rag_markdown_path)
 
     safe_for_rag_override: bool | None = None
     if scan.policy_action == "allow":
