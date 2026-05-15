@@ -268,6 +268,27 @@ Default credentials (override in environment variables):
 - email: `superadmin@nexusshield.ai`
 - password: `StrongPass#2026`
 
+### SuperAdmin tenant management
+
+List tenants:
+
+```bash
+curl -X GET http://localhost:8000/api/v1/admin/tenants \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
+Update tenant status/plan:
+
+```bash
+curl -X PATCH http://localhost:8000/api/v1/admin/tenants/<TENANT_ID> \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "is_active": true,
+    "plan": "enterprise"
+  }'
+```
+
 ### Reject document
 
 ```bash
