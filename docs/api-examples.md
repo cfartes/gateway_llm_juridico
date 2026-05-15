@@ -318,3 +318,33 @@ curl -X POST "http://localhost:8000/api/v1/scans/<SCAN_ID>/retry" \
   -H "Authorization: Bearer <JWT ou API_TOKEN>"
 ```
 
+## SuperAdmin Webhook Dead-Letter
+
+List webhook deliveries (default dead-letter):
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/admin/webhooks/deliveries?status=dead_letter&limit=100" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
+Get one delivery with attempt history:
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/admin/webhooks/deliveries/<DELIVERY_ID>" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
+Retry dead-letter delivery now:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/admin/webhooks/deliveries/<DELIVERY_ID>/retry" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
+Discard delivery:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/admin/webhooks/deliveries/<DELIVERY_ID>/discard" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+

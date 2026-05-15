@@ -13,6 +13,7 @@ const ITEMS = [
   { label: "Quarantine", href: "/quarantine" },
   { label: "SuperAdmin Tenants", href: "/superadmin/tenants" },
   { label: "SuperAdmin LLM", href: "/superadmin/llm-config" },
+  { label: "SuperAdmin Webhooks", href: "/superadmin/webhooks" },
   { label: "Policies" },
   { label: "Allow / Block Lists" },
   { label: "Integrations" },

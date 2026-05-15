@@ -30,4 +30,5 @@ class ScanJob(UUIDTimestampMixin, Base):
 
     tenant = relationship("Tenant", back_populates="scan_jobs")
     document = relationship("Document", back_populates="scans")
+    webhook_deliveries = relationship("WebhookDelivery", back_populates="scan_job")
 

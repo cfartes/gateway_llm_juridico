@@ -14,6 +14,7 @@ from app.services.analyze_gateway_service import (
     parse_integration_meta,
     trigger_result_webhook,
 )
+from app.services.webhook_delivery_service import persist_webhook_delivery_result
 from app.tasks.celery_app import celery_app
 from app.utils.crypto import encrypt_text
 
@@ -133,6 +134,16 @@ def analyze_gateway_task(scan_job_id: str, file_path: str) -> dict:
                 timeout_seconds=settings.webhook_callback_timeout_seconds,
                 max_retries=settings.webhook_callback_max_retries,
                 base_backoff_seconds=settings.webhook_callback_backoff_seconds,
+            )
+            persist_webhook_delivery_result(
+                db,
+                scan_job=scan_job,
+                callback_url=str(callback_url),
+                payload=webhook_payload,
+                callback_secret=metadata.get("callback_secret"),
+                callback_auth_bearer=metadata.get("callback_auth_bearer"),
+                max_attempts=settings.webhook_callback_max_retries,
+                delivery_result=delivery,
             )
             if not delivery.get("ok"):
                 scan_job.error_message = (

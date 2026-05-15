@@ -8,6 +8,7 @@ from app.models.refresh_token import RefreshToken
 from app.models.scan_job import ScanJob
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.models.webhook_delivery import WebhookDelivery, WebhookDeliveryAttempt
 
 __all__ = [
     "Base",
@@ -20,5 +21,7 @@ __all__ = [
     "Document",
     "ScanJob",
     "AuditLog",
+    "WebhookDelivery",
+    "WebhookDeliveryAttempt",
 ]
 

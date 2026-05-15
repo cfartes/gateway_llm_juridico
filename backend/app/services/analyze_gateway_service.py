@@ -353,21 +353,64 @@ def trigger_result_webhook(
 
     attempts = max(1, int(max_retries))
     last_error = None
+    attempt_logs: list[dict[str, Any]] = []
 
     with httpx.Client(timeout=timeout_seconds) as client:
         for attempt in range(1, attempts + 1):
+            started = time.monotonic()
             try:
                 response = client.post(callback_url, content=raw_body.encode("utf-8"), headers=headers)
+                duration_ms = int((time.monotonic() - started) * 1000)
+                response_preview = (response.text or "")[:500]
+                attempt_logs.append(
+                    {
+                        "attempt": attempt,
+                        "status_code": response.status_code,
+                        "error": None,
+                        "duration_ms": duration_ms,
+                        "response_preview": response_preview,
+                    }
+                )
                 if response.status_code < 400:
-                    return {"ok": True, "status_code": response.status_code, "attempt": attempt}
+                    return {
+                        "ok": True,
+                        "status_code": response.status_code,
+                        "attempt": attempt,
+                        "attempt_logs": attempt_logs,
+                        "response_preview": response_preview,
+                    }
                 if response.status_code not in {408, 409, 425, 429} and response.status_code < 500:
-                    return {"ok": False, "status_code": response.status_code, "attempt": attempt}
+                    return {
+                        "ok": False,
+                        "status_code": response.status_code,
+                        "attempt": attempt,
+                        "attempt_logs": attempt_logs,
+                        "response_preview": response_preview,
+                        "error": f"HTTP {response.status_code}",
+                    }
                 last_error = f"HTTP {response.status_code}"
             except Exception as exc:
                 last_error = str(exc)
+                duration_ms = int((time.monotonic() - started) * 1000)
+                attempt_logs.append(
+                    {
+                        "attempt": attempt,
+                        "status_code": None,
+                        "error": last_error,
+                        "duration_ms": duration_ms,
+                        "response_preview": None,
+                    }
+                )
 
             if attempt < attempts:
                 delay = base_backoff_seconds * (2 ** (attempt - 1))
                 time.sleep(delay)
 
-    return {"ok": False, "status_code": None, "attempt": attempts, "error": last_error}
+    return {
+        "ok": False,
+        "status_code": None,
+        "attempt": attempts,
+        "error": last_error,
+        "attempt_logs": attempt_logs,
+        "response_preview": None,
+    }
