@@ -49,6 +49,11 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - limite de concorrência e backlog de fila
   - endpoint de visibilidade: `GET /api/v1/tenants/current/queue-policy`
   - recomendação automática de upgrade quando uso de fila >= 80%
+- Workflow de upgrade de plano:
+  - tenant cria solicitação: `POST /api/v1/tenants/current/upgrade-requests`
+  - tenant acompanha solicitações: `GET /api/v1/tenants/current/upgrade-requests`
+  - superadmin revisa pendentes: `GET /api/v1/admin/tenants/upgrade-requests/list?status=pending`
+  - superadmin aprova/rejeita: `PATCH /api/v1/admin/tenants/upgrade-requests/{request_id}`
 
 ## Segurança de webhook
 

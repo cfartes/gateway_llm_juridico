@@ -48,6 +48,23 @@ type QueuePolicyResponse = {
   upgrade_reasons: string[];
 };
 
+type UpgradeRequestStatus = "pending" | "approved" | "rejected";
+
+type TenantUpgradeRequest = {
+  id: string;
+  tenant_id: string;
+  requested_by_user_id: string | null;
+  current_plan: "starter" | "growth" | "business" | "enterprise";
+  requested_plan: "starter" | "growth" | "business" | "enterprise";
+  status: UpgradeRequestStatus;
+  reason: string | null;
+  admin_note: string | null;
+  processed_by_user_id: string | null;
+  processed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type UserMe = {
   role: string;
 };
@@ -83,6 +100,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [queuePolicy, setQueuePolicy] = useState<QueuePolicyResponse | null>(null);
+  const [upgradeRequests, setUpgradeRequests] = useState<TenantUpgradeRequest[]>([]);
+  const [upgradeReason, setUpgradeReason] = useState("");
+  const [requestingUpgrade, setRequestingUpgrade] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -97,13 +117,15 @@ export default function SettingsPage() {
     setLoading(true);
     setError("");
     try {
-      const [meData, data, policyData] = await Promise.all([
+      const [meData, data, policyData, upgradeData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
         authenticatedJson<SettingsResponse>(API_BASE, "/settings/current", accessToken),
         authenticatedJson<QueuePolicyResponse>(API_BASE, "/tenants/current/queue-policy", accessToken),
+        authenticatedJson<TenantUpgradeRequest[]>(API_BASE, "/tenants/current/upgrade-requests", accessToken),
       ]);
       setMe(meData);
       setQueuePolicy(policyData);
+      setUpgradeRequests(upgradeData);
       setForm({
         quarantine_threshold: String(data.security.quarantine_threshold),
         block_threshold: String(data.security.block_threshold),
@@ -162,6 +184,30 @@ export default function SettingsPage() {
       setError(err instanceof Error ? err.message : "Failed to update settings");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function createUpgradeRequest() {
+    if (!token || !canEdit || !queuePolicy?.recommended_plan) return;
+    setRequestingUpgrade(true);
+    setError("");
+    setSuccess("");
+    try {
+      await authenticatedJson<TenantUpgradeRequest>(API_BASE, "/tenants/current/upgrade-requests", token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requested_plan: queuePolicy.recommended_plan,
+          reason: upgradeReason.trim() || null,
+        }),
+      });
+      setUpgradeReason("");
+      setSuccess(`Upgrade request sent for plan ${queuePolicy.recommended_plan.toUpperCase()}.`);
+      await load(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to request plan upgrade");
+    } finally {
+      setRequestingUpgrade(false);
     }
   }
 
@@ -230,10 +276,69 @@ export default function SettingsPage() {
                         <li key={reason}>{reason}</li>
                       ))}
                     </ul>
+                    <textarea
+                      className="mt-3 h-20 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-sm text-[#5a4200]"
+                      placeholder="Optional business justification for this upgrade request"
+                      value={upgradeReason}
+                      onChange={(e) => setUpgradeReason(e.target.value)}
+                      disabled={!canEdit}
+                    />
+                    <div className="mt-2">
+                      <Button type="button" onClick={() => void createUpgradeRequest()} disabled={!canEdit || requestingUpgrade}>
+                        {requestingUpgrade ? "Sending request..." : "Request Plan Upgrade"}
+                      </Button>
+                    </div>
                   </div>
                 ) : null}
               </Card>
             ) : null}
+
+            <Card className="rounded-xl p-4">
+              <h2 className="text-lg font-semibold text-[#213552]">Upgrade Requests</h2>
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                      <th className="py-2">Created</th>
+                      <th className="py-2">From</th>
+                      <th className="py-2">To</th>
+                      <th className="py-2">Status</th>
+                      <th className="py-2">Reason</th>
+                      <th className="py-2">Admin Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upgradeRequests.map((item) => (
+                      <tr key={item.id} className="border-b border-[#eff3f8]">
+                        <td className="py-2 text-[#4f6386]">{new Date(item.created_at).toLocaleString()}</td>
+                        <td className="py-2 text-[#334766]">{item.current_plan.toUpperCase()}</td>
+                        <td className="py-2 text-[#334766]">{item.requested_plan.toUpperCase()}</td>
+                        <td className="py-2">
+                          <span className={`rounded px-2 py-1 text-xs ${
+                            item.status === "approved"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : item.status === "rejected"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-amber-100 text-amber-700"
+                          }`}>
+                            {item.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="py-2 text-[#4f6386]">{item.reason || "-"}</td>
+                        <td className="py-2 text-[#4f6386]">{item.admin_note || "-"}</td>
+                      </tr>
+                    ))}
+                    {!upgradeRequests.length ? (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-[#7586a3]">
+                          No upgrade requests yet.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
 
             <form onSubmit={onSubmit} className="space-y-4">
               <Card className="rounded-xl p-4">

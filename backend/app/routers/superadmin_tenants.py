@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,8 @@ from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.superadmin_tenant import SuperAdminTenantOut, SuperAdminTenantUpdateRequest
 from app.services.audit_service import write_audit_log
+from app.schemas.tenant_upgrade import TenantUpgradeRequestDecision, TenantUpgradeRequestOut
+from app.services.tenant_upgrade_service import decide_upgrade_request, list_upgrade_requests_for_superadmin
 
 
 router = APIRouter(prefix="/admin/tenants", tags=["superadmin-tenants"])
@@ -147,3 +149,49 @@ def update_tenant(
 
     users_count, docs_count, scans_count, tokens_count = _build_tenant_counts(db, [tenant.id])
     return _to_out(tenant, users_count, docs_count, scans_count, tokens_count)
+
+
+@router.get("/upgrade-requests/list", response_model=list[TenantUpgradeRequestOut])
+def list_upgrade_requests(
+    status: str = Query(default="all"),
+    limit: int = Query(default=200, ge=1, le=500),
+    auth=Depends(require_roles(UserRole.SUPERADMIN)),
+    db: Session = Depends(get_db),
+):
+    _ = auth
+    return list_upgrade_requests_for_superadmin(db, status=status, limit=limit)
+
+
+@router.patch("/upgrade-requests/{request_id}", response_model=TenantUpgradeRequestOut)
+def process_upgrade_request(
+    request_id: str,
+    payload: TenantUpgradeRequestDecision,
+    request: Request,
+    auth=Depends(require_roles(UserRole.SUPERADMIN)),
+    db: Session = Depends(get_db),
+):
+    item = decide_upgrade_request(
+        db,
+        request_id=request_id,
+        actor_user_id=auth.user_id,
+        decision=payload.decision,
+        admin_note=payload.admin_note,
+        apply_plan_change=payload.apply_plan_change,
+    )
+    write_audit_log(
+        db,
+        tenant_id=auth.tenant_id,
+        action="superadmin.tenant.upgrade_request.process",
+        resource_type="tenant_upgrade_request",
+        resource_id=item.id,
+        actor_user_id=auth.user_id,
+        actor_api_token_id=auth.api_token_id,
+        source_ip=get_request_ip(request),
+        details={
+            "target_tenant_id": item.tenant_id,
+            "decision": item.status,
+            "requested_plan": str(item.requested_plan),
+            "admin_note": item.admin_note,
+        },
+    )
+    return item

@@ -29,6 +29,20 @@ type SuperAdminTenant = {
   active_api_tokens: number;
 };
 
+type UpgradeRequest = {
+  id: string;
+  tenant_id: string;
+  requested_by_user_id: string | null;
+  current_plan: TenantPlan;
+  requested_plan: TenantPlan;
+  status: "pending" | "approved" | "rejected";
+  reason: string | null;
+  admin_note: string | null;
+  processed_by_user_id: string | null;
+  processed_at: string | null;
+  created_at: string;
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
 function formatDate(input?: string | null): string {
@@ -58,6 +72,9 @@ export default function SuperAdminTenantsPage() {
   const [selectedId, setSelectedId] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<TenantPlan>("starter");
   const [selectedActive, setSelectedActive] = useState(true);
+  const [upgradeRequests, setUpgradeRequests] = useState<UpgradeRequest[]>([]);
+  const [decisionNote, setDecisionNote] = useState("");
+  const [processingRequestId, setProcessingRequestId] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -72,12 +89,14 @@ export default function SuperAdminTenantsPage() {
     setLoading(true);
     setError("");
     try {
-      const [meData, tenantData] = await Promise.all([
+      const [meData, tenantData, upgradeData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
         authenticatedJson<SuperAdminTenant[]>(API_BASE, "/admin/tenants", accessToken),
+        authenticatedJson<UpgradeRequest[]>(API_BASE, "/admin/tenants/upgrade-requests/list?status=pending", accessToken),
       ]);
       setMe(meData);
       setTenants(tenantData);
+      setUpgradeRequests(upgradeData);
       const nextSelectedId = selectedId && tenantData.some((tenant) => tenant.id === selectedId)
         ? selectedId
         : (tenantData[0]?.id || "");
@@ -130,6 +149,31 @@ export default function SuperAdminTenantsPage() {
     }
   }
 
+  async function processUpgradeRequest(requestId: string, decision: "approved" | "rejected") {
+    if (!token) return;
+    setProcessingRequestId(requestId);
+    setError("");
+    setSuccess("");
+    try {
+      await authenticatedJson<UpgradeRequest>(API_BASE, `/admin/tenants/upgrade-requests/${requestId}`, token, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decision,
+          admin_note: decisionNote.trim() || null,
+          apply_plan_change: true,
+        }),
+      });
+      setDecisionNote("");
+      setSuccess(`Upgrade request ${decision}.`);
+      await bootstrap(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to process upgrade request");
+    } finally {
+      setProcessingRequestId("");
+    }
+  }
+
   if (!ready || !token) {
     return (
       <div className="min-h-screen grid place-items-center bg-[#f7f9fc] text-[#4c5f82]">
@@ -166,7 +210,8 @@ export default function SuperAdminTenantsPage() {
                 <p className="mt-1 text-sm text-red-700">This page is available only for global superadmin users.</p>
               </Card>
             ) : (
-              <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+              <>
+                <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
                 <Card className="rounded-xl p-4">
                   <h2 className="mb-3 text-xl font-semibold text-[#213552]">Tenants</h2>
                   <div className="overflow-x-auto">
@@ -266,7 +311,70 @@ export default function SuperAdminTenantsPage() {
                     </div>
                   )}
                 </Card>
-              </div>
+                </div>
+
+                <Card className="rounded-xl p-4">
+                <h2 className="mb-3 text-xl font-semibold text-[#213552]">Pending Upgrade Requests</h2>
+                <div className="mb-3">
+                  <textarea
+                    className="h-20 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                    placeholder="Optional admin note for approve/reject actions"
+                    value={decisionNote}
+                    onChange={(e) => setDecisionNote(e.target.value)}
+                  />
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[860px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                        <th className="py-2">Tenant ID</th>
+                        <th className="py-2">From</th>
+                        <th className="py-2">To</th>
+                        <th className="py-2">Reason</th>
+                        <th className="py-2">Created</th>
+                        <th className="py-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {upgradeRequests.map((item) => (
+                        <tr key={item.id} className="border-b border-[#eff3f8]">
+                          <td className="py-2 text-[#334766]">{item.tenant_id}</td>
+                          <td className="py-2 text-[#334766]">{item.current_plan.toUpperCase()}</td>
+                          <td className="py-2 text-[#334766]">{item.requested_plan.toUpperCase()}</td>
+                          <td className="py-2 text-[#4f6386]">{item.reason || "-"}</td>
+                          <td className="py-2 text-[#4f6386]">{formatDate(item.created_at)}</td>
+                          <td className="py-2">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                                onClick={() => void processUpgradeRequest(item.id, "approved")}
+                                disabled={processingRequestId === item.id}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => void processUpgradeRequest(item.id, "rejected")}
+                                disabled={processingRequestId === item.id}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {!upgradeRequests.length ? (
+                        <tr>
+                          <td colSpan={6} className="py-6 text-center text-[#7586a3]">
+                            No pending upgrade requests.
+                          </td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
+                </Card>
+              </>
             )}
           </div>
         </main>

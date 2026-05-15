@@ -12,6 +12,7 @@ from app.models.scan_job import ScanJob
 from app.models.tenant import Tenant
 from app.models.tenant_app_settings import TenantAppSettings
 from app.models.tenant_integration_config import TenantIntegrationConfig
+from app.models.tenant_upgrade_request import TenantUpgradeRequest
 from app.models.user import User
 from app.models.webhook_delivery import WebhookDelivery, WebhookDeliveryAttempt
 
@@ -20,6 +21,7 @@ __all__ = [
     "Tenant",
     "TenantAppSettings",
     "TenantIntegrationConfig",
+    "TenantUpgradeRequest",
     "User",
     "APIToken",
     "RefreshToken",
