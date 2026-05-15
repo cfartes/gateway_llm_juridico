@@ -379,6 +379,22 @@ curl -X POST "http://localhost:8000/api/v1/admin/webhooks/deliveries/<DELIVERY_I
   -H "Authorization: Bearer <SUPERADMIN_JWT>"
 ```
 
+## SuperAdmin Queue Dashboard API
+
+Get queue overview (all tenants):
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/admin/queues/overview?window_hours=24" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
+Get queue overview filtered by tenant:
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/admin/queues/overview?window_hours=24&tenant_id=<TENANT_ID>" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
 ## Tenant Webhook Deliveries
 
 List webhook deliveries for the current tenant:

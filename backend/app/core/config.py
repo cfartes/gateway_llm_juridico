@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     ops_alert_webhook_url: str | None = None
     ops_alert_timeout_seconds: float = 8.0
     ops_alert_cooldown_seconds: int = 900
+    queue_eta_worker_slots_light: int = 1
+    queue_eta_worker_slots_standard: int = 1
+    queue_eta_worker_slots_heavy: int = 1
     policy_llm_skip_high_hits_threshold: int = 2
     policy_quarantine_score_threshold: float = 55.0
     policy_block_score_threshold: float = 80.0
