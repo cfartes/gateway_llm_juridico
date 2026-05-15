@@ -6,7 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { appendQueueAlertEvent, isCriticalEscalation, QueueAlertEvent, readQueueAlertHistory } from "@/lib/queue-alerts";
+import {
+  acknowledgeAlertSignature,
+  appendQueueAlertEvent,
+  buildAlertSignature,
+  getAcknowledgedSignature,
+  isAlertSnoozed,
+  isCriticalEscalation,
+  QueueAlertEvent,
+  readQueueAlertHistory,
+  setAlertSnooze,
+} from "@/lib/queue-alerts";
 import { authenticatedJson } from "@/lib/auth";
 
 type QueueBucket = {
@@ -32,6 +42,12 @@ type QueueOverview = {
   items: QueueBucket[];
 };
 
+type UserMe = {
+  id: string;
+  role: string;
+  email: string;
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
 function formatDate(input?: string | null): string {
@@ -49,6 +65,7 @@ function queueTone(name: string): string {
 
 export default function QueuesPage() {
   const { token, ready } = useAuthGuard();
+  const [me, setMe] = useState<UserMe | null>(null);
   const [windowHours, setWindowHours] = useState(24);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -74,13 +91,20 @@ export default function QueuesPage() {
     setLoading(true);
     setError("");
     try {
-      const data = await authenticatedJson<QueueOverview>(
-        API_BASE,
-        `/queues/overview?window_hours=${windowHours}`,
-        accessToken,
-      );
+      const [meData, data] = await Promise.all([
+        authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
+        authenticatedJson<QueueOverview>(
+          API_BASE,
+          `/queues/overview?window_hours=${windowHours}`,
+          accessToken,
+        ),
+      ]);
+      setMe(meData);
       setOverview(data);
-      if (isCriticalEscalation(previousLevelRef.current, data.alert_level)) {
+      const alertSignature = buildAlertSignature(data.alert_level, data.tenant_id, data.alerts);
+      const acknowledged = getAcknowledgedSignature(meData.id, "tenant");
+      const snoozed = isAlertSnoozed(meData.id, "tenant");
+      if (isCriticalEscalation(previousLevelRef.current, data.alert_level) && !snoozed && acknowledged !== alertSignature) {
         const event: QueueAlertEvent = {
           id: `${Date.now()}-tenant`,
           timestamp: new Date().toISOString(),
@@ -129,6 +153,23 @@ export default function QueuesPage() {
     return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
   }
 
+  const alertSignature = buildAlertSignature(overview.alert_level, overview.tenant_id, overview.alerts);
+  const acknowledged = me ? getAcknowledgedSignature(me.id, "tenant") : null;
+  const snoozed = me ? isAlertSnoozed(me.id, "tenant") : false;
+  const showAlertBanner = overview.alert_level !== "normal" && !snoozed && acknowledged !== alertSignature;
+
+  function handleAcknowledge() {
+    if (!me) return;
+    acknowledgeAlertSignature(me.id, "tenant", alertSignature);
+    setToast(null);
+  }
+
+  function handleSnooze(minutes: number) {
+    if (!me) return;
+    setAlertSnooze(me.id, "tenant", minutes);
+    setToast(null);
+  }
+
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
       <div className="flex min-h-screen">
@@ -140,7 +181,7 @@ export default function QueuesPage() {
               <p className="mt-1 text-sm text-[#667896]">Monitor current queue pressure and estimated processing wait for your tenant.</p>
             </Card>
 
-            {overview.alert_level !== "normal" ? (
+            {showAlertBanner ? (
               <Card
                 className={`rounded-xl p-4 ${
                   overview.alert_level === "critical"
@@ -155,6 +196,12 @@ export default function QueuesPage() {
                   {overview.alerts.map((item, index) => (
                     <p key={`${index}-${item}`}>- {item}</p>
                   ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={handleAcknowledge}>Acknowledge</Button>
+                  <Button variant="outline" onClick={() => handleSnooze(15)}>Snooze 15m</Button>
+                  <Button variant="outline" onClick={() => handleSnooze(30)}>Snooze 30m</Button>
+                  <Button variant="outline" onClick={() => handleSnooze(60)}>Snooze 60m</Button>
                 </div>
               </Card>
             ) : null}
