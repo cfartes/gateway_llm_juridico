@@ -10,7 +10,7 @@ def test_root():
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()
-    assert data["name"] == "Nexus LLM Shield"
+    assert data["name"] == "Nexus Gateway LLM Shield"
 
 
 def test_health():

@@ -1,35 +1,48 @@
 # Nexus Gateway LLM Shield
 
-Plataforma SaaS multi-tenant para detecÃ§Ã£o de Prompt Injection, Jailbreaks e ameaÃ§as semÃ¢nticas em documentos para LLMs.
+Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e ameaças semânticas em documentos para LLMs.
 
 ## Stack
 
 - Backend: FastAPI, SQLAlchemy, Alembic, Celery, Redis, PostgreSQL, LangChain/LangGraph
-- AI: OpenAI + Ollama (hÃ­brido)
+- AI: OpenAI + Ollama (híbrido)
 - Parsing/OCR: PyMuPDF, pdfplumber, python-docx, openpyxl, python-pptx, BeautifulSoup, PaddleOCR
-- Frontend: Next.js, React, Tailwind, componentes estilo shadcn/ui, TypeScript
+- Frontend: Next.js, React, Tailwind, shadcn/ui, TypeScript
 - Infra: Docker, Kubernetes-ready, Terraform-ready, GitHub Actions CI
 
 ## Funcionalidades implementadas
 
 - Multi-tenant por `tenant_id` em toda a camada de dados
-- Auth JWT + RBAC (`admin`, `analyst`, `viewer`)
-- CriaÃ§Ã£o e revogaÃ§Ã£o de API Bearer Token para integraÃ§Ã£o B2B
-- Upload de mÃºltiplos arquivos, validaÃ§Ã£o de mime/extensÃ£o/tamanho
-- Endpoint para anÃ¡lise por URL
-- Bloqueio de extensÃµes executÃ¡veis e inspeÃ§Ã£o de ZIP
-- DetecÃ§Ã£o de macro em Office OpenXML (heurÃ­stica)
-- Pipeline modular:
-  - SanitizaÃ§Ã£o
-  - ExtraÃ§Ã£o textual
+- Auth JWT + RBAC (`superadmin`, `admin`, `analyst`, `viewer`)
+- Criação e revogação de API Bearer Tokens para integração B2B
+- Upload múltiplo de arquivos + análise por URL/texto/base64
+- Pipeline de segurança documental:
+  - Sanitização
+  - Extração textual
   - OCR
-  - HeurÃ­sticas de seguranÃ§a
-  - ClassificaÃ§Ã£o hÃ­brida LLM
+  - Heurísticas de segurança
+  - Classificação híbrida com LLM
   - Threat scoring
-  - RelatÃ³rio JSON
-- ExportaÃ§Ã£o de texto sanitizado (`/scans/{scan_id}/sanitized.txt`)
-- Audit log por tenant
-- Rate limit por tenant (Redis)
+  - Relatório JSON
+- AI Document Security Gateway:
+  - `POST /api/v1/analyze`
+  - `POST /api/v1/analyze/jobs`
+  - `GET /api/v1/analyze/jobs/{job_id}`
+  - `GET /api/v1/files/{file_id}/report`
+  - `GET /api/v1/files/{file_id}/rag-md`
+- Quarentena com revisão manual (approve/reject)
+- Dead-letter de webhooks com replay manual e automático
+- Métricas de entrega de webhook para SuperAdmin
+- Painel tenant para acompanhar entregas de webhook
+
+## Segurança de webhook
+
+- Assinatura HMAC opcional (`X-Nexus-Webhook-Signature`)
+- Header de idempotência (`X-Nexus-Event-Id`)
+- Bloqueio de callback para redes privadas/loopback (SSRF hardening)
+- Allowlist opcional de domínios de callback
+- Retry com backoff exponencial
+- Dead-letter com tentativa automática via Celery Beat
 
 ## Subir localmente
 
@@ -37,46 +50,37 @@ Plataforma SaaS multi-tenant para detecÃ§Ã£o de Prompt Injection, Jailbreaks
 docker compose up --build
 ```
 
-Backend em `http://localhost:8000` e frontend em `http://localhost:3000`.
+Serviços:
 
-## Fluxo mÃ­nimo de uso
+- Backend: `http://localhost:8000`
+- Frontend: `http://localhost:3000`
 
-1. Criar tenant+admin via `POST /api/v1/auth/register`
-2. Logar via `POST /api/v1/auth/login` com `email` + `password` e pegar JWT
-3. No app web, colar o JWT em "Conectar"
-4. Gerar API token no painel "API Bearer Token"
-5. Consumir endpoint de anÃ¡lise com `Authorization: Bearer <token>`
+## Fluxo mínimo
 
-## Endpoints principais
-
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/refresh`
-- `POST /api/v1/auth/logout`
-- `POST /api/v1/auth/password-reset/request`
-- `POST /api/v1/auth/password-reset/confirm`
-- `GET /api/v1/auth/me`
-- `POST /api/v1/tokens`
-- `GET /api/v1/tokens`
-- `POST /api/v1/tokens/{token_id}/revoke`
-- `POST /api/v1/uploads/scan-sync`
-- `POST /api/v1/uploads/scan-async`
-- `POST /api/v1/uploads/scan-url`
-- `GET /api/v1/scans`
-- `GET /api/v1/scans/{scan_id}`
-- `GET /api/v1/scans/{scan_id}/sanitized.txt`
+1. Registrar tenant/admin: `POST /api/v1/auth/register`
+2. Login: `POST /api/v1/auth/login`
+3. Gerar API token em `API Tokens`
+4. Consumir gateway com `Authorization: Bearer <token>`
 
 ## SuperAdmin global (bootstrap)
 
-- Login padrÃƒÂ£o (alterar por variÃƒÂ¡veis de ambiente):
-  - `SUPERADMIN_EMAIL=superadmin@nexusshield.ai`
-  - `SUPERADMIN_PASSWORD=StrongPass#2026`
-- Essa conta ÃƒÂ© criada automaticamente no startup quando `SUPERADMIN_AUTO_BOOTSTRAP=true`.
+Com `SUPERADMIN_AUTO_BOOTSTRAP=true`, o usuário global é criado no startup.
 
-## ObservaÃ§Ãµes de produÃ§Ã£o
+- `SUPERADMIN_EMAIL=superadmin@nexusshield.ai`
+- `SUPERADMIN_PASSWORD=StrongPass#2026`
+
+## Teste de carga (gateway)
+
+Script utilitário:
+
+```bash
+python tests/load_gateway.py --base-url http://localhost:8000/api/v1 --email superadmin@nexusshield.ai --password StrongPass#2026 --concurrency 10 --requests 100
+```
+
+## Produção
 
 - Trocar `SECRET_KEY` e `ENCRYPTION_KEY`
 - Habilitar TLS no Ingress/API Gateway
-- Armazenar arquivos em object storage (S3/GCS/Azure Blob)
-- Usar KMS/HSM para chaves de criptografia
-- Ativar observabilidade (metrics/traces/logs)
+- Mover storage para S3/GCS/Azure Blob
+- Usar KMS/HSM para chaves
+- Ativar observabilidade (logs, métricas, traces)
