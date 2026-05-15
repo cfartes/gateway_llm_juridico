@@ -16,6 +16,7 @@ const ITEMS = [
   { label: "SuperAdmin LLM", href: "/superadmin/llm-config" },
   { label: "SuperAdmin Webhooks", href: "/superadmin/webhooks" },
   { label: "SuperAdmin Queues", href: "/superadmin/queues" },
+  { label: "SuperAdmin Ops", href: "/superadmin/ops" },
   { label: "Webhook Deliveries", href: "/webhooks" },
   { label: "Policies" },
   { label: "Allow / Block Lists" },

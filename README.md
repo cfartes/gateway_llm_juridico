@@ -30,6 +30,9 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - `GET /api/v1/analyze/jobs/{job_id}`
   - `GET /api/v1/files/{file_id}/report`
   - `GET /api/v1/files/{file_id}/rag-md`
+- Observabilidade/SLO SuperAdmin:
+  - `GET /api/v1/admin/ops/overview`
+  - Dashboard: `/superadmin/ops`
 - Quarentena com revisão manual (approve/reject)
 - Dead-letter de webhooks com replay manual e automático
 - Métricas de entrega de webhook para SuperAdmin
