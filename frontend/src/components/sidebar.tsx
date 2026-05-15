@@ -20,9 +20,9 @@ const ITEMS = [
   { label: "Webhook Deliveries", href: "/webhooks" },
   { label: "Policies" },
   { label: "Allow / Block Lists" },
-  { label: "Integrations" },
+  { label: "Integrations", href: "/integrations" },
   { label: "Audit Log" },
-  { label: "Settings" },
+  { label: "Settings", href: "/settings" },
 ];
 
 export function Sidebar() {

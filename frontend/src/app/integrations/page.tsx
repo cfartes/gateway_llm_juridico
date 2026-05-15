@@ -1,0 +1,386 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+
+import { Sidebar } from "@/components/sidebar";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { authenticatedJson } from "@/lib/auth";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+
+type IntegrationConfig = {
+  webhook: {
+    enabled: boolean;
+    url: string | null;
+    secret_configured: boolean;
+    auth_bearer_configured: boolean;
+  };
+  siem: {
+    enabled: boolean;
+    provider: string | null;
+    endpoint: string | null;
+    auth_token_configured: boolean;
+  };
+  slack: {
+    enabled: boolean;
+    webhook_url: string | null;
+    channel: string | null;
+    bot_token_configured: boolean;
+  };
+};
+
+type UserMe = {
+  role: string;
+};
+
+type FormState = {
+  webhook_enabled: boolean;
+  webhook_url: string;
+  webhook_secret: string;
+  webhook_clear_secret: boolean;
+  webhook_auth_bearer: string;
+  webhook_clear_auth_bearer: boolean;
+  siem_enabled: boolean;
+  siem_provider: string;
+  siem_endpoint: string;
+  siem_auth_token: string;
+  siem_clear_auth_token: boolean;
+  slack_enabled: boolean;
+  slack_webhook_url: string;
+  slack_channel: string;
+  slack_bot_token: string;
+  slack_clear_bot_token: boolean;
+};
+
+const INITIAL_FORM: FormState = {
+  webhook_enabled: false,
+  webhook_url: "",
+  webhook_secret: "",
+  webhook_clear_secret: false,
+  webhook_auth_bearer: "",
+  webhook_clear_auth_bearer: false,
+  siem_enabled: false,
+  siem_provider: "",
+  siem_endpoint: "",
+  siem_auth_token: "",
+  siem_clear_auth_token: false,
+  slack_enabled: false,
+  slack_webhook_url: "",
+  slack_channel: "",
+  slack_bot_token: "",
+  slack_clear_bot_token: false,
+};
+
+export default function IntegrationsPage() {
+  const { token, ready } = useAuthGuard();
+  const [me, setMe] = useState<UserMe | null>(null);
+  const [config, setConfig] = useState<IntegrationConfig | null>(null);
+  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const canEdit = me ? (me.role === "admin" || me.role === "superadmin") : false;
+
+  useEffect(() => {
+    if (!token) return;
+    void load(token);
+  }, [token]);
+
+  async function load(accessToken: string) {
+    setLoading(true);
+    setError("");
+    try {
+      const [meData, configData] = await Promise.all([
+        authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
+        authenticatedJson<IntegrationConfig>(API_BASE, "/integrations/current", accessToken),
+      ]);
+      setMe(meData);
+      setConfig(configData);
+      setForm({
+        ...INITIAL_FORM,
+        webhook_enabled: configData.webhook.enabled,
+        webhook_url: configData.webhook.url ?? "",
+        siem_enabled: configData.siem.enabled,
+        siem_provider: configData.siem.provider ?? "",
+        siem_endpoint: configData.siem.endpoint ?? "",
+        slack_enabled: configData.slack.enabled,
+        slack_webhook_url: configData.slack.webhook_url ?? "",
+        slack_channel: configData.slack.channel ?? "",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load integrations");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!token || !canEdit) return;
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const payload = {
+        webhook: {
+          enabled: form.webhook_enabled,
+          url: form.webhook_url.trim() || null,
+          secret: form.webhook_secret.trim() || null,
+          clear_secret: form.webhook_clear_secret,
+          auth_bearer: form.webhook_auth_bearer.trim() || null,
+          clear_auth_bearer: form.webhook_clear_auth_bearer,
+        },
+        siem: {
+          enabled: form.siem_enabled,
+          provider: form.siem_provider.trim() || null,
+          endpoint: form.siem_endpoint.trim() || null,
+          auth_token: form.siem_auth_token.trim() || null,
+          clear_auth_token: form.siem_clear_auth_token,
+        },
+        slack: {
+          enabled: form.slack_enabled,
+          webhook_url: form.slack_webhook_url.trim() || null,
+          channel: form.slack_channel.trim() || null,
+          bot_token: form.slack_bot_token.trim() || null,
+          clear_bot_token: form.slack_clear_bot_token,
+        },
+      };
+      const updated = await authenticatedJson<IntegrationConfig>(API_BASE, "/integrations/current", token, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      setConfig(updated);
+      setForm((prev) => ({
+        ...prev,
+        webhook_secret: "",
+        webhook_auth_bearer: "",
+        siem_auth_token: "",
+        slack_bot_token: "",
+        webhook_clear_secret: false,
+        webhook_clear_auth_bearer: false,
+        siem_clear_auth_token: false,
+        slack_clear_bot_token: false,
+      }));
+      setSuccess("Integrations updated successfully.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update integrations");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  if (!ready || !token) {
+    return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <main className="flex-1 p-4 lg:p-5">
+          <div className="mx-auto w-full max-w-[1380px] space-y-4">
+            <Card className="rounded-xl p-4">
+              <h1 className="text-2xl font-semibold text-[#213552]">Integrations</h1>
+              <p className="mt-1 text-sm text-[#667896]">
+                Configure webhook, SIEM e Slack para integração operacional e de segurança.
+              </p>
+            </Card>
+
+            <form onSubmit={onSubmit} className="space-y-4">
+              <Card className="rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-[#213552]">Webhook</h2>
+                  <label className="text-sm text-[#4f6386]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.webhook_enabled}
+                      onChange={(e) => update("webhook_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Enabled
+                  </label>
+                </div>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <Input
+                    placeholder="Webhook URL"
+                    value={form.webhook_url}
+                    onChange={(e) => update("webhook_url", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <Input
+                    placeholder="Webhook Secret (new value)"
+                    value={form.webhook_secret}
+                    onChange={(e) => update("webhook_secret", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <Input
+                    placeholder="Webhook Bearer Token (new value)"
+                    value={form.webhook_auth_bearer}
+                    onChange={(e) => update("webhook_auth_bearer", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <div className="flex gap-4 text-sm text-[#5f7393]">
+                    <label>
+                      <input
+                        type="checkbox"
+                        className="mr-2"
+                        checked={form.webhook_clear_secret}
+                        onChange={(e) => update("webhook_clear_secret", e.target.checked)}
+                        disabled={!canEdit}
+                      />
+                      Clear Secret
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        className="mr-2"
+                        checked={form.webhook_clear_auth_bearer}
+                        onChange={(e) => update("webhook_clear_auth_bearer", e.target.checked)}
+                        disabled={!canEdit}
+                      />
+                      Clear Bearer
+                    </label>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-[#6b7b95]">
+                  Secret configured: {config?.webhook.secret_configured ? "yes" : "no"} | Bearer configured: {config?.webhook.auth_bearer_configured ? "yes" : "no"}
+                </p>
+              </Card>
+
+              <Card className="rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-[#213552]">SIEM</h2>
+                  <label className="text-sm text-[#4f6386]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.siem_enabled}
+                      onChange={(e) => update("siem_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Enabled
+                  </label>
+                </div>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <Input
+                    placeholder="Provider (Splunk, Sentinel, Elastic...)"
+                    value={form.siem_provider}
+                    onChange={(e) => update("siem_provider", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <Input
+                    placeholder="SIEM Endpoint URL"
+                    value={form.siem_endpoint}
+                    onChange={(e) => update("siem_endpoint", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <Input
+                    placeholder="SIEM Auth Token (new value)"
+                    value={form.siem_auth_token}
+                    onChange={(e) => update("siem_auth_token", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <label className="text-sm text-[#5f7393]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.siem_clear_auth_token}
+                      onChange={(e) => update("siem_clear_auth_token", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Clear SIEM token
+                  </label>
+                </div>
+                <p className="mt-2 text-xs text-[#6b7b95]">
+                  Auth token configured: {config?.siem.auth_token_configured ? "yes" : "no"}
+                </p>
+              </Card>
+
+              <Card className="rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-[#213552]">Slack / ChatOps</h2>
+                  <label className="text-sm text-[#4f6386]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.slack_enabled}
+                      onChange={(e) => update("slack_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Enabled
+                  </label>
+                </div>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <Input
+                    placeholder="Slack Webhook URL"
+                    value={form.slack_webhook_url}
+                    onChange={(e) => update("slack_webhook_url", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <Input
+                    placeholder="Slack Channel (#soc-alerts)"
+                    value={form.slack_channel}
+                    onChange={(e) => update("slack_channel", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <Input
+                    placeholder="Slack Bot Token (new value)"
+                    value={form.slack_bot_token}
+                    onChange={(e) => update("slack_bot_token", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <label className="text-sm text-[#5f7393]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.slack_clear_bot_token}
+                      onChange={(e) => update("slack_clear_bot_token", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Clear bot token
+                  </label>
+                </div>
+                <p className="mt-2 text-xs text-[#6b7b95]">
+                  Bot token configured: {config?.slack.bot_token_configured ? "yes" : "no"}
+                </p>
+              </Card>
+
+              <Card className="rounded-xl p-4">
+                <div className="flex items-center gap-2">
+                  <Button type="submit" disabled={saving || !canEdit}>
+                    {saving ? "Saving..." : "Save Integrations"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => token && load(token)} disabled={loading}>
+                    {loading ? "Refreshing..." : "Refresh"}
+                  </Button>
+                </div>
+              </Card>
+            </form>
+          </div>
+        </main>
+      </div>
+      {error ? (
+        <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          Error: {error}
+        </div>
+      ) : null}
+      {success ? (
+        <div className="fixed bottom-4 left-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {success}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
