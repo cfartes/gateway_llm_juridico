@@ -73,6 +73,18 @@ def list_slo_history(
     return picked
 
 
+def cleanup_old_slo_snapshots(db: Session, *, retention_days: int) -> int:
+    days = max(1, retention_days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    deleted = (
+        db.query(OpsSLOSnapshot)
+        .filter(OpsSLOSnapshot.recorded_at < cutoff)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return int(deleted or 0)
+
+
 def evaluate_slo_alerts(
     db: Session,
     *,

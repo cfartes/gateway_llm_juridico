@@ -33,12 +33,14 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 - Observabilidade/SLO SuperAdmin:
   - `GET /api/v1/admin/ops/overview`
   - `POST /api/v1/admin/ops/alerts/evaluate`
+  - `GET /api/v1/admin/ops/slo-history`
   - Dashboard: `/superadmin/ops`
 - Quarentena com revisão manual (approve/reject)
 - Dead-letter de webhooks com replay manual e automático
 - Métricas de entrega de webhook para SuperAdmin
 - Painel tenant para acompanhar entregas de webhook
 - Persistência server-side de `acknowledge/snooze` dos alertas de fila
+- Retenção automática de snapshots SLO (cleanup via Celery Beat)
 
 ## Segurança de webhook
 
@@ -48,6 +50,7 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 - Allowlist opcional de domínios de callback
 - Retry com backoff exponencial
 - Dead-letter com tentativa automática via Celery Beat
+- Limpeza automática de snapshots SLO antigos via Celery Beat
 
 ## Subir localmente
 

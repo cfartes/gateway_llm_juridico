@@ -39,6 +39,11 @@ celery_app.conf.update(
             "schedule": max(30, int(settings.ops_slo_alert_interval_seconds)),
             "options": {"queue": "celery", "routing_key": "celery"},
         },
+        "cleanup-ops-slo-snapshots": {
+            "task": "cleanup_ops_slo_snapshots_task",
+            "schedule": max(300, int(settings.ops_slo_snapshot_cleanup_interval_seconds)),
+            "options": {"queue": "celery", "routing_key": "celery"},
+        },
     },
 )
 

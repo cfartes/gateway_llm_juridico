@@ -17,7 +17,7 @@ from app.services.analyze_gateway_service import (
 )
 from app.services.webhook_delivery_service import persist_webhook_delivery_result
 from app.services.webhook_delivery_service import discard_exhausted_dead_letters, list_dead_letter_retry_candidates, retry_delivery_now
-from app.services.ops_alerting_service import evaluate_slo_alerts
+from app.services.ops_alerting_service import cleanup_old_slo_snapshots, evaluate_slo_alerts
 from app.tasks.celery_app import celery_app
 from app.utils.crypto import encrypt_text
 
@@ -231,6 +231,23 @@ def evaluate_ops_slo_alerts_task() -> dict:
             tenant_id=None,
             window_hours=int(settings.ops_slo_alert_window_hours),
         )
+    finally:
+        db.close()
+
+
+@celery_app.task(name="cleanup_ops_slo_snapshots_task")
+def cleanup_ops_slo_snapshots_task() -> dict:
+    db = SessionLocal()
+    try:
+        deleted = cleanup_old_slo_snapshots(
+            db,
+            retention_days=int(settings.ops_slo_snapshot_retention_days),
+        )
+        return {
+            "status": "ok",
+            "retention_days": int(settings.ops_slo_snapshot_retention_days),
+            "deleted": deleted,
+        }
     finally:
         db.close()
 

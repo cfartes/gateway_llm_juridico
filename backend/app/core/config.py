@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     ops_alert_cooldown_seconds: int = 900
     ops_slo_alert_interval_seconds: int = 120
     ops_slo_alert_window_hours: int = 24
+    ops_slo_snapshot_retention_days: int = 30
+    ops_slo_snapshot_cleanup_interval_seconds: int = 3600
     queue_eta_worker_slots_light: int = 1
     queue_eta_worker_slots_standard: int = 1
     queue_eta_worker_slots_heavy: int = 1
