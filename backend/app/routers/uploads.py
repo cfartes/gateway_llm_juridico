@@ -32,7 +32,7 @@ from app.utils.crypto import encrypt_text
 
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
-STORAGE_ROOT = Path("backend/storage")
+STORAGE_ROOT = Path("storage")
 ensure_dir(STORAGE_ROOT)
 
 

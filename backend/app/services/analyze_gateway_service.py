@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import json
+import mimetypes
 import time
 from pathlib import Path
 from typing import Any
@@ -23,7 +24,7 @@ from app.utils.common import ensure_dir, sha256_bytes
 from app.utils.crypto import decrypt_text, encrypt_text
 
 
-STORAGE_ROOT = Path("backend/storage")
+STORAGE_ROOT = Path("storage")
 ensure_dir(STORAGE_ROOT)
 
 
@@ -65,7 +66,8 @@ def load_source_content(req: AnalyzeRequest, upload_file: UploadFile | None) -> 
         except Exception as exc:
             raise HTTPException(status_code=400, detail="Invalid base64_content") from exc
         filename = req.filename or "input.bin"
-        return decoded, filename, "application/octet-stream"
+        inferred_mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        return decoded, filename, inferred_mime
 
     raise HTTPException(status_code=400, detail="Unsupported source_type")
 

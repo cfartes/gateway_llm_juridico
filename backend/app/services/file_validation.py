@@ -19,6 +19,7 @@ ALLOWED_MIME_PREFIXES = {
     "application/zip",
     "application/x-zip-compressed",
 }
+OCTET_STREAM_MIMES = {"application/octet-stream", "binary/octet-stream"}
 
 
 def _is_allowed_mime(content_type: str | None) -> bool:
@@ -36,6 +37,9 @@ def validate_file_metadata(filename: str, content_type: str | None, size_bytes: 
     if size_bytes > settings.max_upload_size_mb * 1024 * 1024:
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large")
     if not _is_allowed_mime(content_type):
+        normalized = (content_type or "").strip().lower()
+        if normalized in OCTET_STREAM_MIMES and ext in ALLOWED_EXTENSIONS:
+            return
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported MIME type: {content_type}")
 
 
