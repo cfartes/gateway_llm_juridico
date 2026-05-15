@@ -95,6 +95,41 @@ function sloTone(status: string): string {
   return "bg-red-100 text-red-700";
 }
 
+function sloStroke(status: string): string {
+  if (status === "pass") return "#059669";
+  if (status === "warn") return "#d97706";
+  return "#dc2626";
+}
+
+function toSparkline(points: SLOHistoryPoint[], width = 280, height = 64): string {
+  if (!points.length) return "";
+  const values = points.map((point) => point.actual);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  if (points.length === 1) {
+    const y = Math.round(height / 2);
+    return `0,${y} ${width},${y}`;
+  }
+  return points
+    .map((point, index) => {
+      const x = Math.round((index / (points.length - 1)) * width);
+      const y = Math.round(height - ((point.actual - min) / range) * height);
+      return `${x},${y}`;
+    })
+    .join(" ");
+}
+
+function targetLineY(points: SLOHistoryPoint[], height = 64): number {
+  if (!points.length) return Math.round(height / 2);
+  const values = points.map((point) => point.actual);
+  const target = points[0]?.target ?? 0;
+  const min = Math.min(...values, target);
+  const max = Math.max(...values, target);
+  const range = max - min || 1;
+  return Math.round(height - ((target - min) / range) * height);
+}
+
 export default function SuperAdminOpsPage() {
   const { token, ready } = useAuthGuard();
   const [me, setMe] = useState<UserMe | null>(null);
@@ -166,6 +201,11 @@ export default function SuperAdminOpsPage() {
     for (const item of sloHistory?.items ?? []) {
       if (!grouped[item.indicator_name]) grouped[item.indicator_name] = [];
       grouped[item.indicator_name].push(item);
+    }
+    for (const indicator of Object.keys(grouped)) {
+      grouped[indicator] = [...grouped[indicator]].sort(
+        (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime(),
+      );
     }
     return grouped;
   }, [sloHistory]);
@@ -320,7 +360,47 @@ export default function SuperAdminOpsPage() {
                   <div className="mt-3 space-y-3">
                     {Object.entries(historyByIndicator).map(([indicator, points]) => (
                       <div key={indicator} className="rounded-lg border border-[#e8edf5] bg-white p-3">
-                        <h3 className="text-sm font-semibold text-[#2c3f5f]">{indicator}</h3>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-sm font-semibold text-[#2c3f5f]">{indicator}</h3>
+                          {points.length ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-[#6f80a0]">
+                                Latest: {points[points.length - 1].actual} {points[points.length - 1].unit}
+                              </span>
+                              <Badge className={sloTone(points[points.length - 1].status)}>
+                                {points[points.length - 1].status.toUpperCase()}
+                              </Badge>
+                            </div>
+                          ) : null}
+                        </div>
+                        {points.length ? (
+                          <div className="mt-3 rounded-lg border border-[#eef3fb] bg-[#fbfdff] p-3">
+                            <svg viewBox="0 0 280 64" className="h-16 w-full">
+                              <line
+                                x1={0}
+                                y1={targetLineY(points)}
+                                x2={280}
+                                y2={targetLineY(points)}
+                                stroke="#93a7c7"
+                                strokeDasharray="4 4"
+                                strokeWidth="1"
+                              />
+                              <polyline
+                                fill="none"
+                                stroke={sloStroke(points[points.length - 1].status)}
+                                strokeWidth="2.5"
+                                points={toSparkline(points)}
+                              />
+                            </svg>
+                            <div className="mt-1 flex items-center justify-between text-[11px] text-[#6f80a0]">
+                              <span>{fmtDate(points[0].recorded_at)}</span>
+                              <span>
+                                Target: {points[points.length - 1].target} {points[points.length - 1].unit}
+                              </span>
+                              <span>{fmtDate(points[points.length - 1].recorded_at)}</span>
+                            </div>
+                          </div>
+                        ) : null}
                         <div className="mt-2 overflow-x-auto">
                           <table className="w-full min-w-[680px] text-left text-sm">
                             <thead>
