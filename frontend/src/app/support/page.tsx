@@ -25,6 +25,17 @@ type SupportTicket = {
   updated_at: string;
 };
 
+type SupportTicketMessage = {
+  id: string;
+  ticket_id: string;
+  tenant_id: string;
+  author_user_id: string | null;
+  author_role: string;
+  message: string;
+  is_internal: boolean;
+  created_at: string;
+};
+
 type UserMe = { role: string };
 
 export default function SupportPage() {
@@ -37,6 +48,10 @@ export default function SupportPage() {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState("");
+  const [thread, setThread] = useState<SupportTicketMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -91,6 +106,39 @@ export default function SupportPage() {
       setError(err instanceof Error ? err.message : "Failed to open support ticket");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function loadThread(ticketId: string) {
+    if (!token) return;
+    setSelectedTicketId(ticketId);
+    setError("");
+    try {
+      const items = await authenticatedJson<SupportTicketMessage[]>(API_BASE, `/support/tickets/${ticketId}/messages`, token);
+      setThread(items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load ticket thread");
+    }
+  }
+
+  async function sendThreadMessage() {
+    if (!token || !selectedTicketId || !newMessage.trim()) return;
+    setSendingMessage(true);
+    setError("");
+    setSuccess("");
+    try {
+      await authenticatedJson<SupportTicketMessage>(API_BASE, `/support/tickets/${selectedTicketId}/messages`, token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: newMessage.trim(), is_internal: false }),
+      });
+      setNewMessage("");
+      setSuccess("Message sent.");
+      await loadThread(selectedTicketId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send message");
+    } finally {
+      setSendingMessage(false);
     }
   }
 
@@ -156,6 +204,7 @@ export default function SupportPage() {
                       <th className="py-2">Priority</th>
                       <th className="py-2">Status</th>
                       <th className="py-2">Admin Note</th>
+                      <th className="py-2">Thread</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -167,17 +216,59 @@ export default function SupportPage() {
                         <td className="py-2 text-[#334766]">{item.priority.toUpperCase()}</td>
                         <td className="py-2 text-[#334766]">{item.status.toUpperCase()}</td>
                         <td className="py-2 text-[#4f6386]">{item.admin_note || "-"}</td>
+                        <td className="py-2">
+                          <Button variant="outline" onClick={() => void loadThread(item.id)}>
+                            Open
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                     {!tickets.length ? (
                       <tr>
-                        <td colSpan={6} className="py-6 text-center text-[#7586a3]">No support tickets found.</td>
+                        <td colSpan={7} className="py-6 text-center text-[#7586a3]">No support tickets found.</td>
                       </tr>
                     ) : null}
                   </tbody>
                 </table>
               </div>
             </Card>
+
+            {selectedTicketId ? (
+              <Card className="rounded-xl p-4">
+                <h2 className="text-lg font-semibold text-[#213552]">Ticket Thread</h2>
+                <p className="mt-1 text-xs text-[#667896]">Ticket: {selectedTicketId}</p>
+                <div className="mt-3 space-y-2">
+                  {thread.map((msg) => (
+                    <div key={msg.id} className="rounded-lg border border-[#e6edf8] bg-white p-3">
+                      <p className="text-xs text-[#6f80a0]">
+                        {new Date(msg.created_at).toLocaleString()} | {msg.author_role}
+                      </p>
+                      <p className="mt-1 text-sm text-[#2f4667] whitespace-pre-wrap">{msg.message}</p>
+                    </div>
+                  ))}
+                  {!thread.length ? (
+                    <div className="rounded-lg border border-dashed border-[#d9e4f5] bg-[#fbfdff] px-3 py-4 text-center text-sm text-[#7586a3]">
+                      No messages yet.
+                    </div>
+                  ) : null}
+                </div>
+                <textarea
+                  className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                  placeholder="Write a reply"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  disabled={!canCreate}
+                />
+                <div className="mt-2 flex gap-2">
+                  <Button type="button" onClick={() => void sendThreadMessage()} disabled={!canCreate || sendingMessage}>
+                    {sendingMessage ? "Sending..." : "Send Message"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => void loadThread(selectedTicketId)}>
+                    Refresh Thread
+                  </Button>
+                </div>
+              </Card>
+            ) : null}
           </div>
         </main>
       </div>

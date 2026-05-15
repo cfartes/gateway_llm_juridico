@@ -5,9 +5,9 @@ from app.core.database import get_db
 from app.core.deps import get_request_ip, require_roles
 from app.core.types import UserRole
 from app.models.support_ticket import SupportTicket
-from app.schemas.support_ticket import SupportTicketCreateRequest, SupportTicketOut
+from app.schemas.support_ticket import SupportTicketCreateRequest, SupportTicketMessageCreateRequest, SupportTicketMessageOut, SupportTicketOut
 from app.services.audit_service import write_audit_log
-from app.services.support_ticket_service import create_support_ticket, list_tenant_tickets
+from app.services.support_ticket_service import create_support_ticket, create_ticket_message, list_tenant_tickets, list_ticket_messages
 
 
 router = APIRouter(prefix="/support/tickets", tags=["support"])
@@ -61,3 +61,48 @@ def get_ticket(
     if not item:
         raise HTTPException(status_code=404, detail="Support ticket not found")
     return item
+
+
+@router.get("/{ticket_id}/messages", response_model=list[SupportTicketMessageOut])
+def list_ticket_thread(
+    ticket_id: str,
+    auth=Depends(require_roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.ANALYST, UserRole.VIEWER)),
+    db: Session = Depends(get_db),
+):
+    item = db.query(SupportTicket).filter(SupportTicket.id == ticket_id, SupportTicket.tenant_id == auth.tenant_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Support ticket not found")
+    return list_ticket_messages(db, ticket_id=item.id, include_internal=False)
+
+
+@router.post("/{ticket_id}/messages", response_model=SupportTicketMessageOut)
+def post_ticket_message(
+    ticket_id: str,
+    payload: SupportTicketMessageCreateRequest,
+    request: Request,
+    auth=Depends(require_roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.ANALYST)),
+    db: Session = Depends(get_db),
+):
+    item = db.query(SupportTicket).filter(SupportTicket.id == ticket_id, SupportTicket.tenant_id == auth.tenant_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Support ticket not found")
+    created = create_ticket_message(
+        db,
+        ticket=item,
+        author_user_id=auth.user_id,
+        author_role=str(auth.role),
+        message=payload.message,
+        is_internal=False,
+    )
+    write_audit_log(
+        db,
+        tenant_id=auth.tenant_id,
+        action="support.ticket.message.create",
+        resource_type="support_ticket_message",
+        resource_id=created.id,
+        actor_user_id=auth.user_id,
+        actor_api_token_id=auth.api_token_id,
+        source_ip=get_request_ip(request),
+        details={"ticket_id": item.id},
+    )
+    return created

@@ -33,3 +33,22 @@ class SupportTicketOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SupportTicketMessageCreateRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=12000)
+    is_internal: bool = False
+
+
+class SupportTicketMessageOut(BaseModel):
+    id: str
+    ticket_id: str
+    tenant_id: str
+    author_user_id: str | None = None
+    author_role: str
+    message: str
+    is_internal: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}

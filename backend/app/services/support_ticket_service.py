@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models.support_ticket import SupportTicket
+from app.models.support_ticket_message import SupportTicketMessage
 from app.services.webhook_delivery_service import send_ops_alert
 
 
@@ -108,3 +109,61 @@ def update_support_ticket_status(
         },
     )
     return ticket
+
+
+def list_ticket_messages(
+    db: Session,
+    *,
+    ticket_id: str,
+    include_internal: bool = False,
+    limit: int = 500,
+) -> list[SupportTicketMessage]:
+    capped = max(1, min(limit, 2000))
+    query = db.query(SupportTicketMessage).filter(SupportTicketMessage.ticket_id == ticket_id)
+    if not include_internal:
+        query = query.filter(SupportTicketMessage.is_internal.is_(False))
+    return query.order_by(SupportTicketMessage.created_at.asc()).limit(capped).all()
+
+
+def create_ticket_message(
+    db: Session,
+    *,
+    ticket: SupportTicket,
+    author_user_id: str | None,
+    author_role: str,
+    message: str,
+    is_internal: bool = False,
+) -> SupportTicketMessage:
+    body = message.strip()
+    if not body:
+        raise ValueError("Message cannot be empty")
+
+    item = SupportTicketMessage(
+        ticket_id=ticket.id,
+        tenant_id=ticket.tenant_id,
+        author_user_id=author_user_id,
+        author_role=author_role,
+        message=body,
+        is_internal=bool(is_internal),
+    )
+    db.add(item)
+
+    # First response SLA: first non-internal superadmin message counts as first response.
+    if author_role == "superadmin" and not is_internal and ticket.first_response_at is None:
+        ticket.first_response_at = datetime.now(timezone.utc)
+        db.add(ticket)
+
+    db.commit()
+    db.refresh(item)
+
+    send_ops_alert(
+        "support.ticket.message.created",
+        {
+            "tenant_id": ticket.tenant_id,
+            "ticket_id": ticket.id,
+            "message_id": item.id,
+            "author_role": author_role,
+            "is_internal": bool(is_internal),
+        },
+    )
+    return item

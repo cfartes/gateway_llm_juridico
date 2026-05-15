@@ -22,6 +22,17 @@ type Ticket = {
   created_at: string;
 };
 
+type TicketMessage = {
+  id: string;
+  ticket_id: string;
+  tenant_id: string;
+  author_user_id: string | null;
+  author_role: string;
+  message: string;
+  is_internal: boolean;
+  created_at: string;
+};
+
 type UserMe = { role: string };
 
 export default function SuperAdminSupportPage() {
@@ -31,6 +42,11 @@ export default function SuperAdminSupportPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [tenantFilter, setTenantFilter] = useState("");
   const [note, setNote] = useState("");
+  const [selectedTicketId, setSelectedTicketId] = useState("");
+  const [thread, setThread] = useState<TicketMessage[]>([]);
+  const [threadMessage, setThreadMessage] = useState("");
+  const [threadInternal, setThreadInternal] = useState(false);
+  const [sendingThread, setSendingThread] = useState(false);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
   const [error, setError] = useState("");
@@ -82,6 +98,40 @@ export default function SuperAdminSupportPage() {
     }
   }
 
+  async function loadThread(ticketId: string) {
+    if (!token) return;
+    setSelectedTicketId(ticketId);
+    setError("");
+    try {
+      const data = await authenticatedJson<TicketMessage[]>(API_BASE, `/admin/support/tickets/${ticketId}/messages`, token);
+      setThread(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load thread");
+    }
+  }
+
+  async function sendThreadMessage() {
+    if (!token || !selectedTicketId || !threadMessage.trim()) return;
+    setSendingThread(true);
+    setError("");
+    setSuccess("");
+    try {
+      await authenticatedJson<TicketMessage>(API_BASE, `/admin/support/tickets/${selectedTicketId}/messages`, token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: threadMessage.trim(), is_internal: threadInternal }),
+      });
+      setThreadMessage("");
+      setThreadInternal(false);
+      setSuccess("Message posted.");
+      await loadThread(selectedTicketId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to post message");
+    } finally {
+      setSendingThread(false);
+    }
+  }
+
   const isSuperAdmin = me ? me.role === "superadmin" : true;
   if (!ready || !token) return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
 
@@ -127,6 +177,7 @@ export default function SuperAdminSupportPage() {
                         <th className="py-2">Priority</th>
                         <th className="py-2">Status</th>
                         <th className="py-2">Action</th>
+                        <th className="py-2">Thread</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -147,11 +198,16 @@ export default function SuperAdminSupportPage() {
                               </Button>
                             </div>
                           </td>
+                          <td className="py-2">
+                            <Button variant="outline" onClick={() => void loadThread(t.id)}>
+                              Open
+                            </Button>
+                          </td>
                         </tr>
                       ))}
                       {!tickets.length ? (
                         <tr>
-                          <td colSpan={6} className="py-6 text-center text-[#7586a3]">No tickets found.</td>
+                          <td colSpan={7} className="py-6 text-center text-[#7586a3]">No tickets found.</td>
                         </tr>
                       ) : null}
                     </tbody>
@@ -159,6 +215,47 @@ export default function SuperAdminSupportPage() {
                 </div>
               </Card>
             )}
+
+            {isSuperAdmin && selectedTicketId ? (
+              <Card className="rounded-xl p-4">
+                <h2 className="text-lg font-semibold text-[#213552]">Ticket Thread</h2>
+                <p className="mt-1 text-xs text-[#667896]">Ticket: {selectedTicketId}</p>
+                <div className="mt-3 space-y-2">
+                  {thread.map((msg) => (
+                    <div key={msg.id} className={`rounded-lg border p-3 ${msg.is_internal ? "border-amber-200 bg-amber-50" : "border-[#e6edf8] bg-white"}`}>
+                      <p className="text-xs text-[#6f80a0]">
+                        {new Date(msg.created_at).toLocaleString()} | {msg.author_role}
+                        {msg.is_internal ? " | internal" : ""}
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-[#2f4667]">{msg.message}</p>
+                    </div>
+                  ))}
+                  {!thread.length ? (
+                    <div className="rounded-lg border border-dashed border-[#d9e4f5] bg-[#fbfdff] px-3 py-4 text-center text-sm text-[#7586a3]">
+                      No messages yet.
+                    </div>
+                  ) : null}
+                </div>
+                <textarea
+                  className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                  placeholder="Write a reply"
+                  value={threadMessage}
+                  onChange={(e) => setThreadMessage(e.target.value)}
+                />
+                <label className="mt-2 inline-flex items-center text-sm text-[#4f6386]">
+                  <input type="checkbox" className="mr-2" checked={threadInternal} onChange={(e) => setThreadInternal(e.target.checked)} />
+                  Internal note (hidden from tenant)
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <Button type="button" onClick={() => void sendThreadMessage()} disabled={sendingThread}>
+                    {sendingThread ? "Sending..." : "Send Message"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => void loadThread(selectedTicketId)}>
+                    Refresh Thread
+                  </Button>
+                </div>
+              </Card>
+            ) : null}
           </div>
         </main>
       </div>
