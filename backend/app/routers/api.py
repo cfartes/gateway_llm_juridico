@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get("/health", tags=["system"])
 def health_check():
-    return {"status": "healthy", "service": "nexus-llm-shield"}
+    return {"status": "healthy", "service": "nexus-gateway-llm-shield"}
 
 
 router.include_router(auth.router)

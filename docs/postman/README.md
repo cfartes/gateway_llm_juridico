@@ -9,7 +9,7 @@
 
 1. Import the collection file.
 2. Import the environment file.
-3. Select environment `Nexus LLM Shield - Local`.
+3. Select environment `Nexus Gateway LLM Shield - Local`.
 4. Run in this order:
    - `Auth/Login` (or `Auth/Register` first time)
    - `API Tokens/Create API Token`

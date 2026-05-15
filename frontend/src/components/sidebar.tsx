@@ -48,7 +48,7 @@ export function Sidebar() {
     <aside className="hidden w-[238px] flex-col border-r border-[#e6ebf3] bg-white lg:flex">
       <div className="px-6 pb-4 pt-5">
         <p className="text-[33px] font-extrabold leading-none text-[var(--color-primary)]">NEXUS</p>
-        <p className="text-xs font-semibold tracking-wide text-[#8292af]">LLM SHIELD</p>
+        <p className="text-xs font-semibold tracking-wide text-[#8292af]">GATEWAY LLM SHIELD</p>
       </div>
       <nav className="px-3">
         {ITEMS.map((item) => {

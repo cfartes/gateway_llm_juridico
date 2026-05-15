@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "2aaaf196-533d-44ff-8acf-16fa61259666",
-    "name": "Nexus LLM Shield - AI Document Security Gateway",
+    "name": "Nexus Gateway LLM Shield - AI Document Security Gateway",
     "description": "Collection oficial para testar autenticacao, API Tokens e endpoints do AI Document Security Gateway.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },

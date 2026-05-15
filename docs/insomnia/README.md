@@ -9,7 +9,7 @@
 1. Open Insomnia.
 2. Go to `Create` > `Import`.
 3. Choose `File` and select `Nexus-LLM-Shield.insomnia.json`.
-4. Select the workspace `Nexus LLM Shield - AI Document Security Gateway`.
+4. Select the workspace `Nexus Gateway LLM Shield - AI Document Security Gateway`.
 
 ## Environment variables
 

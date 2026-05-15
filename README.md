@@ -1,4 +1,4 @@
-# Nexus LLM Shield
+# Nexus Gateway LLM Shield
 
 Plataforma SaaS multi-tenant para detecÃ§Ã£o de Prompt Injection, Jailbreaks e ameaÃ§as semÃ¢nticas em documentos para LLMs.
 

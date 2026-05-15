@@ -1,4 +1,4 @@
-# Arquitetura - Nexus LLM Shield
+# Arquitetura - Nexus Gateway LLM Shield
 
 ## Visão geral
 
@@ -66,3 +66,4 @@ PostgreSQL (multi-tenant) + Audit Logs + Export Sanitizado
 - Next.js + React + Tailwind
 - Dashboard com upload, score, evidências, histórico e gestão de API token
 - Exportação de sanitização por scan
+

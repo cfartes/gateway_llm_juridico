@@ -12,7 +12,7 @@ from app.services.superadmin_service import ensure_superadmin_account
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Nexus LLM Shield API",
+    title="Nexus Gateway LLM Shield API",
     description="Enterprise SaaS for Prompt Injection Detection in documents.",
     version=settings.version,
 )

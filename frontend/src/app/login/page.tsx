@@ -79,7 +79,7 @@ export default function LoginPage() {
         <Card className="grid w-full max-w-[880px] grid-cols-1 overflow-hidden p-0 md:grid-cols-[1.05fr_1fr]">
           <div className="bg-[linear-gradient(145deg,#2f6fff,#1748bb)] p-8 text-white">
             <p className="text-3xl font-extrabold">NEXUS</p>
-            <p className="text-sm font-semibold text-blue-100">LLM SHIELD</p>
+            <p className="text-sm font-semibold text-blue-100">GATEWAY LLM SHIELD</p>
             <h1 className="mt-10 text-3xl font-bold">Secure AI Document Pipeline</h1>
             <p className="mt-3 text-sm text-blue-100">
               Authenticate with your user email and start scanning files for prompt injections, hidden instructions, and exfiltration attempts.

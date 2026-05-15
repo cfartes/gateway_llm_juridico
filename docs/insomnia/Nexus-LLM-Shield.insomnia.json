@@ -7,7 +7,7 @@
     {
       "_id": "wrk_nexus_llm_shield",
       "_type": "workspace",
-      "name": "Nexus LLM Shield - AI Document Security Gateway",
+      "name": "Nexus Gateway LLM Shield - AI Document Security Gateway",
       "description": "Workspace para testar autenticacao, API Tokens e endpoints do gateway.",
       "scope": "collection"
     },

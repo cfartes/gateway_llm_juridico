@@ -8,8 +8,8 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Nexus LLM Shield",
-  description: "Enterprise SaaS for LLM Prompt Injection detection in documents.",
+  title: "Nexus Gateway LLM Shield",
+  description: "Enterprise SaaS for LLM Prompt Injection detection and secure document gateway.",
 };
 
 export default function RootLayout({
