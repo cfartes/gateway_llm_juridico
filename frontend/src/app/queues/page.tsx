@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { appendQueueAlertEvent, isCriticalEscalation, QueueAlertEvent, readQueueAlertHistory } from "@/lib/queue-alerts";
 import { authenticatedJson } from "@/lib/auth";
 
 type QueueBucket = {
@@ -52,6 +53,8 @@ export default function QueuesPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [history, setHistory] = useState<QueueAlertEvent[]>(() => readQueueAlertHistory().slice(0, 12));
+  const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
   const [overview, setOverview] = useState<QueueOverview>({
     generated_at: "",
     window_hours: 24,
@@ -63,6 +66,7 @@ export default function QueuesPage() {
     alerts: [],
     items: [],
   });
+  const previousLevelRef = useRef<string>("normal");
 
   const totalEta = useMemo(() => overview.eta_total_seconds || overview.items.reduce((acc, item) => acc + item.estimated_wait_seconds, 0), [overview.eta_total_seconds, overview.items]);
 
@@ -76,12 +80,36 @@ export default function QueuesPage() {
         accessToken,
       );
       setOverview(data);
+      if (isCriticalEscalation(previousLevelRef.current, data.alert_level)) {
+        const event: QueueAlertEvent = {
+          id: `${Date.now()}-tenant`,
+          timestamp: new Date().toISOString(),
+          page: "tenant",
+          level: "critical",
+          tenantId: data.tenant_id,
+          windowHours: data.window_hours,
+          messages: data.alerts,
+        };
+        const nextHistory = appendQueueAlertEvent(event);
+        setHistory(nextHistory.slice(0, 12));
+        setToast({
+          title: "Critical Queue Alert",
+          message: data.alerts[0] ?? "Queue pressure crossed critical threshold.",
+        });
+      }
+      previousLevelRef.current = data.alert_level;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load queue overview");
     } finally {
       setLoading(false);
     }
   }, [windowHours]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 8000);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   useEffect(() => {
     if (!token) return;
@@ -130,6 +158,22 @@ export default function QueuesPage() {
                 </div>
               </Card>
             ) : null}
+
+            <Card className="rounded-xl p-4">
+              <h2 className="text-xl font-semibold text-[#213552]">Queue Alert History</h2>
+              <div className="mt-2 space-y-2">
+                {history.length ? (
+                  history.map((item) => (
+                    <div key={item.id} className="rounded-lg border border-[#e8edf5] bg-white p-2 text-xs text-[#4f6386]">
+                      [{new Date(item.timestamp).toLocaleString()}] {item.page.toUpperCase()} {item.level.toUpperCase()}
+                      {item.messages[0] ? ` - ${item.messages[0]}` : ""}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-[#667896]">No alert history yet.</p>
+                )}
+              </div>
+            </Card>
 
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex flex-wrap items-end gap-2">
@@ -219,6 +263,12 @@ export default function QueuesPage() {
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           Error: {error}
+        </div>
+      ) : null}
+      {toast ? (
+        <div className="fixed bottom-4 left-4 max-w-[420px] rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-lg">
+          <p className="font-semibold">{toast.title}</p>
+          <p className="mt-1">{toast.message}</p>
         </div>
       ) : null}
     </div>
