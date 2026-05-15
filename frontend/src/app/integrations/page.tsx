@@ -30,6 +30,17 @@ type IntegrationConfig = {
     channel: string | null;
     bot_token_configured: boolean;
   };
+  ops_alerts: {
+    enabled: boolean;
+    webhook_enabled: boolean;
+    webhook_url: string | null;
+    webhook_auth_bearer_configured: boolean;
+    slack_enabled: boolean;
+    teams_enabled: boolean;
+    teams_webhook_url: string | null;
+    email_enabled: boolean;
+    email_recipients: string[];
+  };
 };
 
 type UserMe = {
@@ -53,6 +64,16 @@ type FormState = {
   slack_channel: string;
   slack_bot_token: string;
   slack_clear_bot_token: boolean;
+  ops_alerts_enabled: boolean;
+  ops_alert_webhook_enabled: boolean;
+  ops_alert_webhook_url: string;
+  ops_alert_webhook_auth_bearer: string;
+  ops_alert_clear_webhook_auth_bearer: boolean;
+  ops_alert_slack_enabled: boolean;
+  ops_alert_teams_enabled: boolean;
+  ops_alert_teams_webhook_url: string;
+  ops_alert_email_enabled: boolean;
+  ops_alert_email_recipients: string;
 };
 
 const INITIAL_FORM: FormState = {
@@ -72,6 +93,16 @@ const INITIAL_FORM: FormState = {
   slack_channel: "",
   slack_bot_token: "",
   slack_clear_bot_token: false,
+  ops_alerts_enabled: false,
+  ops_alert_webhook_enabled: false,
+  ops_alert_webhook_url: "",
+  ops_alert_webhook_auth_bearer: "",
+  ops_alert_clear_webhook_auth_bearer: false,
+  ops_alert_slack_enabled: false,
+  ops_alert_teams_enabled: false,
+  ops_alert_teams_webhook_url: "",
+  ops_alert_email_enabled: false,
+  ops_alert_email_recipients: "",
 };
 
 export default function IntegrationsPage() {
@@ -111,6 +142,14 @@ export default function IntegrationsPage() {
         slack_enabled: configData.slack.enabled,
         slack_webhook_url: configData.slack.webhook_url ?? "",
         slack_channel: configData.slack.channel ?? "",
+        ops_alerts_enabled: configData.ops_alerts.enabled,
+        ops_alert_webhook_enabled: configData.ops_alerts.webhook_enabled,
+        ops_alert_webhook_url: configData.ops_alerts.webhook_url ?? "",
+        ops_alert_slack_enabled: configData.ops_alerts.slack_enabled,
+        ops_alert_teams_enabled: configData.ops_alerts.teams_enabled,
+        ops_alert_teams_webhook_url: configData.ops_alerts.teams_webhook_url ?? "",
+        ops_alert_email_enabled: configData.ops_alerts.email_enabled,
+        ops_alert_email_recipients: (configData.ops_alerts.email_recipients ?? []).join(", "),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load integrations");
@@ -149,6 +188,21 @@ export default function IntegrationsPage() {
           bot_token: form.slack_bot_token.trim() || null,
           clear_bot_token: form.slack_clear_bot_token,
         },
+        ops_alerts: {
+          enabled: form.ops_alerts_enabled,
+          webhook_enabled: form.ops_alert_webhook_enabled,
+          webhook_url: form.ops_alert_webhook_url.trim() || null,
+          webhook_auth_bearer: form.ops_alert_webhook_auth_bearer.trim() || null,
+          clear_webhook_auth_bearer: form.ops_alert_clear_webhook_auth_bearer,
+          slack_enabled: form.ops_alert_slack_enabled,
+          teams_enabled: form.ops_alert_teams_enabled,
+          teams_webhook_url: form.ops_alert_teams_webhook_url.trim() || null,
+          email_enabled: form.ops_alert_email_enabled,
+          email_recipients: form.ops_alert_email_recipients
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+        },
       };
       const updated = await authenticatedJson<IntegrationConfig>(API_BASE, "/integrations/current", token, {
         method: "PUT",
@@ -162,10 +216,12 @@ export default function IntegrationsPage() {
         webhook_auth_bearer: "",
         siem_auth_token: "",
         slack_bot_token: "",
+        ops_alert_webhook_auth_bearer: "",
         webhook_clear_secret: false,
         webhook_clear_auth_bearer: false,
         siem_clear_auth_token: false,
         slack_clear_bot_token: false,
+        ops_alert_clear_webhook_auth_bearer: false,
       }));
       setSuccess("Integrations updated successfully.");
     } catch (err) {
@@ -357,6 +413,104 @@ export default function IntegrationsPage() {
               </Card>
 
               <Card className="rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-[#213552]">Ops Alerts (Tenant)</h2>
+                  <label className="text-sm text-[#4f6386]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.ops_alerts_enabled}
+                      onChange={(e) => update("ops_alerts_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Enabled
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-[#667896]">
+                  Alertas operacionais do tenant (SLO breach/recovery e webhook dead-letter).
+                </p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <label className="text-sm text-[#5f7393]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.ops_alert_webhook_enabled}
+                      onChange={(e) => update("ops_alert_webhook_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Send to webhook
+                  </label>
+                  <Input
+                    placeholder="Ops alert webhook URL"
+                    value={form.ops_alert_webhook_url}
+                    onChange={(e) => update("ops_alert_webhook_url", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <Input
+                    placeholder="Ops alert webhook bearer (new value)"
+                    value={form.ops_alert_webhook_auth_bearer}
+                    onChange={(e) => update("ops_alert_webhook_auth_bearer", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <label className="text-sm text-[#5f7393]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.ops_alert_clear_webhook_auth_bearer}
+                      onChange={(e) => update("ops_alert_clear_webhook_auth_bearer", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Clear webhook bearer
+                  </label>
+                  <label className="text-sm text-[#5f7393]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.ops_alert_slack_enabled}
+                      onChange={(e) => update("ops_alert_slack_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Send to Slack (uses Slack webhook above)
+                  </label>
+                  <label className="text-sm text-[#5f7393]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.ops_alert_teams_enabled}
+                      onChange={(e) => update("ops_alert_teams_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Send to Teams
+                  </label>
+                  <Input
+                    placeholder="Teams webhook URL"
+                    value={form.ops_alert_teams_webhook_url}
+                    onChange={(e) => update("ops_alert_teams_webhook_url", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                  <label className="text-sm text-[#5f7393]">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={form.ops_alert_email_enabled}
+                      onChange={(e) => update("ops_alert_email_enabled", e.target.checked)}
+                      disabled={!canEdit}
+                    />
+                    Send to email
+                  </label>
+                  <Input
+                    placeholder="Email recipients (comma separated)"
+                    value={form.ops_alert_email_recipients}
+                    onChange={(e) => update("ops_alert_email_recipients", e.target.value)}
+                    disabled={!canEdit}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-[#6b7b95]">
+                  Webhook bearer configured: {config?.ops_alerts.webhook_auth_bearer_configured ? "yes" : "no"}
+                </p>
+              </Card>
+
+              <Card className="rounded-xl p-4">
                 <div className="flex items-center gap-2">
                   <Button type="submit" disabled={saving || !canEdit}>
                     {saving ? "Saving..." : "Save Integrations"}
@@ -383,4 +537,3 @@ export default function IntegrationsPage() {
     </div>
   );
 }
-

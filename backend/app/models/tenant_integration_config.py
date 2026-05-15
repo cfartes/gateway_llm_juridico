@@ -28,3 +28,12 @@ class TenantIntegrationConfig(UUIDTimestampMixin, Base):
     slack_channel: Mapped[str | None] = mapped_column(String(255), nullable=True)
     slack_bot_token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    ops_alerts_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    ops_alert_webhook_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    ops_alert_webhook_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    ops_alert_webhook_auth_bearer_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ops_alert_slack_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    ops_alert_teams_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    ops_alert_teams_webhook_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    ops_alert_email_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    ops_alert_email_recipients_json: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -33,6 +33,12 @@ def _ensure_app_settings(db: Session, tenant_id: str) -> TenantAppSettings:
 
 def get_integration_config(db: Session, tenant_id: str) -> IntegrationConfigOut:
     config = _ensure_integration_config(db, tenant_id)
+    try:
+        alert_emails = json.loads(config.ops_alert_email_recipients_json or "[]")
+        if not isinstance(alert_emails, list):
+            alert_emails = []
+    except Exception:
+        alert_emails = []
     return IntegrationConfigOut(
         webhook={
             "enabled": config.webhook_enabled,
@@ -51,6 +57,17 @@ def get_integration_config(db: Session, tenant_id: str) -> IntegrationConfigOut:
             "webhook_url": config.slack_webhook_url,
             "channel": config.slack_channel,
             "bot_token_configured": bool(config.slack_bot_token_enc),
+        },
+        ops_alerts={
+            "enabled": config.ops_alerts_enabled,
+            "webhook_enabled": config.ops_alert_webhook_enabled,
+            "webhook_url": config.ops_alert_webhook_url,
+            "webhook_auth_bearer_configured": bool(config.ops_alert_webhook_auth_bearer_enc),
+            "slack_enabled": config.ops_alert_slack_enabled,
+            "teams_enabled": config.ops_alert_teams_enabled,
+            "teams_webhook_url": config.ops_alert_teams_webhook_url,
+            "email_enabled": config.ops_alert_email_enabled,
+            "email_recipients": [str(item) for item in alert_emails if isinstance(item, str)],
         },
     )
 
@@ -87,6 +104,21 @@ def update_integration_config(db: Session, tenant_id: str, payload: IntegrationC
         config.slack_bot_token_enc = encrypt_text(slack.bot_token)
     elif slack.clear_bot_token:
         config.slack_bot_token_enc = None
+
+    ops_alerts = payload.ops_alerts
+    config.ops_alerts_enabled = ops_alerts.enabled
+    config.ops_alert_webhook_enabled = ops_alerts.webhook_enabled
+    config.ops_alert_webhook_url = str(ops_alerts.webhook_url) if ops_alerts.webhook_url else None
+    if ops_alerts.webhook_auth_bearer is not None:
+        config.ops_alert_webhook_auth_bearer_enc = encrypt_text(ops_alerts.webhook_auth_bearer)
+    elif ops_alerts.clear_webhook_auth_bearer:
+        config.ops_alert_webhook_auth_bearer_enc = None
+    config.ops_alert_slack_enabled = ops_alerts.slack_enabled
+    config.ops_alert_teams_enabled = ops_alerts.teams_enabled
+    config.ops_alert_teams_webhook_url = str(ops_alerts.teams_webhook_url) if ops_alerts.teams_webhook_url else None
+    config.ops_alert_email_enabled = ops_alerts.email_enabled
+    normalized_alert_emails = [item.strip().lower() for item in ops_alerts.email_recipients if item.strip()]
+    config.ops_alert_email_recipients_json = json.dumps(normalized_alert_emails, ensure_ascii=False)
 
     db.add(config)
     db.commit()
@@ -150,5 +182,7 @@ def get_integration_secret_preview(db: Session, tenant_id: str) -> dict[str, boo
         "webhook_bearer_decodable": bool(config.webhook_auth_bearer_enc and decrypt_text(config.webhook_auth_bearer_enc)),
         "siem_token_decodable": bool(config.siem_auth_token_enc and decrypt_text(config.siem_auth_token_enc)),
         "slack_bot_token_decodable": bool(config.slack_bot_token_enc and decrypt_text(config.slack_bot_token_enc)),
+        "ops_alert_webhook_bearer_decodable": bool(
+            config.ops_alert_webhook_auth_bearer_enc and decrypt_text(config.ops_alert_webhook_auth_bearer_enc)
+        ),
     }
-

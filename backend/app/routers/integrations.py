@@ -41,7 +41,13 @@ def update_current_integrations(
             "webhook_enabled": result.webhook.enabled,
             "siem_enabled": result.siem.enabled,
             "slack_enabled": result.slack.enabled,
+            "ops_alerts_enabled": result.ops_alerts.enabled,
+            "ops_alert_channels": {
+                "webhook": result.ops_alerts.webhook_enabled,
+                "slack": result.ops_alerts.slack_enabled,
+                "teams": result.ops_alerts.teams_enabled,
+                "email": result.ops_alerts.email_enabled,
+            },
         },
     )
     return result
-

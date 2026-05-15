@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.types import ScanStatus
 from app.models.scan_job import ScanJob
+from app.models.tenant import Tenant
 from app.schemas.analyze_gateway import AnalyzeReturnMode
 from app.pipelines.analysis_graph import analyze_document_bytes
 from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
@@ -225,12 +226,39 @@ def retry_dead_letter_webhooks_task() -> dict:
 def evaluate_ops_slo_alerts_task() -> dict:
     db = SessionLocal()
     try:
-        return evaluate_slo_alerts(
-            db,
-            scope_key="global",
-            tenant_id=None,
-            window_hours=int(settings.ops_slo_alert_window_hours),
-        )
+        summary: dict[str, object] = {
+            "global": evaluate_slo_alerts(
+                db,
+                scope_key="global",
+                tenant_id=None,
+                window_hours=int(settings.ops_slo_alert_window_hours),
+            ),
+            "tenants_evaluated": 0,
+            "tenant_results": [],
+        }
+
+        tenants = db.query(Tenant).filter(Tenant.is_active.is_(True)).all()
+        tenant_results: list[dict[str, object]] = []
+        for tenant in tenants:
+            result = evaluate_slo_alerts(
+                db,
+                scope_key=f"tenant:{tenant.id}",
+                tenant_id=tenant.id,
+                window_hours=int(settings.ops_slo_alert_window_hours),
+            )
+            tenant_results.append(
+                {
+                    "tenant_id": tenant.id,
+                    "tenant_name": tenant.name,
+                    "breaches_sent": int(result.get("breaches_sent", 0)),
+                    "recoveries_sent": int(result.get("recoveries_sent", 0)),
+                    "updated_items": int(result.get("updated_items", 0)),
+                }
+            )
+
+        summary["tenants_evaluated"] = len(tenant_results)
+        summary["tenant_results"] = tenant_results
+        return summary
     finally:
         db.close()
 

@@ -1,5 +1,7 @@
 import json
+import smtplib
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 from typing import Any
 
 import httpx
@@ -7,7 +9,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.models.scan_job import ScanJob
+from app.models.tenant_integration_config import TenantIntegrationConfig
 from app.models.webhook_delivery import WebhookDelivery, WebhookDeliveryAttempt
 from app.services.webhook_security_service import validate_callback_url_security
 from app.utils.crypto import decrypt_text, encrypt_text
@@ -360,14 +364,98 @@ def discard_exhausted_dead_letters(
     return len(items)
 
 
-def send_ops_alert(event_type: str, payload: dict[str, Any]) -> None:
-    alert_url = (settings.ops_alert_webhook_url or "").strip()
-    if not alert_url:
-        return
-
-    body = {"event_type": event_type, "payload": payload, "source": "nexus-gateway-llm-shield"}
+def _post_ops_alert(url: str, body: dict[str, Any], *, bearer: str | None = None) -> None:
     try:
+        headers: dict[str, str] = {}
+        if bearer:
+            headers["Authorization"] = f"Bearer {bearer}"
         with httpx.Client(timeout=settings.ops_alert_timeout_seconds) as client:
-            client.post(alert_url, json=body)
+            client.post(url, json=body, headers=headers)
     except Exception:
         return
+
+
+def _send_ops_alert_email(event_type: str, payload: dict[str, Any], recipients: list[str]) -> None:
+    smtp_host = settings.smtp_host.strip()
+    if not smtp_host or not recipients:
+        return
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = f"[Nexus LLM Shield] {event_type}"
+        msg["From"] = settings.smtp_from_email
+        msg["To"] = ", ".join(recipients)
+        msg.set_content(
+            "Operational alert from Nexus Gateway LLM Shield\n\n"
+            f"Event: {event_type}\n\n"
+            f"Payload:\n{json.dumps(payload, ensure_ascii=False, indent=2)}"
+        )
+        if settings.smtp_use_ssl:
+            with smtplib.SMTP_SSL(
+                smtp_host,
+                int(settings.smtp_port),
+                timeout=float(settings.smtp_timeout_seconds),
+            ) as smtp:
+                if settings.smtp_username:
+                    smtp.login(settings.smtp_username, settings.smtp_password)
+                smtp.send_message(msg)
+        else:
+            with smtplib.SMTP(
+                smtp_host,
+                int(settings.smtp_port),
+                timeout=float(settings.smtp_timeout_seconds),
+            ) as smtp:
+                if settings.smtp_use_tls:
+                    smtp.starttls()
+                if settings.smtp_username:
+                    smtp.login(settings.smtp_username, settings.smtp_password)
+                smtp.send_message(msg)
+    except Exception:
+        return
+
+
+def send_ops_alert(event_type: str, payload: dict[str, Any]) -> None:
+    body = {"event_type": event_type, "payload": payload, "source": settings.ops_alert_source_label}
+
+    # Global platform-level hook (superadmin/ops visibility)
+    global_alert_url = (settings.ops_alert_webhook_url or "").strip()
+    if global_alert_url:
+        _post_ops_alert(global_alert_url, body)
+
+    tenant_id = str(payload.get("tenant_id") or "").strip()
+    if not tenant_id:
+        return
+
+    db = SessionLocal()
+    try:
+        cfg = db.query(TenantIntegrationConfig).filter(TenantIntegrationConfig.tenant_id == tenant_id).first()
+        if not cfg or not cfg.ops_alerts_enabled:
+            return
+
+        if cfg.ops_alert_webhook_enabled and cfg.ops_alert_webhook_url:
+            bearer = _decode_optional(cfg.ops_alert_webhook_auth_bearer_enc)
+            _post_ops_alert(cfg.ops_alert_webhook_url, body, bearer=bearer)
+
+        if cfg.ops_alert_slack_enabled and cfg.slack_webhook_url:
+            text = f"[{event_type}] tenant={tenant_id} payload={json.dumps(payload, ensure_ascii=False)}"
+            _post_ops_alert(cfg.slack_webhook_url, {"text": text})
+
+        if cfg.ops_alert_teams_enabled and cfg.ops_alert_teams_webhook_url:
+            teams_body = {
+                "@type": "MessageCard",
+                "@context": "https://schema.org/extensions",
+                "summary": f"Nexus Alert: {event_type}",
+                "themeColor": "FF0000" if "dead_letter" in event_type or "breach" in event_type else "0078D7",
+                "title": f"Nexus Gateway LLM Shield - {event_type}",
+                "text": json.dumps(payload, ensure_ascii=False, indent=2),
+            }
+            _post_ops_alert(cfg.ops_alert_teams_webhook_url, teams_body)
+
+        if cfg.ops_alert_email_enabled and cfg.ops_alert_email_recipients_json:
+            try:
+                recipients_raw = json.loads(cfg.ops_alert_email_recipients_json)
+                recipients = [str(item).strip() for item in recipients_raw if str(item).strip()]
+            except Exception:
+                recipients = []
+            _send_ops_alert_email(event_type, payload, recipients)
+    finally:
+        db.close()
