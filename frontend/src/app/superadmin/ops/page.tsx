@@ -48,6 +48,16 @@ type OpsOverview = {
     discarded_count: number;
     delivery_success_rate_percent: number;
   };
+  upgrade_requests: {
+    pending_count: number;
+    pending_over_sla_count: number;
+    sla_hours: number;
+  };
+  support_tickets: {
+    open_count: number;
+    waiting_first_response_over_sla_count: number;
+    first_response_sla_hours: number;
+  };
   slo: SLOItem[];
   active_alerts: {
     scope_key: string;
@@ -283,6 +293,26 @@ export default function SuperAdminOpsPage() {
                     <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
                       <p className="text-xs text-[#6f80a0]">Generated At</p>
                       <p className="text-sm font-semibold text-[#2c3f5f]">{fmtDate(overview?.generated_at)}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="rounded-xl p-4">
+                  <h2 className="text-lg font-semibold text-[#213552]">Operational SLAs</h2>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
+                      <p className="text-xs text-[#6f80a0]">Pending Upgrade Requests</p>
+                      <p className="text-2xl font-bold text-[#1f3f72]">{overview?.upgrade_requests.pending_count ?? 0}</p>
+                      <p className="mt-1 text-xs text-[#7b4f00]">
+                        Over SLA ({overview?.upgrade_requests.sla_hours ?? 24}h): {overview?.upgrade_requests.pending_over_sla_count ?? 0}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
+                      <p className="text-xs text-[#6f80a0]">Open Support Tickets</p>
+                      <p className="text-2xl font-bold text-[#1f3f72]">{overview?.support_tickets.open_count ?? 0}</p>
+                      <p className="mt-1 text-xs text-[#7b4f00]">
+                        Waiting first response over {overview?.support_tickets.first_response_sla_hours ?? 8}h: {overview?.support_tickets.waiting_first_response_over_sla_count ?? 0}
+                      </p>
                     </div>
                   </div>
                 </Card>

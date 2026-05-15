@@ -17,11 +17,13 @@ const ITEMS = [
   { label: "SuperAdmin Webhooks", href: "/superadmin/webhooks" },
   { label: "SuperAdmin Queues", href: "/superadmin/queues" },
   { label: "SuperAdmin Ops", href: "/superadmin/ops" },
+  { label: "SuperAdmin Support", href: "/superadmin/support" },
   { label: "Webhook Deliveries", href: "/webhooks" },
   { label: "Policies" },
   { label: "Allow / Block Lists" },
   { label: "Integrations", href: "/integrations" },
   { label: "Audit Log", href: "/audit-log" },
+  { label: "Support", href: "/support" },
   { label: "Settings", href: "/settings" },
 ];
 

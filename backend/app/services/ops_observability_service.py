@@ -3,8 +3,11 @@ from typing import Sequence
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.types import ScanStatus
 from app.models.scan_job import ScanJob
+from app.models.support_ticket import SupportTicket
+from app.models.tenant_upgrade_request import TenantUpgradeRequest
 from app.models.webhook_delivery import WebhookDelivery
 from app.services.queue_observability_service import build_queue_overview
 
@@ -73,6 +76,31 @@ def build_ops_overview(db: Session, *, window_hours: int = 24, tenant_id: str | 
     discarded_count = sum(1 for item in deliveries if item.status == "discarded")
     webhook_success_rate = (delivered_count / len(deliveries) * 100.0) if deliveries else 100.0
 
+    upgrade_query = db.query(TenantUpgradeRequest)
+    if tenant_id:
+        upgrade_query = upgrade_query.filter(TenantUpgradeRequest.tenant_id == tenant_id)
+    pending_upgrade_requests = int(upgrade_query.filter(TenantUpgradeRequest.status == "pending").count())
+    upgrade_sla_cutoff = datetime.now(timezone.utc) - timedelta(hours=max(1, int(settings.ops_upgrade_request_sla_hours)))
+    pending_upgrade_requests_over_sla = int(
+        upgrade_query.filter(
+            TenantUpgradeRequest.status == "pending",
+            TenantUpgradeRequest.created_at <= upgrade_sla_cutoff,
+        ).count()
+    )
+
+    support_query = db.query(SupportTicket)
+    if tenant_id:
+        support_query = support_query.filter(SupportTicket.tenant_id == tenant_id)
+    open_support_tickets = int(support_query.filter(SupportTicket.status.in_(["open", "in_progress"])).count())
+    support_sla_cutoff = datetime.now(timezone.utc) - timedelta(hours=max(1, int(settings.ops_support_first_response_sla_hours)))
+    support_tickets_waiting_first_response_over_sla = int(
+        support_query.filter(
+            SupportTicket.status.in_(["open", "in_progress"]),
+            SupportTicket.first_response_at.is_(None),
+            SupportTicket.created_at <= support_sla_cutoff,
+        ).count()
+    )
+
     scan_slo_target = 99.0
     scan_latency_target = 120.0
     webhook_slo_target = 99.0
@@ -134,6 +162,15 @@ def build_ops_overview(db: Session, *, window_hours: int = 24, tenant_id: str | 
             "discarded_count": discarded_count,
             "delivery_success_rate_percent": round(webhook_success_rate, 2),
         },
+        "upgrade_requests": {
+            "pending_count": pending_upgrade_requests,
+            "pending_over_sla_count": pending_upgrade_requests_over_sla,
+            "sla_hours": int(settings.ops_upgrade_request_sla_hours),
+        },
+        "support_tickets": {
+            "open_count": open_support_tickets,
+            "waiting_first_response_over_sla_count": support_tickets_waiting_first_response_over_sla,
+            "first_response_sla_hours": int(settings.ops_support_first_response_sla_hours),
+        },
         "slo": slo,
     }
-

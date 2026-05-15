@@ -44,12 +44,26 @@ class WebhookOpsMetricsOut(BaseModel):
     delivery_success_rate_percent: float = Field(ge=0, le=100)
 
 
+class UpgradeRequestOpsMetricsOut(BaseModel):
+    pending_count: int = Field(ge=0)
+    pending_over_sla_count: int = Field(ge=0)
+    sla_hours: int = Field(ge=1)
+
+
+class SupportTicketOpsMetricsOut(BaseModel):
+    open_count: int = Field(ge=0)
+    waiting_first_response_over_sla_count: int = Field(ge=0)
+    first_response_sla_hours: int = Field(ge=1)
+
+
 class OpsOverviewOut(BaseModel):
     generated_at: datetime
     window_hours: int = Field(ge=1, le=168)
     queue: QueueOverviewOut
     scans: ScanOpsMetricsOut
     webhooks: WebhookOpsMetricsOut
+    upgrade_requests: UpgradeRequestOpsMetricsOut
+    support_tickets: SupportTicketOpsMetricsOut
     slo: list[SLOIndicatorOut]
     active_alerts: list[ActiveOpsAlertOut] = Field(default_factory=list)
 

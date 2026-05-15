@@ -9,6 +9,7 @@ from app.models.password_reset_token import PasswordResetToken
 from app.models.queue_alert_preference import QueueAlertPreference
 from app.models.refresh_token import RefreshToken
 from app.models.scan_job import ScanJob
+from app.models.support_ticket import SupportTicket
 from app.models.tenant import Tenant
 from app.models.tenant_app_settings import TenantAppSettings
 from app.models.tenant_integration_config import TenantIntegrationConfig
@@ -32,6 +33,7 @@ __all__ = [
     "OpsSLOSnapshot",
     "Document",
     "ScanJob",
+    "SupportTicket",
     "AuditLog",
     "WebhookDelivery",
     "WebhookDeliveryAttempt",

@@ -54,6 +54,12 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - tenant acompanha solicitações: `GET /api/v1/tenants/current/upgrade-requests`
   - superadmin revisa pendentes: `GET /api/v1/admin/tenants/upgrade-requests/list?status=pending`
   - superadmin aprova/rejeita: `PATCH /api/v1/admin/tenants/upgrade-requests/{request_id}`
+- Chamados de suporte:
+  - tenant abre/lista: `POST /api/v1/support/tickets`, `GET /api/v1/support/tickets`
+  - superadmin triagem/atualização: `GET /api/v1/admin/support/tickets`, `PATCH /api/v1/admin/support/tickets/{ticket_id}`
+- SLA operacional no SuperAdmin Ops:
+  - pendências de upgrade de plano acima do SLA
+  - chamados abertos aguardando primeira resposta acima do SLA
 
 ## Segurança de webhook
 

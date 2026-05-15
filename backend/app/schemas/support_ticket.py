@@ -1,0 +1,35 @@
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
+
+class SupportTicketCreateRequest(BaseModel):
+    subject: str = Field(min_length=4, max_length=200)
+    category: str = Field(default="general", max_length=64)
+    priority: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
+    description: str = Field(min_length=10, max_length=12000)
+
+
+class SupportTicketStatusUpdateRequest(BaseModel):
+    status: str = Field(pattern="^(open|in_progress|resolved|closed)$")
+    admin_note: str | None = Field(default=None, max_length=4000)
+    assigned_to_user_id: str | None = None
+
+
+class SupportTicketOut(BaseModel):
+    id: str
+    tenant_id: str
+    requester_user_id: str | None = None
+    subject: str
+    category: str
+    priority: str
+    status: str
+    description: str
+    admin_note: str | None = None
+    assigned_to_user_id: str | None = None
+    first_response_at: datetime | None = None
+    resolved_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
