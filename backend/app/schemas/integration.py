@@ -86,3 +86,10 @@ class IntegrationConfigUpdateRequest(BaseModel):
     ops_alerts: OpsAlertsIntegrationUpdateRequest = Field(
         default_factory=lambda: OpsAlertsIntegrationUpdateRequest(enabled=False)
     )
+
+
+class IntegrationTestAlertOut(BaseModel):
+    status: str
+    event_type: str
+    tenant_id: str
+    channels: dict[str, bool] = Field(default_factory=dict)

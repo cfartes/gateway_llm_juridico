@@ -42,6 +42,7 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 - Persistência server-side de `acknowledge/snooze` dos alertas de fila
 - Retenção automática de snapshots SLO (cleanup via Celery Beat)
 - Canais de alertas operacionais por tenant (Webhook, Slack, Teams e Email)
+  - endpoint de validação: `POST /api/v1/integrations/test-alert`
 
 ## Segurança de webhook
 

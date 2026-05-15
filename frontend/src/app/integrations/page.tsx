@@ -47,6 +47,13 @@ type UserMe = {
   role: string;
 };
 
+type TestAlertResponse = {
+  status: string;
+  event_type: string;
+  tenant_id: string;
+  channels: Record<string, boolean>;
+};
+
 type FormState = {
   webhook_enabled: boolean;
   webhook_url: string;
@@ -112,6 +119,7 @@ export default function IntegrationsPage() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testingAlert, setTestingAlert] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -228,6 +236,27 @@ export default function IntegrationsPage() {
       setError(err instanceof Error ? err.message : "Failed to update integrations");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendTestAlert() {
+    if (!token || !canEdit) return;
+    setTestingAlert(true);
+    setError("");
+    setSuccess("");
+    try {
+      const result = await authenticatedJson<TestAlertResponse>(API_BASE, "/integrations/test-alert", token, {
+        method: "POST",
+      });
+      const activeChannels = Object.entries(result.channels)
+        .filter(([, enabled]) => enabled)
+        .map(([name]) => name)
+        .join(", ");
+      setSuccess(`Test alert queued successfully (${activeChannels || "no active channel"}).`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send test alert");
+    } finally {
+      setTestingAlert(false);
     }
   }
 
@@ -514,6 +543,9 @@ export default function IntegrationsPage() {
                 <div className="flex items-center gap-2">
                   <Button type="submit" disabled={saving || !canEdit}>
                     {saving ? "Saving..." : "Save Integrations"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => void sendTestAlert()} disabled={testingAlert || !canEdit}>
+                    {testingAlert ? "Sending test..." : "Send Test Alert"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => token && load(token)} disabled={loading}>
                     {loading ? "Refreshing..." : "Refresh"}
