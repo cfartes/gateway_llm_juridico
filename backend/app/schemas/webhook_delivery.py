@@ -52,3 +52,26 @@ class WebhookDeliveryListResponse(BaseModel):
 class WebhookDeliveryRetryResponse(BaseModel):
     delivery: WebhookDeliveryOut
     retried_attempts: int = Field(ge=0)
+
+
+class WebhookCallbackFailureOut(BaseModel):
+    callback_url: str
+    dead_letter_count: int
+
+
+class WebhookTenantFailureOut(BaseModel):
+    tenant_id: str
+    dead_letter_count: int
+
+
+class WebhookDeliveryMetricsOut(BaseModel):
+    window_days: int
+    total_events: int
+    delivered_events: int
+    dead_letter_events: int
+    discarded_events: int
+    success_rate_percent: float
+    avg_attempts_per_event: float
+    avg_attempt_duration_ms: float
+    top_failed_callbacks: list[WebhookCallbackFailureOut]
+    top_failed_tenants: list[WebhookTenantFailureOut]

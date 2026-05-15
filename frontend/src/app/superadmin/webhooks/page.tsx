@@ -62,6 +62,19 @@ type RetryResponse = {
   retried_attempts: number;
 };
 
+type DeliveryMetrics = {
+  window_days: number;
+  total_events: number;
+  delivered_events: number;
+  dead_letter_events: number;
+  discarded_events: number;
+  success_rate_percent: number;
+  avg_attempts_per_event: number;
+  avg_attempt_duration_ms: number;
+  top_failed_callbacks: { callback_url: string; dead_letter_count: number }[];
+  top_failed_tenants: { tenant_id: string; dead_letter_count: number }[];
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
 function formatDate(input?: string | null): string {
@@ -82,6 +95,7 @@ function statusTone(status: string): string {
 export default function SuperAdminWebhooksPage() {
   const { token, ready } = useAuthGuard();
   const [me, setMe] = useState<UserMe | null>(null);
+  const [windowDays, setWindowDays] = useState(7);
   const [statusFilter, setStatusFilter] = useState("dead_letter");
   const [tenantFilter, setTenantFilter] = useState("");
   const [listData, setListData] = useState<DeliveryListResponse>({
@@ -93,6 +107,18 @@ export default function SuperAdminWebhooksPage() {
   });
   const [selectedId, setSelectedId] = useState("");
   const [detail, setDetail] = useState<DeliveryDetailResponse | null>(null);
+  const [metrics, setMetrics] = useState<DeliveryMetrics>({
+    window_days: 7,
+    total_events: 0,
+    delivered_events: 0,
+    dead_letter_events: 0,
+    discarded_events: 0,
+    success_rate_percent: 0,
+    avg_attempts_per_event: 0,
+    avg_attempt_duration_ms: 0,
+    top_failed_callbacks: [],
+    top_failed_tenants: [],
+  });
   const [loading, setLoading] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -113,17 +139,26 @@ export default function SuperAdminWebhooksPage() {
       params.set("status", statusFilter);
       params.set("limit", "150");
       if (tenantFilter.trim()) params.set("tenant_id", tenantFilter.trim());
+      const metricsParams = new URLSearchParams();
+      metricsParams.set("window_days", String(windowDays));
+      if (tenantFilter.trim()) metricsParams.set("tenant_id", tenantFilter.trim());
 
-      const [meData, deliveries] = await Promise.all([
+      const [meData, deliveries, metricsData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
         authenticatedJson<DeliveryListResponse>(
           API_BASE,
           `/admin/webhooks/deliveries?${params.toString()}`,
           accessToken,
         ),
+        authenticatedJson<DeliveryMetrics>(
+          API_BASE,
+          `/admin/webhooks/deliveries/metrics?${metricsParams.toString()}`,
+          accessToken,
+        ),
       ]);
       setMe(meData);
       setListData(deliveries);
+      setMetrics(metricsData);
       setSelectedId((prev) => {
         if (prev && deliveries.items.some((item) => item.id === prev)) return prev;
         return deliveries.items[0]?.id ?? "";
@@ -133,7 +168,7 @@ export default function SuperAdminWebhooksPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, tenantFilter]);
+  }, [statusFilter, tenantFilter, windowDays]);
 
   const loadDetail = useCallback(async (accessToken: string, deliveryId: string) => {
     if (!deliveryId) {
@@ -248,7 +283,7 @@ export default function SuperAdminWebhooksPage() {
             ) : (
               <>
                 <Card className="rounded-xl p-4">
-                  <div className="grid gap-3 md:grid-cols-4">
+                  <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
                     <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
                       <p className="text-xs text-[#6f80a0]">Dead-letter</p>
                       <p className="text-2xl font-bold text-red-600">{listData.total_dead_letter}</p>
@@ -264,6 +299,14 @@ export default function SuperAdminWebhooksPage() {
                     <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
                       <p className="text-xs text-[#6f80a0]">Visible rows</p>
                       <p className="text-2xl font-bold text-[#1f3f72]">{listData.total}</p>
+                    </div>
+                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
+                      <p className="text-xs text-[#6f80a0]">Success Rate ({metrics.window_days}d)</p>
+                      <p className="text-2xl font-bold text-emerald-700">{metrics.success_rate_percent}%</p>
+                    </div>
+                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
+                      <p className="text-xs text-[#6f80a0]">Avg Attempt Duration</p>
+                      <p className="text-2xl font-bold text-[#1f3f72]">{metrics.avg_attempt_duration_ms} ms</p>
                     </div>
                   </div>
                 </Card>
@@ -291,6 +334,19 @@ export default function SuperAdminWebhooksPage() {
                           onChange={(e) => setTenantFilter(e.target.value)}
                           placeholder="Filter by tenant UUID"
                         />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Metrics window</label>
+                        <select
+                          value={windowDays}
+                          onChange={(e) => setWindowDays(Number(e.target.value))}
+                          className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                        >
+                          <option value={1}>1 day</option>
+                          <option value={7}>7 days</option>
+                          <option value={30}>30 days</option>
+                          <option value={90}>90 days</option>
+                        </select>
                       </div>
                       <Button variant="outline" onClick={refreshAll} disabled={loading}>
                         {loading ? "Refreshing..." : "Refresh"}
@@ -340,6 +396,18 @@ export default function SuperAdminWebhooksPage() {
 
                   <Card className="rounded-xl p-4">
                     <h2 className="text-xl font-semibold text-[#213552]">Delivery Detail</h2>
+                    <div className="mb-3 mt-2 rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-2 text-xs text-[#5f7393]">
+                      <p className="font-semibold text-[#2e4b77]">Top Failed Callbacks ({metrics.window_days}d)</p>
+                      {metrics.top_failed_callbacks.length ? (
+                        metrics.top_failed_callbacks.map((item) => (
+                          <p key={item.callback_url} className="mt-1 truncate">
+                            {item.dead_letter_count}x - {item.callback_url}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="mt-1">No failed callbacks in this window.</p>
+                      )}
+                    </div>
                     {!selected ? (
                       <p className="mt-2 text-sm text-[#667896]">Select one delivery to inspect attempts.</p>
                     ) : (

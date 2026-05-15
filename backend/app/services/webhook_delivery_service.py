@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import func
@@ -152,3 +152,84 @@ def retry_delivery_now(
     db.commit()
     db.refresh(delivery)
     return delivery, len(logs)
+
+
+def compute_delivery_metrics(
+    db: Session,
+    *,
+    window_days: int = 7,
+    tenant_id: str | None = None,
+) -> dict[str, Any]:
+    bounded_days = max(1, min(window_days, 90))
+    since = datetime.now(timezone.utc) - timedelta(days=bounded_days)
+
+    base_query = db.query(WebhookDelivery).filter(WebhookDelivery.created_at >= since)
+    if tenant_id:
+        base_query = base_query.filter(WebhookDelivery.tenant_id == tenant_id)
+
+    total_events = int(base_query.count())
+    delivered_events = int(base_query.filter(WebhookDelivery.status == "delivered").count())
+    dead_letter_events = int(base_query.filter(WebhookDelivery.status == "dead_letter").count())
+    discarded_events = int(base_query.filter(WebhookDelivery.status == "discarded").count())
+
+    avg_attempts = (
+        base_query.with_entities(func.avg(WebhookDelivery.attempt_count)).scalar()
+        or 0.0
+    )
+
+    attempts_query = (
+        db.query(func.avg(WebhookDeliveryAttempt.duration_ms))
+        .join(WebhookDelivery, WebhookDeliveryAttempt.delivery_id == WebhookDelivery.id)
+        .filter(WebhookDelivery.created_at >= since)
+    )
+    if tenant_id:
+        attempts_query = attempts_query.filter(WebhookDelivery.tenant_id == tenant_id)
+    avg_attempt_duration = attempts_query.scalar() or 0.0
+
+    callback_failures_query = (
+        db.query(WebhookDelivery.callback_url, func.count(WebhookDelivery.id))
+        .filter(WebhookDelivery.created_at >= since, WebhookDelivery.status == "dead_letter")
+    )
+    if tenant_id:
+        callback_failures_query = callback_failures_query.filter(WebhookDelivery.tenant_id == tenant_id)
+    top_failed_callbacks = [
+        {"callback_url": row[0], "dead_letter_count": int(row[1])}
+        for row in (
+            callback_failures_query.group_by(WebhookDelivery.callback_url)
+            .order_by(func.count(WebhookDelivery.id).desc())
+            .limit(5)
+            .all()
+        )
+    ]
+
+    tenant_failures_query = (
+        db.query(WebhookDelivery.tenant_id, func.count(WebhookDelivery.id))
+        .filter(WebhookDelivery.created_at >= since, WebhookDelivery.status == "dead_letter")
+    )
+    if tenant_id:
+        tenant_failures_query = tenant_failures_query.filter(WebhookDelivery.tenant_id == tenant_id)
+    top_failed_tenants = [
+        {"tenant_id": row[0], "dead_letter_count": int(row[1])}
+        for row in (
+            tenant_failures_query.group_by(WebhookDelivery.tenant_id)
+            .order_by(func.count(WebhookDelivery.id).desc())
+            .limit(5)
+            .all()
+        )
+    ]
+
+    settled_total = delivered_events + dead_letter_events
+    success_rate = (delivered_events / settled_total * 100.0) if settled_total > 0 else 0.0
+
+    return {
+        "window_days": bounded_days,
+        "total_events": total_events,
+        "delivered_events": delivered_events,
+        "dead_letter_events": dead_letter_events,
+        "discarded_events": discarded_events,
+        "success_rate_percent": round(float(success_rate), 2),
+        "avg_attempts_per_event": round(float(avg_attempts), 2),
+        "avg_attempt_duration_ms": round(float(avg_attempt_duration), 2),
+        "top_failed_callbacks": top_failed_callbacks,
+        "top_failed_tenants": top_failed_tenants,
+    }

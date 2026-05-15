@@ -12,11 +12,12 @@ from app.models.webhook_delivery import WebhookDelivery
 from app.schemas.webhook_delivery import (
     WebhookDeliveryDetailOut,
     WebhookDeliveryListResponse,
+    WebhookDeliveryMetricsOut,
     WebhookDeliveryOut,
     WebhookDeliveryRetryResponse,
 )
 from app.services.audit_service import write_audit_log
-from app.services.webhook_delivery_service import list_deliveries_with_stats, retry_delivery_now
+from app.services.webhook_delivery_service import compute_delivery_metrics, list_deliveries_with_stats, retry_delivery_now
 
 
 router = APIRouter(prefix="/admin/webhooks/deliveries", tags=["superadmin-webhooks"])
@@ -38,6 +39,18 @@ def list_webhook_deliveries(
         total_delivered=counts.get("delivered", 0),
         total_discarded=counts.get("discarded", 0),
     )
+
+
+@router.get("/metrics", response_model=WebhookDeliveryMetricsOut)
+def get_webhook_delivery_metrics(
+    window_days: int = Query(default=7, ge=1, le=90),
+    tenant_id: str | None = Query(default=None),
+    auth=Depends(require_roles(UserRole.SUPERADMIN)),
+    db: Session = Depends(get_db),
+):
+    _ = auth
+    metrics = compute_delivery_metrics(db, window_days=window_days, tenant_id=tenant_id)
+    return WebhookDeliveryMetricsOut.model_validate(metrics)
 
 
 @router.get("/{delivery_id}", response_model=WebhookDeliveryDetailOut)

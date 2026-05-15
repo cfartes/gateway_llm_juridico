@@ -327,6 +327,13 @@ curl -X GET "http://localhost:8000/api/v1/admin/webhooks/deliveries?status=dead_
   -H "Authorization: Bearer <SUPERADMIN_JWT>"
 ```
 
+Metrics (SLA/health overview):
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/admin/webhooks/deliveries/metrics?window_days=7" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
 Get one delivery with attempt history:
 
 ```bash

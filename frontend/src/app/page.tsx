@@ -354,7 +354,6 @@ export default function Home() {
                                 {scan.scan.status === "failed" ? (
                                   <Button
                                     variant="outline"
-                                    size="sm"
                                     disabled={retryingScanId === scan.scan.id}
                                     onClick={() => void retryScan(scan.scan.id)}
                                   >
