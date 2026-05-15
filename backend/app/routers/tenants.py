@@ -14,14 +14,14 @@ router = APIRouter(prefix="/tenants", tags=["tenants"])
 
 
 @router.get("/current", response_model=TenantOut)
-def get_current_tenant(auth=Depends(require_roles(UserRole.ADMIN, UserRole.ANALYST, UserRole.VIEWER)), db: Session = Depends(get_db)):
+def get_current_tenant(auth=Depends(require_roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.ANALYST, UserRole.VIEWER)), db: Session = Depends(get_db)):
     tenant = db.query(Tenant).filter(Tenant.id == auth.tenant_id).first()
     return tenant
 
 
 @router.get("/current/queue-policy", response_model=TenantQueuePolicyOut)
 def get_current_tenant_queue_policy(
-    auth=Depends(require_roles(UserRole.ADMIN, UserRole.ANALYST, UserRole.VIEWER)),
+    auth=Depends(require_roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.ANALYST, UserRole.VIEWER)),
     db: Session = Depends(get_db),
 ):
     return get_tenant_queue_policy_snapshot(db, auth.tenant_id)
@@ -31,7 +31,7 @@ def get_current_tenant_queue_policy(
 def update_current_tenant_plan(
     payload: TenantPlanUpdateRequest,
     request: Request,
-    auth=Depends(require_roles(UserRole.ADMIN)),
+    auth=Depends(require_roles(UserRole.SUPERADMIN, UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
     tenant = db.query(Tenant).filter(Tenant.id == auth.tenant_id).first()

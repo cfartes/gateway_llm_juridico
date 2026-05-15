@@ -29,6 +29,20 @@ type SettingsResponse = {
   };
 };
 
+type QueuePolicyResponse = {
+  plan: "starter" | "growth" | "business" | "enterprise";
+  max_inflight_jobs: number;
+  max_pending_jobs: number;
+  burst_per_minute: number;
+  sync_requests_per_minute: number;
+  async_requests_per_minute: number;
+  url_requests_per_minute: number;
+  max_files_per_batch: number;
+  current_running_jobs: number;
+  current_pending_jobs: number;
+  current_inflight_jobs: number;
+};
+
 type UserMe = {
   role: string;
 };
@@ -63,6 +77,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [queuePolicy, setQueuePolicy] = useState<QueuePolicyResponse | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -77,11 +92,13 @@ export default function SettingsPage() {
     setLoading(true);
     setError("");
     try {
-      const [meData, data] = await Promise.all([
+      const [meData, data, policyData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
         authenticatedJson<SettingsResponse>(API_BASE, "/settings/current", accessToken),
+        authenticatedJson<QueuePolicyResponse>(API_BASE, "/tenants/current/queue-policy", accessToken),
       ]);
       setMe(meData);
+      setQueuePolicy(policyData);
       setForm({
         quarantine_threshold: String(data.security.quarantine_threshold),
         block_threshold: String(data.security.block_threshold),
@@ -163,6 +180,43 @@ export default function SettingsPage() {
                 Configure security thresholds, retention policy e notificações do tenant.
               </p>
             </Card>
+
+            {queuePolicy ? (
+              <Card className="rounded-xl p-4">
+                <h2 className="text-lg font-semibold text-[#213552]">Current Plan Limits</h2>
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
+                    <p className="text-xs text-[#6f80a0]">Plan</p>
+                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.plan.toUpperCase()}</p>
+                  </div>
+                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
+                    <p className="text-xs text-[#6f80a0]">Sync req/min</p>
+                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.sync_requests_per_minute}</p>
+                  </div>
+                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
+                    <p className="text-xs text-[#6f80a0]">Async req/min</p>
+                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.async_requests_per_minute}</p>
+                  </div>
+                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
+                    <p className="text-xs text-[#6f80a0]">URL req/min</p>
+                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.url_requests_per_minute}</p>
+                  </div>
+                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
+                    <p className="text-xs text-[#6f80a0]">Max files/batch</p>
+                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.max_files_per_batch}</p>
+                  </div>
+                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
+                    <p className="text-xs text-[#6f80a0]">In-flight usage</p>
+                    <p className="text-lg font-semibold text-[#1f3f72]">
+                      {queuePolicy.current_inflight_jobs}/{queuePolicy.max_inflight_jobs}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-[#6f80a0]">
+                  Pending queue: {queuePolicy.current_pending_jobs}/{queuePolicy.max_pending_jobs} | Burst/min: {queuePolicy.burst_per_minute}
+                </p>
+              </Card>
+            ) : null}
 
             <form onSubmit={onSubmit} className="space-y-4">
               <Card className="rounded-xl p-4">
@@ -295,4 +349,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

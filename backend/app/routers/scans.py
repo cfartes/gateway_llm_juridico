@@ -13,6 +13,7 @@ from app.schemas.document import DocumentOut
 from app.services.audit_service import write_audit_log
 from app.services.queue_policy_service import (
     classify_file_tier,
+    enforce_plan_request_rate,
     enforce_scan_enqueue_policy,
     resolve_tenant_plan,
     tier_to_queue,
@@ -109,6 +110,7 @@ def retry_failed_scan(
         raise HTTPException(status_code=409, detail="Stored file not found for retry")
 
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
+    enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="async")
     enforce_scan_enqueue_policy(db, auth.tenant_id, tenant_plan)
 
     queue_tier = classify_file_tier(scan.document.original_name)

@@ -15,13 +15,49 @@ class PlanQueuePolicy:
     max_inflight_jobs: int
     max_pending_jobs: int
     burst_per_minute: int
+    sync_requests_per_minute: int
+    async_requests_per_minute: int
+    url_requests_per_minute: int
+    max_files_per_batch: int
 
 
 PLAN_POLICIES: dict[TenantPlan, PlanQueuePolicy] = {
-    TenantPlan.STARTER: PlanQueuePolicy(max_inflight_jobs=2, max_pending_jobs=20, burst_per_minute=30),
-    TenantPlan.GROWTH: PlanQueuePolicy(max_inflight_jobs=5, max_pending_jobs=80, burst_per_minute=100),
-    TenantPlan.BUSINESS: PlanQueuePolicy(max_inflight_jobs=12, max_pending_jobs=250, burst_per_minute=300),
-    TenantPlan.ENTERPRISE: PlanQueuePolicy(max_inflight_jobs=30, max_pending_jobs=1000, burst_per_minute=1200),
+    TenantPlan.STARTER: PlanQueuePolicy(
+        max_inflight_jobs=2,
+        max_pending_jobs=20,
+        burst_per_minute=30,
+        sync_requests_per_minute=20,
+        async_requests_per_minute=30,
+        url_requests_per_minute=20,
+        max_files_per_batch=3,
+    ),
+    TenantPlan.GROWTH: PlanQueuePolicy(
+        max_inflight_jobs=5,
+        max_pending_jobs=80,
+        burst_per_minute=100,
+        sync_requests_per_minute=60,
+        async_requests_per_minute=100,
+        url_requests_per_minute=60,
+        max_files_per_batch=8,
+    ),
+    TenantPlan.BUSINESS: PlanQueuePolicy(
+        max_inflight_jobs=12,
+        max_pending_jobs=250,
+        burst_per_minute=300,
+        sync_requests_per_minute=180,
+        async_requests_per_minute=300,
+        url_requests_per_minute=180,
+        max_files_per_batch=20,
+    ),
+    TenantPlan.ENTERPRISE: PlanQueuePolicy(
+        max_inflight_jobs=30,
+        max_pending_jobs=1000,
+        burst_per_minute=1200,
+        sync_requests_per_minute=600,
+        async_requests_per_minute=1200,
+        url_requests_per_minute=600,
+        max_files_per_batch=50,
+    ),
 }
 
 LIGHT_EXTENSIONS = {".txt", ".md", ".markdown", ".csv", ".json", ".html", ".htm", ".xml", ".yaml", ".yml"}
@@ -85,10 +121,37 @@ def get_tenant_queue_policy_snapshot(db: Session, tenant_id: str, plan: TenantPl
         "max_inflight_jobs": policy.max_inflight_jobs,
         "max_pending_jobs": policy.max_pending_jobs,
         "burst_per_minute": policy.burst_per_minute,
+        "sync_requests_per_minute": policy.sync_requests_per_minute,
+        "async_requests_per_minute": policy.async_requests_per_minute,
+        "url_requests_per_minute": policy.url_requests_per_minute,
+        "max_files_per_batch": policy.max_files_per_batch,
         "current_running_jobs": running_count,
         "current_pending_jobs": pending_count,
         "current_inflight_jobs": inflight,
     }
+
+
+def enforce_plan_request_rate(tenant_id: str, plan: TenantPlan, *, operation: str) -> None:
+    policy = PLAN_POLICIES.get(plan, PLAN_POLICIES[TenantPlan.STARTER])
+    limits = {
+        "sync": policy.sync_requests_per_minute,
+        "async": policy.async_requests_per_minute,
+        "url": policy.url_requests_per_minute,
+    }
+    resolved_limit = limits.get(operation, policy.burst_per_minute)
+    rate_limiter.enforce(key=f"{tenant_id}:plan-rate:{operation}", limit=resolved_limit, window_seconds=60)
+
+
+def enforce_batch_file_count(plan: TenantPlan, file_count: int) -> None:
+    policy = PLAN_POLICIES.get(plan, PLAN_POLICIES[TenantPlan.STARTER])
+    if file_count > policy.max_files_per_batch:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Batch file limit reached for plan '{plan}'. "
+                f"Allowed: {policy.max_files_per_batch}, received: {file_count}."
+            ),
+        )
 
 
 def enforce_scan_enqueue_policy(db: Session, tenant_id: str, plan: TenantPlan) -> None:

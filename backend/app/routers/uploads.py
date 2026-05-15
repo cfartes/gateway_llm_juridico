@@ -20,6 +20,8 @@ from app.services.file_validation import detect_office_macro, inspect_zip_for_bl
 from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
 from app.services.queue_policy_service import (
     classify_file_tier,
+    enforce_batch_file_count,
+    enforce_plan_request_rate,
     enforce_scan_enqueue_policy,
     resolve_tenant_plan,
     tier_to_queue,
@@ -98,6 +100,9 @@ async def scan_sync(
     db: Session = Depends(get_db),
 ):
     rate_limit_dependency(request, key=f"{auth.tenant_id}:scan-sync")
+    tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
+    enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="sync")
+    enforce_batch_file_count(tenant_plan, len(files))
 
     responses: list[ScanResponse] = []
     for upload in files:
@@ -172,6 +177,8 @@ async def scan_async(
 ):
     rate_limit_dependency(request, key=f"{auth.tenant_id}:scan-async")
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
+    enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="async")
+    enforce_batch_file_count(tenant_plan, len(files))
 
     responses: list[ScanResponse] = []
     for upload in files:
@@ -219,6 +226,7 @@ def scan_from_url(
 ):
     rate_limit_dependency(request, key=f"{auth.tenant_id}:scan-url")
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
+    enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="url")
 
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
     content, filename, content_type = download_url_content(str(payload.url), max_bytes)

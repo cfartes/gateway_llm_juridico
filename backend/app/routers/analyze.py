@@ -36,6 +36,7 @@ from app.services.file_validation import validate_file_metadata
 from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
 from app.services.webhook_security_service import validate_callback_url_security
 from app.services.queue_policy_service import (
+    enforce_plan_request_rate,
     classify_file_tier,
     enforce_scan_enqueue_policy,
     resolve_tenant_plan,
@@ -162,6 +163,8 @@ async def analyze_sync(
     db: Session = Depends(get_db),
 ):
     _enforce_gateway_actor_rate_limit(request, auth, "analyze-sync")
+    tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
+    enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="sync")
     req, upload_file = await _extract_request_payload(request, file)
 
     if req.tenant_id and req.tenant_id != auth.tenant_id:
@@ -244,6 +247,7 @@ async def analyze_async(
         validate_callback_url_security(str(req.callback_url))
 
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
+    enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="async")
     enforce_scan_enqueue_policy(db, auth.tenant_id, tenant_plan)
 
     content, filename, mime_type = load_source_content(req, upload_file)

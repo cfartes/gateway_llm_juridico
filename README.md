@@ -43,6 +43,11 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 - Retenção automática de snapshots SLO (cleanup via Celery Beat)
 - Canais de alertas operacionais por tenant (Webhook, Slack, Teams e Email)
   - endpoint de validação: `POST /api/v1/integrations/test-alert`
+- Limites por plano aplicados em runtime (starter/growth/business/enterprise):
+  - requests por minuto para sync/async/url
+  - limite de arquivos por batch
+  - limite de concorrência e backlog de fila
+  - endpoint de visibilidade: `GET /api/v1/tenants/current/queue-policy`
 
 ## Segurança de webhook
 
