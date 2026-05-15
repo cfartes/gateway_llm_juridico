@@ -28,8 +28,11 @@ type WebhookDelivery = {
   last_error: string | null;
   last_response_preview: string | null;
   last_attempt_at: string | null;
+  next_retry_at: string | null;
   delivered_at: string | null;
   discarded_at: string | null;
+  alert_last_sent_at: string | null;
+  alert_count: number;
   created_at: string;
   updated_at: string;
 };
@@ -60,6 +63,11 @@ type DeliveryDetailResponse = {
 type RetryResponse = {
   delivery: WebhookDelivery;
   retried_attempts: number;
+};
+
+type RetryCycleResponse = {
+  queued: boolean;
+  task_id: string;
 };
 
 type DeliveryMetrics = {
@@ -123,6 +131,7 @@ export default function SuperAdminWebhooksPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [discarding, setDiscarding] = useState(false);
+  const [runningCycle, setRunningCycle] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -252,6 +261,27 @@ export default function SuperAdminWebhooksPage() {
     }
   }
 
+  async function runDeadLetterCycle() {
+    if (!token) return;
+    setRunningCycle(true);
+    setError("");
+    setSuccess("");
+    try {
+      const result = await authenticatedJson<RetryCycleResponse>(
+        API_BASE,
+        "/admin/webhooks/deliveries/retry-dead-letter/run",
+        token,
+        { method: "POST" },
+      );
+      setSuccess(`Dead-letter retry cycle queued. Task ID: ${result.task_id}`);
+      await refreshAll();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start dead-letter retry cycle");
+    } finally {
+      setRunningCycle(false);
+    }
+  }
+
   if (!ready || !token) {
     return (
       <div className="min-h-screen grid place-items-center bg-[#f7f9fc] text-[#4c5f82]">
@@ -351,6 +381,9 @@ export default function SuperAdminWebhooksPage() {
                       <Button variant="outline" onClick={refreshAll} disabled={loading}>
                         {loading ? "Refreshing..." : "Refresh"}
                       </Button>
+                      <Button onClick={runDeadLetterCycle} disabled={runningCycle}>
+                        {runningCycle ? "Queueing..." : "Run Retry Cycle"}
+                      </Button>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -361,6 +394,7 @@ export default function SuperAdminWebhooksPage() {
                             <th className="py-2">Tenant</th>
                             <th className="py-2">Scan</th>
                             <th className="py-2">Attempts</th>
+                            <th className="py-2">Next Retry</th>
                             <th className="py-2">HTTP</th>
                             <th className="py-2">Updated</th>
                           </tr>
@@ -378,13 +412,14 @@ export default function SuperAdminWebhooksPage() {
                               <td className="py-2 text-[#4f6386]">{item.tenant_id}</td>
                               <td className="py-2 text-[#4f6386]">{item.scan_job_id ?? "-"}</td>
                               <td className="py-2 text-[#334766]">{item.attempt_count} / {item.max_attempts}</td>
+                              <td className="py-2 text-[#4f6386]">{formatDate(item.next_retry_at)}</td>
                               <td className="py-2 text-[#334766]">{item.last_http_status ?? "-"}</td>
                               <td className="py-2 text-[#4f6386]">{formatDate(item.updated_at)}</td>
                             </tr>
                           ))}
                           {!listData.items.length ? (
                             <tr>
-                              <td colSpan={6} className="py-6 text-center text-[#7586a3]">
+                              <td colSpan={7} className="py-6 text-center text-[#7586a3]">
                                 No webhook delivery records found for this filter.
                               </td>
                             </tr>
@@ -416,6 +451,8 @@ export default function SuperAdminWebhooksPage() {
                           <p><span className="font-semibold">ID:</span> {selected.id}</p>
                           <p className="mt-1"><span className="font-semibold">Callback:</span> {selected.callback_url}</p>
                           <p className="mt-1"><span className="font-semibold">Last Error:</span> {selected.last_error ?? "-"}</p>
+                          <p className="mt-1"><span className="font-semibold">Next Retry:</span> {formatDate(selected.next_retry_at)}</p>
+                          <p className="mt-1"><span className="font-semibold">Alerts Sent:</span> {selected.alert_count}</p>
                         </div>
 
                         <div className="flex flex-wrap gap-2">

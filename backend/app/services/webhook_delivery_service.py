@@ -22,6 +22,43 @@ def _decode_optional(value: str | None) -> str | None:
         return value
 
 
+def _compute_next_retry_at(*, attempt_count: int) -> datetime:
+    base_backoff = max(1.0, float(settings.webhook_callback_backoff_seconds))
+    multiplier = 2 ** max(0, attempt_count - 1)
+    delay_seconds = min(
+        int(settings.webhook_dead_letter_auto_retry_max_delay_seconds),
+        int(base_backoff * multiplier),
+    )
+    return datetime.now(timezone.utc) + timedelta(seconds=max(1, delay_seconds))
+
+
+def _maybe_send_dead_letter_alert(delivery: WebhookDelivery) -> None:
+    now = datetime.now(timezone.utc)
+    cooldown = max(0, int(settings.ops_alert_cooldown_seconds))
+
+    if delivery.alert_last_sent_at and cooldown > 0:
+        elapsed = (now - delivery.alert_last_sent_at).total_seconds()
+        if elapsed < cooldown:
+            return
+
+    send_ops_alert(
+        "webhook.dead_letter",
+        {
+            "delivery_id": delivery.id,
+            "tenant_id": delivery.tenant_id,
+            "scan_job_id": delivery.scan_job_id,
+            "callback_url": delivery.callback_url,
+            "attempt_count": delivery.attempt_count,
+            "max_attempts": delivery.max_attempts,
+            "last_error": delivery.last_error,
+            "last_http_status": delivery.last_http_status,
+            "next_retry_at": delivery.next_retry_at.isoformat() if delivery.next_retry_at else None,
+        },
+    )
+    delivery.alert_last_sent_at = now
+    delivery.alert_count = int(delivery.alert_count or 0) + 1
+
+
 def persist_webhook_delivery_result(
     db: Session,
     *,
@@ -52,6 +89,7 @@ def persist_webhook_delivery_result(
         callback_secret_enc=encrypt_text(callback_secret) if callback_secret else None,
         callback_auth_bearer_enc=encrypt_text(callback_auth_bearer) if callback_auth_bearer else None,
         last_attempt_at=now if logs else None,
+        next_retry_at=_compute_next_retry_at(attempt_count=len(logs)) if not ok and logs else None,
         delivered_at=now if ok else None,
     )
     db.add(delivery)
@@ -71,19 +109,10 @@ def persist_webhook_delivery_result(
     db.commit()
 
     if not ok:
-        send_ops_alert(
-            "webhook.dead_letter",
-            {
-                "delivery_id": delivery.id,
-                "tenant_id": delivery.tenant_id,
-                "scan_job_id": delivery.scan_job_id,
-                "callback_url": delivery.callback_url,
-                "attempt_count": delivery.attempt_count,
-                "max_attempts": delivery.max_attempts,
-                "last_error": delivery.last_error,
-                "last_http_status": delivery.last_http_status,
-            },
-        )
+        _maybe_send_dead_letter_alert(delivery)
+        db.add(delivery)
+        db.commit()
+        db.refresh(delivery)
 
     return delivery
 
@@ -164,9 +193,12 @@ def retry_delivery_now(
     if result.get("ok"):
         delivery.status = "delivered"
         delivery.delivered_at = datetime.now(timezone.utc)
+        delivery.next_retry_at = None
     else:
         delivery.status = "dead_letter"
         delivery.delivered_at = None
+        delivery.next_retry_at = _compute_next_retry_at(attempt_count=delivery.attempt_count)
+        _maybe_send_dead_letter_alert(delivery)
 
     db.add(delivery)
     db.commit()
@@ -264,7 +296,8 @@ def list_dead_letter_retry_candidates(
 ) -> list[WebhookDelivery]:
     min_age = max(0, min_age_seconds)
     limit = max(1, min(batch_size, 200))
-    cutoff = datetime.now(timezone.utc) - timedelta(seconds=min_age)
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(seconds=min_age)
     max_attempts = max(1, max_total_attempts)
 
     return (
@@ -274,6 +307,7 @@ def list_dead_letter_retry_candidates(
             WebhookDelivery.discarded_at.is_(None),
             WebhookDelivery.updated_at <= cutoff,
             WebhookDelivery.attempt_count < max_attempts,
+            ((WebhookDelivery.next_retry_at.is_(None)) | (WebhookDelivery.next_retry_at <= now)),
         )
         .order_by(WebhookDelivery.updated_at.asc())
         .limit(limit)

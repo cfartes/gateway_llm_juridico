@@ -24,8 +24,11 @@ class WebhookDelivery(UUIDTimestampMixin, Base):
     callback_secret_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
     callback_auth_bearer_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
     last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     discarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    alert_last_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    alert_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     scan_job = relationship("ScanJob", back_populates="webhook_deliveries")
     attempts = relationship("WebhookDeliveryAttempt", back_populates="delivery", cascade="all, delete-orphan")

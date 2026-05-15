@@ -48,8 +48,10 @@ class Settings(BaseSettings):
     webhook_dead_letter_auto_retry_batch_size: int = 25
     webhook_dead_letter_auto_retry_max_total_attempts: int = 12
     webhook_dead_letter_auto_retry_min_age_seconds: int = 60
+    webhook_dead_letter_auto_retry_max_delay_seconds: int = 1800
     ops_alert_webhook_url: str | None = None
     ops_alert_timeout_seconds: float = 8.0
+    ops_alert_cooldown_seconds: int = 900
     policy_llm_skip_high_hits_threshold: int = 2
     policy_quarantine_score_threshold: float = 55.0
     policy_block_score_threshold: float = 80.0

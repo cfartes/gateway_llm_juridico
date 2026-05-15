@@ -10,6 +10,7 @@ from app.core.types import UserRole
 from app.models.scan_job import ScanJob
 from app.models.webhook_delivery import WebhookDelivery
 from app.schemas.webhook_delivery import (
+    WebhookDeadLetterRunResponse,
     WebhookDeliveryDetailOut,
     WebhookDeliveryListResponse,
     WebhookDeliveryMetricsOut,
@@ -18,6 +19,7 @@ from app.schemas.webhook_delivery import (
 )
 from app.services.audit_service import write_audit_log
 from app.services.webhook_delivery_service import compute_delivery_metrics, list_deliveries_with_stats, retry_delivery_now
+from app.tasks.scan_tasks import retry_dead_letter_webhooks_task
 
 
 router = APIRouter(prefix="/admin/webhooks/deliveries", tags=["superadmin-webhooks"])
@@ -51,6 +53,27 @@ def get_webhook_delivery_metrics(
     _ = auth
     metrics = compute_delivery_metrics(db, window_days=window_days, tenant_id=tenant_id)
     return WebhookDeliveryMetricsOut.model_validate(metrics)
+
+
+@router.post("/retry-dead-letter/run", response_model=WebhookDeadLetterRunResponse)
+def run_dead_letter_retry_cycle(
+    request: Request,
+    auth=Depends(require_roles(UserRole.SUPERADMIN)),
+    db: Session = Depends(get_db),
+):
+    task = retry_dead_letter_webhooks_task.apply_async(queue="celery", routing_key="celery")
+    write_audit_log(
+        db,
+        tenant_id=auth.tenant_id,
+        action="superadmin.webhook.retry_cycle.run",
+        resource_type="webhook_delivery",
+        resource_id=None,
+        actor_user_id=auth.user_id,
+        actor_api_token_id=auth.api_token_id,
+        source_ip=get_request_ip(request),
+        details={"task_id": task.id},
+    )
+    return WebhookDeadLetterRunResponse(queued=True, task_id=task.id)
 
 
 @router.get("/{delivery_id}", response_model=WebhookDeliveryDetailOut)
@@ -132,6 +155,7 @@ def discard_webhook_delivery(
 
     delivery.status = "discarded"
     delivery.discarded_at = datetime.now(timezone.utc)
+    delivery.next_retry_at = None
     db.add(delivery)
     db.commit()
     db.refresh(delivery)

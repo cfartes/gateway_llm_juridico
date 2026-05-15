@@ -365,6 +365,13 @@ curl -X POST "http://localhost:8000/api/v1/admin/webhooks/deliveries/<DELIVERY_I
   -H "Authorization: Bearer <SUPERADMIN_JWT>"
 ```
 
+Trigger one automatic dead-letter retry cycle:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/admin/webhooks/deliveries/retry-dead-letter/run" \
+  -H "Authorization: Bearer <SUPERADMIN_JWT>"
+```
+
 Discard delivery:
 
 ```bash

@@ -28,8 +28,11 @@ class WebhookDeliveryOut(BaseModel):
     last_error: str | None
     last_response_preview: str | None
     last_attempt_at: datetime | None
+    next_retry_at: datetime | None
     delivered_at: datetime | None
     discarded_at: datetime | None
+    alert_last_sent_at: datetime | None
+    alert_count: int
     created_at: datetime
     updated_at: datetime
 
@@ -75,3 +78,8 @@ class WebhookDeliveryMetricsOut(BaseModel):
     avg_attempt_duration_ms: float
     top_failed_callbacks: list[WebhookCallbackFailureOut]
     top_failed_tenants: list[WebhookTenantFailureOut]
+
+
+class WebhookDeadLetterRunResponse(BaseModel):
+    queued: bool
+    task_id: str
