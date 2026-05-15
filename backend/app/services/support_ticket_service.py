@@ -206,6 +206,7 @@ def create_ticket_attachment(
     filename: str,
     content_type: str | None,
     content: bytes,
+    message_id: str | None = None,
     is_internal: bool = False,
 ) -> SupportTicketAttachment:
     safe_filename = filename or "attachment.bin"
@@ -225,9 +226,25 @@ def create_ticket_attachment(
                 pass
             raise HTTPException(status_code=400, detail=f"ZIP has blocked files: {blocked[:5]}")
 
+    linked_message_id: str | None = None
+    if message_id:
+        linked = (
+            db.query(SupportTicketMessage)
+            .filter(
+                SupportTicketMessage.id == message_id,
+                SupportTicketMessage.ticket_id == ticket.id,
+                SupportTicketMessage.tenant_id == ticket.tenant_id,
+            )
+            .first()
+        )
+        if not linked:
+            raise HTTPException(status_code=400, detail="Invalid message_id for this ticket.")
+        linked_message_id = linked.id
+
     item = SupportTicketAttachment(
         ticket_id=ticket.id,
         tenant_id=ticket.tenant_id,
+        message_id=linked_message_id,
         uploaded_by_user_id=uploaded_by_user_id,
         uploaded_by_role=uploaded_by_role,
         original_name=safe_filename,
@@ -247,6 +264,7 @@ def create_ticket_attachment(
             "tenant_id": ticket.tenant_id,
             "ticket_id": ticket.id,
             "attachment_id": item.id,
+            "message_id": linked_message_id,
             "uploaded_by_role": uploaded_by_role,
             "is_internal": bool(is_internal),
             "size_bytes": int(item.size_bytes),

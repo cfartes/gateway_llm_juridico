@@ -10,6 +10,7 @@ class SupportTicketAttachment(UUIDTimestampMixin, Base):
 
     ticket_id: Mapped[str] = mapped_column(String(36), ForeignKey("support_tickets.id", ondelete="CASCADE"), index=True, nullable=False)
     tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=False)
+    message_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("support_ticket_messages.id", ondelete="SET NULL"), index=True, nullable=True)
     uploaded_by_user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     uploaded_by_role: Mapped[str] = mapped_column(String(32), nullable=False)
     original_name: Mapped[str] = mapped_column(String(255), nullable=False)

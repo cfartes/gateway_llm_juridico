@@ -37,6 +37,7 @@ type TicketAttachment = {
   id: string;
   ticket_id: string;
   tenant_id: string;
+  message_id: string | null;
   uploaded_by_user_id: string | null;
   uploaded_by_role: string;
   original_name: string;
@@ -60,6 +61,7 @@ export default function SuperAdminSupportPage() {
   const [thread, setThread] = useState<TicketMessage[]>([]);
   const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
   const [threadMessage, setThreadMessage] = useState("");
+  const [attachmentMessageId, setAttachmentMessageId] = useState("");
   const [threadInternal, setThreadInternal] = useState(false);
   const [sendingThread, setSendingThread] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
@@ -123,6 +125,7 @@ export default function SuperAdminSupportPage() {
       const att = await authenticatedJson<TicketAttachment[]>(API_BASE, `/admin/support/tickets/${ticketId}/attachments`, token);
       setThread(data);
       setAttachments(att);
+      setAttachmentMessageId(data.length ? data[data.length - 1].id : "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load thread");
     }
@@ -161,6 +164,7 @@ export default function SuperAdminSupportPage() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("is_internal", threadInternal ? "true" : "false");
+      if (attachmentMessageId) formData.append("message_id", attachmentMessageId);
       const response = await fetch(`${API_BASE}/admin/support/tickets/${selectedTicketId}/attachments`, {
         method: "POST",
         credentials: "include",
@@ -312,7 +316,9 @@ export default function SuperAdminSupportPage() {
                     {attachments.map((att) => (
                       <div key={att.id} className={`flex items-center justify-between rounded border px-3 py-2 text-sm ${att.is_internal ? "border-amber-200 bg-amber-50" : "border-[#e8edf6] bg-white"}`}>
                         <span className="text-[#334766]">
-                          {att.original_name} ({Math.round(att.size_bytes / 1024)} KB){att.is_internal ? " [internal]" : ""}
+                          {att.original_name} ({Math.round(att.size_bytes / 1024)} KB)
+                          {att.is_internal ? " [internal]" : ""}
+                          {att.message_id ? ` | linked to message ${att.message_id.slice(0, 8)}` : ""}
                         </span>
                         <Button type="button" variant="outline" onClick={() => void downloadAttachment(att.id, att.original_name)}>
                           Download
@@ -322,6 +328,19 @@ export default function SuperAdminSupportPage() {
                     {!attachments.length ? <p className="text-xs text-[#7586a3]">No attachments yet.</p> : null}
                   </div>
                   <div className="mt-3">
+                    <label className="mb-1 block text-xs text-[#6f80a0]">Link attachment to message (optional)</label>
+                    <select
+                      value={attachmentMessageId}
+                      onChange={(e) => setAttachmentMessageId(e.target.value)}
+                      className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                    >
+                      <option value="">No message link</option>
+                      {thread.map((msg) => (
+                        <option key={msg.id} value={msg.id}>
+                          {new Date(msg.created_at).toLocaleString()} | {msg.author_role} | {msg.message.slice(0, 48)}
+                        </option>
+                      ))}
+                    </select>
                     <input type="file" onChange={uploadAttachment} disabled={uploadingAttachment} />
                     <p className="mt-1 text-xs text-[#6f80a0]">Internal flag follows checkbox below when uploading.</p>
                   </div>

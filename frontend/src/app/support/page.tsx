@@ -40,6 +40,7 @@ type SupportTicketAttachment = {
   id: string;
   ticket_id: string;
   tenant_id: string;
+  message_id: string | null;
   uploaded_by_user_id: string | null;
   uploaded_by_role: string;
   original_name: string;
@@ -66,6 +67,7 @@ export default function SupportPage() {
   const [thread, setThread] = useState<SupportTicketMessage[]>([]);
   const [attachments, setAttachments] = useState<SupportTicketAttachment[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [attachmentMessageId, setAttachmentMessageId] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [error, setError] = useState("");
@@ -134,6 +136,7 @@ export default function SupportPage() {
       const att = await authenticatedJson<SupportTicketAttachment[]>(API_BASE, `/support/tickets/${ticketId}/attachments`, token);
       setThread(items);
       setAttachments(att);
+      setAttachmentMessageId(items.length ? items[items.length - 1].id : "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load ticket thread");
     }
@@ -170,6 +173,7 @@ export default function SupportPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (attachmentMessageId) formData.append("message_id", attachmentMessageId);
       const response = await fetch(`${API_BASE}/support/tickets/${selectedTicketId}/attachments`, {
         method: "POST",
         credentials: "include",
@@ -326,7 +330,10 @@ export default function SupportPage() {
                   <div className="mt-2 space-y-2">
                     {attachments.map((att) => (
                       <div key={att.id} className="flex items-center justify-between rounded border border-[#e8edf6] bg-white px-3 py-2 text-sm">
-                        <span className="text-[#334766]">{att.original_name} ({Math.round(att.size_bytes / 1024)} KB)</span>
+                        <span className="text-[#334766]">
+                          {att.original_name} ({Math.round(att.size_bytes / 1024)} KB)
+                          {att.message_id ? ` | linked to message ${att.message_id.slice(0, 8)}` : ""}
+                        </span>
                         <Button type="button" variant="outline" onClick={() => void downloadAttachment(att.id, att.original_name)}>
                           Download
                         </Button>
@@ -335,6 +342,20 @@ export default function SupportPage() {
                     {!attachments.length ? <p className="text-xs text-[#7586a3]">No attachments yet.</p> : null}
                   </div>
                   <div className="mt-3">
+                    <label className="mb-1 block text-xs text-[#6f80a0]">Link attachment to message (optional)</label>
+                    <select
+                      value={attachmentMessageId}
+                      onChange={(e) => setAttachmentMessageId(e.target.value)}
+                      className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                      disabled={!canCreate}
+                    >
+                      <option value="">No message link</option>
+                      {thread.map((msg) => (
+                        <option key={msg.id} value={msg.id}>
+                          {new Date(msg.created_at).toLocaleString()} | {msg.author_role} | {msg.message.slice(0, 48)}
+                        </option>
+                      ))}
+                    </select>
                     <input type="file" onChange={uploadAttachment} disabled={!canCreate || uploadingAttachment} />
                     <p className="mt-1 text-xs text-[#6f80a0]">Allowed formats follow secure upload policy. Max 20MB per attachment.</p>
                   </div>

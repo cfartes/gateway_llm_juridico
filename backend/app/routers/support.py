@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.core.deps import get_request_ip, require_roles
 from app.core.types import UserRole
 from app.models.support_ticket import SupportTicket
+from app.models.support_ticket_message import SupportTicketMessage
 from app.schemas.support_ticket import (
     SupportTicketAttachmentOut,
     SupportTicketCreateRequest,
@@ -140,12 +141,26 @@ async def upload_ticket_attachment_tenant(
     ticket_id: str,
     request: Request,
     file: UploadFile = File(...),
+    message_id: str | None = Form(default=None),
     auth=Depends(require_roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.ANALYST)),
     db: Session = Depends(get_db),
 ):
     ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id, SupportTicket.tenant_id == auth.tenant_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Support ticket not found")
+    if message_id:
+        linked = (
+            db.query(SupportTicketMessage)
+            .filter(
+                SupportTicketMessage.id == message_id,
+                SupportTicketMessage.ticket_id == ticket.id,
+                SupportTicketMessage.tenant_id == auth.tenant_id,
+                SupportTicketMessage.is_internal.is_(False),
+            )
+            .first()
+        )
+        if not linked:
+            raise HTTPException(status_code=400, detail="Invalid message_id for this ticket.")
     content = await file.read()
     item = create_ticket_attachment(
         db,
@@ -155,6 +170,7 @@ async def upload_ticket_attachment_tenant(
         filename=file.filename or "attachment.bin",
         content_type=file.content_type,
         content=content,
+        message_id=message_id,
         is_internal=False,
     )
     write_audit_log(
@@ -166,7 +182,7 @@ async def upload_ticket_attachment_tenant(
         actor_user_id=auth.user_id,
         actor_api_token_id=auth.api_token_id,
         source_ip=get_request_ip(request),
-        details={"ticket_id": ticket.id, "filename": item.original_name, "size_bytes": item.size_bytes},
+        details={"ticket_id": ticket.id, "filename": item.original_name, "size_bytes": item.size_bytes, "message_id": item.message_id},
     )
     return item
 

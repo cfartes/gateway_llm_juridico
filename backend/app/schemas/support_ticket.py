@@ -58,6 +58,7 @@ class SupportTicketAttachmentOut(BaseModel):
     id: str
     ticket_id: str
     tenant_id: str
+    message_id: str | None = None
     uploaded_by_user_id: str | None = None
     uploaded_by_role: str
     original_name: str

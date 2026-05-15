@@ -64,6 +64,7 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - anexos do chamado (superadmin): `GET/POST /api/v1/admin/support/tickets/{ticket_id}/attachments`
   - download de anexo (superadmin): `GET /api/v1/admin/support/tickets/{ticket_id}/attachments/{attachment_id}/download`
   - visibilidade: anexos `is_internal=true` aparecem somente para superadmin
+  - vínculo opcional de anexo com mensagem da thread via `message_id` (multipart/form-data)
 - SLA operacional no SuperAdmin Ops:
   - pendências de upgrade de plano acima do SLA
   - chamados abertos aguardando primeira resposta acima do SLA

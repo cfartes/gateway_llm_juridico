@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.core.deps import get_request_ip, require_roles
 from app.core.types import UserRole
 from app.models.support_ticket import SupportTicket
+from app.models.support_ticket_message import SupportTicketMessage
 from app.schemas.support_ticket import SupportTicketAttachmentOut, SupportTicketMessageCreateRequest, SupportTicketMessageOut, SupportTicketOut, SupportTicketStatusUpdateRequest
 from app.services.audit_service import write_audit_log
 from app.services.support_ticket_service import (
@@ -137,12 +138,25 @@ async def upload_ticket_attachment_admin(
     request: Request,
     file: UploadFile = File(...),
     is_internal: bool = Form(default=False),
+    message_id: str | None = Form(default=None),
     auth=Depends(require_roles(UserRole.SUPERADMIN)),
     db: Session = Depends(get_db),
 ):
     ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Support ticket not found")
+    if message_id:
+        linked = (
+            db.query(SupportTicketMessage)
+            .filter(
+                SupportTicketMessage.id == message_id,
+                SupportTicketMessage.ticket_id == ticket.id,
+                SupportTicketMessage.tenant_id == ticket.tenant_id,
+            )
+            .first()
+        )
+        if not linked:
+            raise HTTPException(status_code=400, detail="Invalid message_id for this ticket.")
     content = await file.read()
     item = create_ticket_attachment(
         db,
@@ -152,6 +166,7 @@ async def upload_ticket_attachment_admin(
         filename=file.filename or "attachment.bin",
         content_type=file.content_type,
         content=content,
+        message_id=message_id,
         is_internal=bool(is_internal),
     )
     write_audit_log(
@@ -163,7 +178,12 @@ async def upload_ticket_attachment_admin(
         actor_user_id=auth.user_id,
         actor_api_token_id=auth.api_token_id,
         source_ip=get_request_ip(request),
-        details={"ticket_id": ticket.id, "is_internal": bool(item.is_internal), "filename": item.original_name},
+        details={
+            "ticket_id": ticket.id,
+            "is_internal": bool(item.is_internal),
+            "filename": item.original_name,
+            "message_id": item.message_id,
+        },
     )
     return item
 
