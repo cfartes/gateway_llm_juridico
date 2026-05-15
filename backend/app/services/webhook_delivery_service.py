@@ -315,6 +315,51 @@ def list_dead_letter_retry_candidates(
     )
 
 
+def discard_exhausted_dead_letters(
+    db: Session,
+    *,
+    max_total_attempts: int,
+    limit: int = 200,
+) -> int:
+    max_attempts = max(1, max_total_attempts)
+    capped_limit = max(1, min(limit, 1000))
+    now = datetime.now(timezone.utc)
+
+    items = (
+        db.query(WebhookDelivery)
+        .filter(
+            WebhookDelivery.status == "dead_letter",
+            WebhookDelivery.discarded_at.is_(None),
+            WebhookDelivery.attempt_count >= max_attempts,
+        )
+        .order_by(WebhookDelivery.updated_at.asc())
+        .limit(capped_limit)
+        .all()
+    )
+
+    if not items:
+        return 0
+
+    for delivery in items:
+        delivery.status = "discarded"
+        delivery.discarded_at = now
+        delivery.next_retry_at = None
+        db.add(delivery)
+        send_ops_alert(
+            "webhook.dead_letter.exhausted",
+            {
+                "delivery_id": delivery.id,
+                "tenant_id": delivery.tenant_id,
+                "callback_url": delivery.callback_url,
+                "attempt_count": delivery.attempt_count,
+                "max_allowed_attempts": max_attempts,
+            },
+        )
+
+    db.commit()
+    return len(items)
+
+
 def send_ops_alert(event_type: str, payload: dict[str, Any]) -> None:
     alert_url = (settings.ops_alert_webhook_url or "").strip()
     if not alert_url:

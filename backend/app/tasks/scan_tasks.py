@@ -16,7 +16,7 @@ from app.services.analyze_gateway_service import (
     trigger_result_webhook,
 )
 from app.services.webhook_delivery_service import persist_webhook_delivery_result
-from app.services.webhook_delivery_service import list_dead_letter_retry_candidates, retry_delivery_now
+from app.services.webhook_delivery_service import discard_exhausted_dead_letters, list_dead_letter_retry_candidates, retry_delivery_now
 from app.tasks.celery_app import celery_app
 from app.utils.crypto import encrypt_text
 
@@ -179,7 +179,12 @@ def retry_dead_letter_webhooks_task() -> dict:
     retried = 0
     delivered = 0
     still_dead_letter = 0
+    exhausted_discarded = 0
     try:
+        exhausted_discarded = discard_exhausted_dead_letters(
+            db,
+            max_total_attempts=settings.webhook_dead_letter_auto_retry_max_total_attempts,
+        )
         candidates = list_dead_letter_retry_candidates(
             db,
             min_age_seconds=settings.webhook_dead_letter_auto_retry_min_age_seconds,
@@ -209,6 +214,7 @@ def retry_dead_letter_webhooks_task() -> dict:
             "retried": retried,
             "delivered": delivered,
             "still_dead_letter": still_dead_letter,
+            "exhausted_discarded": exhausted_discarded,
         }
     finally:
         db.close()

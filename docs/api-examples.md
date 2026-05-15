@@ -418,3 +418,15 @@ curl -X POST "http://localhost:8000/api/v1/webhooks/deliveries/<DELIVERY_ID>/ret
   -H "Authorization: Bearer <JWT ou API_TOKEN>"
 ```
 
+Notes:
+
+- Dead-letter items that reach `WEBHOOK_DEAD_LETTER_AUTO_RETRY_MAX_TOTAL_ATTEMPTS` are automatically moved to `discarded`.
+- Exhausted discards generate ops alert event `webhook.dead_letter.exhausted` when `OPS_ALERT_WEBHOOK_URL` is configured.
+
+## Tenant Queue Overview API
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/queues/overview?window_hours=24" \
+  -H "Authorization: Bearer <JWT ou API_TOKEN>"
+```
+
