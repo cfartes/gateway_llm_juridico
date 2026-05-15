@@ -17,6 +17,7 @@ from app.services.analyze_gateway_service import (
 )
 from app.services.webhook_delivery_service import persist_webhook_delivery_result
 from app.services.webhook_delivery_service import discard_exhausted_dead_letters, list_dead_letter_retry_candidates, retry_delivery_now
+from app.services.ops_alerting_service import evaluate_slo_alerts
 from app.tasks.celery_app import celery_app
 from app.utils.crypto import encrypt_text
 
@@ -216,6 +217,20 @@ def retry_dead_letter_webhooks_task() -> dict:
             "still_dead_letter": still_dead_letter,
             "exhausted_discarded": exhausted_discarded,
         }
+    finally:
+        db.close()
+
+
+@celery_app.task(name="evaluate_ops_slo_alerts_task")
+def evaluate_ops_slo_alerts_task() -> dict:
+    db = SessionLocal()
+    try:
+        return evaluate_slo_alerts(
+            db,
+            scope_key="global",
+            tenant_id=None,
+            window_hours=int(settings.ops_slo_alert_window_hours),
+        )
     finally:
         db.close()
 

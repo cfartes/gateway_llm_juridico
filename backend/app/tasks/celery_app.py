@@ -33,7 +33,12 @@ celery_app.conf.update(
             "task": "retry_dead_letter_webhooks_task",
             "schedule": max(30, int(settings.webhook_dead_letter_auto_retry_interval_seconds)),
             "options": {"queue": "celery", "routing_key": "celery"},
-        }
+        },
+        "evaluate-ops-slo-alerts": {
+            "task": "evaluate_ops_slo_alerts_task",
+            "schedule": max(30, int(settings.ops_slo_alert_interval_seconds)),
+            "options": {"queue": "celery", "routing_key": "celery"},
+        },
     },
 )
 

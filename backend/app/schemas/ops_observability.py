@@ -13,6 +13,18 @@ class SLOIndicatorOut(BaseModel):
     status: str
 
 
+class ActiveOpsAlertOut(BaseModel):
+    scope_key: str
+    indicator_name: str
+    status: str
+    actual: float
+    target: float
+    unit: str
+    alert_count: int
+    last_sent_at: datetime | None = None
+    updated_at: datetime
+
+
 class ScanOpsMetricsOut(BaseModel):
     total_jobs: int = Field(ge=0)
     completed_jobs: int = Field(ge=0)
@@ -39,4 +51,12 @@ class OpsOverviewOut(BaseModel):
     scans: ScanOpsMetricsOut
     webhooks: WebhookOpsMetricsOut
     slo: list[SLOIndicatorOut]
+    active_alerts: list[ActiveOpsAlertOut] = Field(default_factory=list)
 
+
+class OpsAlertEvaluationOut(BaseModel):
+    scope_key: str
+    window_hours: int
+    updated_items: int
+    breaches_sent: int
+    recoveries_sent: int

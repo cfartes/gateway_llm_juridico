@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     ops_alert_webhook_url: str | None = None
     ops_alert_timeout_seconds: float = 8.0
     ops_alert_cooldown_seconds: int = 900
+    ops_slo_alert_interval_seconds: int = 120
+    ops_slo_alert_window_hours: int = 24
     queue_eta_worker_slots_light: int = 1
     queue_eta_worker_slots_standard: int = 1
     queue_eta_worker_slots_heavy: int = 1

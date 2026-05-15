@@ -49,6 +49,17 @@ type OpsOverview = {
     delivery_success_rate_percent: number;
   };
   slo: SLOItem[];
+  active_alerts: {
+    scope_key: string;
+    indicator_name: string;
+    status: string;
+    actual: number;
+    target: number;
+    unit: string;
+    alert_count: number;
+    last_sent_at: string | null;
+    updated_at: string;
+  }[];
 };
 
 type UserMe = {
@@ -74,7 +85,9 @@ export default function SuperAdminOpsPage() {
   const [windowHours, setWindowHours] = useState(24);
   const [tenantFilter, setTenantFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [overview, setOverview] = useState<OpsOverview | null>(null);
 
   const load = useCallback(async (accessToken: string) => {
@@ -103,6 +116,28 @@ export default function SuperAdminOpsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load(token);
   }, [token, load]);
+
+  async function runAlertEvaluation() {
+    if (!token) return;
+    setEvaluating(true);
+    setError("");
+    setSuccess("");
+    try {
+      const params = new URLSearchParams();
+      params.set("window_hours", String(windowHours));
+      if (tenantFilter.trim()) params.set("tenant_id", tenantFilter.trim());
+      const result = await authenticatedJson<{
+        breaches_sent: number;
+        recoveries_sent: number;
+      }>(API_BASE, `/admin/ops/alerts/evaluate?${params.toString()}`, token, { method: "POST" });
+      setSuccess(`Alert evaluation completed. Breaches: ${result.breaches_sent}, Recoveries: ${result.recoveries_sent}.`);
+      await load(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to evaluate SLO alerts");
+    } finally {
+      setEvaluating(false);
+    }
+  }
 
   const passCount = useMemo(() => (overview ? overview.slo.filter((item) => item.status === "pass").length : 0), [overview]);
   const totalCount = overview?.slo.length ?? 0;
@@ -158,6 +193,9 @@ export default function SuperAdminOpsPage() {
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
                       {loading ? "Refreshing..." : "Refresh"}
                     </Button>
+                    <Button className="bg-[#1f3f72] hover:bg-[#183561]" onClick={() => void runAlertEvaluation()} disabled={evaluating}>
+                      {evaluating ? "Evaluating..." : "Run Alert Evaluation"}
+                    </Button>
                   </div>
                 </Card>
 
@@ -209,6 +247,43 @@ export default function SuperAdminOpsPage() {
                     </table>
                   </div>
                 </Card>
+
+                <Card className="rounded-xl p-4">
+                  <h2 className="text-lg font-semibold text-[#213552]">Active Alerts</h2>
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                          <th className="py-2">Indicator</th>
+                          <th className="py-2">Status</th>
+                          <th className="py-2">Actual</th>
+                          <th className="py-2">Target</th>
+                          <th className="py-2">Alert Count</th>
+                          <th className="py-2">Last Sent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(overview?.active_alerts ?? []).map((item) => (
+                          <tr key={`${item.scope_key}:${item.indicator_name}`} className="border-b border-[#eff3f8]">
+                            <td className="py-2 text-[#334766]">{item.indicator_name}</td>
+                            <td className="py-2"><Badge className={sloTone(item.status)}>{item.status.toUpperCase()}</Badge></td>
+                            <td className="py-2 text-[#334766]">{item.actual} {item.unit}</td>
+                            <td className="py-2 text-[#334766]">{item.target} {item.unit}</td>
+                            <td className="py-2 text-[#334766]">{item.alert_count}</td>
+                            <td className="py-2 text-[#4f6386]">{fmtDate(item.last_sent_at ?? item.updated_at)}</td>
+                          </tr>
+                        ))}
+                        {!(overview?.active_alerts?.length) ? (
+                          <tr>
+                            <td colSpan={6} className="py-6 text-center text-[#7586a3]">
+                              No active SLO alerts.
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
               </>
             )}
           </div>
@@ -217,6 +292,11 @@ export default function SuperAdminOpsPage() {
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           Error: {error}
+        </div>
+      ) : null}
+      {success ? (
+        <div className="fixed bottom-4 left-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {success}
         </div>
       ) : null}
     </div>

@@ -32,6 +32,7 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - `GET /api/v1/files/{file_id}/rag-md`
 - Observabilidade/SLO SuperAdmin:
   - `GET /api/v1/admin/ops/overview`
+  - `POST /api/v1/admin/ops/alerts/evaluate`
   - Dashboard: `/superadmin/ops`
 - Quarentena com revisão manual (approve/reject)
 - Dead-letter de webhooks com replay manual e automático
