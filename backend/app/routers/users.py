@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -10,6 +10,7 @@ from app.services.user_management_service import (
     create_tenant_user,
     get_tenant_user,
     list_tenant_users,
+    reset_temporary_password,
     resend_invitation_email,
     send_user_invitation_email,
     update_tenant_user,
@@ -21,10 +22,25 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("", response_model=list[TenantUserOut])
 def list_users(
+    q: str | None = Query(default=None),
+    role: UserRole | None = Query(default=None),
+    is_active: bool | None = Query(default=None),
+    email_confirmed: bool | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     auth=Depends(require_roles(UserRole.ADMIN, UserRole.SUPERADMIN)),
     db: Session = Depends(get_db),
 ):
-    return list_tenant_users(db, tenant_id=auth.tenant_id)
+    return list_tenant_users(
+        db,
+        tenant_id=auth.tenant_id,
+        q=q,
+        role=role,
+        is_active=is_active,
+        email_confirmed=email_confirmed,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.post("", response_model=TenantUserOut)
@@ -70,6 +86,8 @@ def patch_user(
     target = get_tenant_user(db, tenant_id=auth.tenant_id, user_id=user_id)
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
+    if target.role == UserRole.SUPERADMIN:
+        raise HTTPException(status_code=400, detail="Cannot modify superadmin users in tenant management")
     if target.id == auth.user_id and payload.is_active is False:
         raise HTTPException(status_code=400, detail="You cannot disable your own user")
     try:
@@ -128,3 +146,32 @@ def resend_invite(
         details={"email": user.email},
     )
     return user
+
+
+@router.post("/{user_id}/reset-temp-password", response_model=TenantUserOut)
+def reset_temp_password(
+    user_id: str,
+    request: Request,
+    auth=Depends(require_roles(UserRole.ADMIN, UserRole.SUPERADMIN)),
+    db: Session = Depends(get_db),
+):
+    user = get_tenant_user(db, tenant_id=auth.tenant_id, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.role == UserRole.SUPERADMIN:
+        raise HTTPException(status_code=400, detail="Cannot reset temporary password for superadmin users")
+    if user.id == auth.user_id:
+        raise HTTPException(status_code=400, detail="You cannot reset your own password from this action")
+    updated = reset_temporary_password(db, user=user)
+    write_audit_log(
+        db,
+        tenant_id=auth.tenant_id,
+        action="tenant.user.reset_temp_password",
+        resource_type="user",
+        resource_id=updated.id,
+        actor_user_id=auth.user_id,
+        actor_api_token_id=auth.api_token_id,
+        source_ip=get_request_ip(request),
+        details={"email": updated.email},
+    )
+    return updated

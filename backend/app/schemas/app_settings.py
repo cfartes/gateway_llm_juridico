@@ -48,3 +48,11 @@ class TenantAppSettingsUpdateRequest(BaseModel):
     retention: RetentionSettingsUpdateRequest
     notifications: NotificationSettingsUpdateRequest
 
+
+class SmtpTestRequest(BaseModel):
+    recipient_email: str | None = None
+
+
+class SmtpTestResponse(BaseModel):
+    sent: bool
+    message: str

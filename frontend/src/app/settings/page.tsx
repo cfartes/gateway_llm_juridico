@@ -103,6 +103,8 @@ export default function SettingsPage() {
   const [upgradeRequests, setUpgradeRequests] = useState<TenantUpgradeRequest[]>([]);
   const [upgradeReason, setUpgradeReason] = useState("");
   const [requestingUpgrade, setRequestingUpgrade] = useState(false);
+  const [smtpRecipient, setSmtpRecipient] = useState("");
+  const [testingSmtp, setTestingSmtp] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -208,6 +210,27 @@ export default function SettingsPage() {
       setError(err instanceof Error ? err.message : "Failed to request plan upgrade");
     } finally {
       setRequestingUpgrade(false);
+    }
+  }
+
+  async function testSmtp() {
+    if (!token || !canEdit) return;
+    setTestingSmtp(true);
+    setError("");
+    setSuccess("");
+    try {
+      const result = await authenticatedJson<{ sent: boolean; message: string }>(API_BASE, "/settings/test-smtp", token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient_email: smtpRecipient.trim() || null,
+        }),
+      });
+      setSuccess(result.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send SMTP test");
+    } finally {
+      setTestingSmtp(false);
     }
   }
 
@@ -440,6 +463,22 @@ export default function SettingsPage() {
                       />
                       Notify on dead-letter
                     </label>
+                  </div>
+                </div>
+                <div className="mt-4 rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
+                  <p className="text-sm font-semibold text-[#2c456b]">SMTP Test</p>
+                  <p className="mt-1 text-xs text-[#6f80a0]">Send a test email using current SMTP backend settings.</p>
+                  <div className="mt-2 flex flex-col gap-2 md:flex-row">
+                    <Input
+                      type="email"
+                      placeholder="Recipient email (optional: current user will be used)"
+                      value={smtpRecipient}
+                      onChange={(e) => setSmtpRecipient(e.target.value)}
+                      disabled={!canEdit}
+                    />
+                    <Button type="button" variant="outline" onClick={() => void testSmtp()} disabled={!canEdit || testingSmtp}>
+                      {testingSmtp ? "Sending..." : "Send SMTP Test"}
+                    </Button>
                   </div>
                 </div>
               </Card>

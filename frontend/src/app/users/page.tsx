@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
@@ -36,32 +36,51 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [rowSavingId, setRowSavingId] = useState("");
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "analyst" | "viewer">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [emailFilter, setEmailFilter] = useState<"all" | "confirmed" | "pending">("all");
+  const [offset, setOffset] = useState(0);
+  const pageSize = 10;
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const canManage = me ? me.role === "admin" || me.role === "superadmin" : false;
 
-  useEffect(() => {
-    if (!token) return;
-    void load(token);
-  }, [token]);
-
-  async function load(accessToken: string) {
+  const load = useCallback(async (accessToken: string, nextOffset: number) => {
     setLoading(true);
     setError("");
     try {
+      const params = new URLSearchParams();
+      if (query.trim()) params.set("q", query.trim());
+      if (roleFilter !== "all") params.set("role", roleFilter);
+      if (statusFilter === "active") params.set("is_active", "true");
+      if (statusFilter === "inactive") params.set("is_active", "false");
+      if (emailFilter === "confirmed") params.set("email_confirmed", "true");
+      if (emailFilter === "pending") params.set("email_confirmed", "false");
+      params.set("limit", String(pageSize));
+      params.set("offset", String(Math.max(0, nextOffset)));
       const [meData, userData] = await Promise.all([
         authenticatedJson<UserMe>(API_BASE, "/auth/me", accessToken),
-        authenticatedJson<TenantUser[]>(API_BASE, "/users", accessToken),
+        authenticatedJson<TenantUser[]>(API_BASE, `/users?${params.toString()}`, accessToken),
       ]);
       setMe(meData);
       setUsers(userData);
+      setOffset(Math.max(0, nextOffset));
+      setHasNextPage(userData.length === pageSize);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
       setLoading(false);
     }
-  }
+  }, [emailFilter, query, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    if (!token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load(token, 0);
+  }, [token, load]);
 
   async function createUser(event: FormEvent) {
     event.preventDefault();
@@ -83,7 +102,7 @@ export default function UsersPage() {
       setEmail("");
       setRole("analyst");
       setSuccess("User created. Invitation email sent with confirmation link and temporary password.");
-      await load(token);
+      await load(token, 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
@@ -103,7 +122,7 @@ export default function UsersPage() {
         body: JSON.stringify(payload),
       });
       setSuccess(successMessage);
-      await load(token);
+      await load(token, offset);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update user");
     } finally {
@@ -121,9 +140,27 @@ export default function UsersPage() {
         method: "POST",
       });
       setSuccess("Invitation email resent and temporary password reset to Mudar@123.");
-      await load(token);
+      await load(token, offset);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to resend invitation");
+    } finally {
+      setRowSavingId("");
+    }
+  }
+
+  async function resetTemporaryPassword(userId: string) {
+    if (!token || !canManage) return;
+    setRowSavingId(userId);
+    setError("");
+    setSuccess("");
+    try {
+      await authenticatedJson<TenantUser>(API_BASE, `/users/${userId}/reset-temp-password`, token, {
+        method: "POST",
+      });
+      setSuccess("Temporary password reset to Mudar@123. User must change password on next login.");
+      await load(token, offset);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset temporary password");
     } finally {
       setRowSavingId("");
     }
@@ -169,8 +206,30 @@ export default function UsersPage() {
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-[#213552]">Users</h2>
-                <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
+                <Button variant="outline" onClick={() => token && load(token, offset)} disabled={loading}>
                   {loading ? "Refreshing..." : "Refresh"}
+                </Button>
+              </div>
+              <div className="mb-3 grid gap-2 md:grid-cols-5">
+                <Input placeholder="Search name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as "all" | "admin" | "analyst" | "viewer")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm">
+                  <option value="all">All roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="analyst">Analyst</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm">
+                  <option value="all">All status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <select value={emailFilter} onChange={(e) => setEmailFilter(e.target.value as "all" | "confirmed" | "pending")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm">
+                  <option value="all">All email states</option>
+                  <option value="confirmed">Email confirmed</option>
+                  <option value="pending">Email pending</option>
+                </select>
+                <Button type="button" variant="outline" onClick={() => token && load(token, 0)} disabled={loading}>
+                  Apply Filters
                 </Button>
               </div>
               <div className="overflow-x-auto">
@@ -230,6 +289,14 @@ export default function UsersPage() {
                                 Resend Invite
                               </Button>
                             ) : null}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => void resetTemporaryPassword(item.id)}
+                              disabled={!canManage || rowSavingId === item.id}
+                            >
+                              Reset Temp Password
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -241,6 +308,25 @@ export default function UsersPage() {
                     ) : null}
                   </tbody>
                 </table>
+              </div>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => token && load(token, Math.max(0, offset - pageSize))}
+                  disabled={loading || offset === 0}
+                >
+                  Previous
+                </Button>
+                <span className="text-xs text-[#6f80a0]">Offset {offset}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => token && load(token, offset + pageSize)}
+                  disabled={loading || !hasNextPage}
+                >
+                  Next
+                </Button>
               </div>
             </Card>
           </div>

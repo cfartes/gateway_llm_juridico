@@ -4,6 +4,10 @@ from email.message import EmailMessage
 from app.core.config import settings
 
 
+def is_smtp_configured() -> bool:
+    return bool(settings.smtp_host.strip() and settings.smtp_from_email.strip())
+
+
 def send_email(*, subject: str, recipients: list[str], body_text: str, body_html: str | None = None) -> None:
     smtp_host = settings.smtp_host.strip()
     clean_recipients = [item.strip() for item in recipients if item and item.strip()]

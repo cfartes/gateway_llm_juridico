@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import or_
+
 from app.core.config import settings
 from app.core.security import hash_password
 from app.core.types import UserRole
@@ -9,13 +11,33 @@ from app.services.auth_service import create_email_verification_flow
 from app.services.email_service import send_email
 
 
-def list_tenant_users(db, *, tenant_id: str) -> list[User]:
-    return (
-        db.query(User)
-        .filter(User.tenant_id == tenant_id)
-        .order_by(User.created_at.desc())
-        .all()
-    )
+def list_tenant_users(
+    db,
+    *,
+    tenant_id: str,
+    q: str | None = None,
+    role: UserRole | None = None,
+    is_active: bool | None = None,
+    email_confirmed: bool | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[User]:
+    query = db.query(User).filter(User.tenant_id == tenant_id)
+    if q:
+        search = f"%{q.strip()}%"
+        query = query.filter(or_(User.email.ilike(search), User.full_name.ilike(search)))
+    if role is not None:
+        query = query.filter(User.role == role)
+    if is_active is not None:
+        query = query.filter(User.is_active.is_(bool(is_active)))
+    if email_confirmed is not None:
+        if email_confirmed:
+            query = query.filter(User.email_verified_at.is_not(None))
+        else:
+            query = query.filter(User.email_verified_at.is_(None))
+    capped_limit = max(1, min(int(limit), 100))
+    safe_offset = max(0, int(offset))
+    return query.order_by(User.created_at.desc()).offset(safe_offset).limit(capped_limit).all()
 
 
 def _validate_create_role(requested: UserRole) -> None:
@@ -98,6 +120,15 @@ def resend_invitation_email(db, *, user: User) -> str:
     db.refresh(user)
     token = create_email_verification_flow(db, user)
     return token
+
+
+def reset_temporary_password(db, *, user: User) -> User:
+    user.must_change_password = True
+    user.hashed_password = hash_password(settings.tenant_user_temp_password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 def verify_user_email_manually(db, *, user: User) -> User:
