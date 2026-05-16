@@ -16,10 +16,16 @@ export function clearSessionTokens(): void {
 }
 
 async function refreshAccessToken(apiBase: string): Promise<string | null> {
-  const response = await fetch(`${apiBase}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${apiBase}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    clearSessionTokens();
+    return null;
+  }
 
   if (!response.ok) {
     clearSessionTokens();
@@ -34,7 +40,12 @@ async function refreshAccessToken(apiBase: string): Promise<string | null> {
 export async function ensureAccessToken(apiBase: string): Promise<string | null> {
   const accessToken = getAccessToken();
   if (accessToken) return accessToken;
-  return refreshAccessToken(apiBase);
+  try {
+    return await refreshAccessToken(apiBase);
+  } catch {
+    clearSessionTokens();
+    return null;
+  }
 }
 
 export async function authenticatedJson<T>(

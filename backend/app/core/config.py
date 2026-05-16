@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     api_token_gateway_rate_limit_per_minute: int = 180
     user_gateway_rate_limit_per_minute: int = 90
 
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://localhost:3010"
     allowed_hosts: str = "localhost,127.0.0.1"
     force_https: bool = False
     hsts_seconds: int = 31536000

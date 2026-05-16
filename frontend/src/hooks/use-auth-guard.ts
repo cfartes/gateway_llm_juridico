@@ -15,13 +15,12 @@ export function useAuthGuard() {
 
   useEffect(() => {
     async function bootstrap() {
-      const stored = await ensureAccessToken(API_BASE);
-      if (!stored) {
-        router.replace("/login");
-        setReady(true);
-        return;
-      }
       try {
+        const stored = await ensureAccessToken(API_BASE);
+        if (!stored) {
+          router.replace("/login");
+          return;
+        }
         const response = await fetch(`${API_BASE}/auth/me`, {
           method: "GET",
           credentials: "include",
@@ -29,7 +28,6 @@ export function useAuthGuard() {
         });
         if (!response.ok) {
           router.replace("/login");
-          setReady(true);
           return;
         }
         const me = (await response.json()) as { must_change_password?: boolean; role?: string };
@@ -38,22 +36,19 @@ export function useAuthGuard() {
         if (me.must_change_password && pathname !== "/first-access") {
           router.replace("/first-access");
           setToken(stored);
-          setReady(true);
           return;
         }
         if (pathname.startsWith("/superadmin") && resolvedRole !== "superadmin") {
           router.replace("/");
           setToken(stored);
-          setReady(true);
           return;
         }
+        setToken(stored);
       } catch {
         router.replace("/login");
+      } finally {
         setReady(true);
-        return;
       }
-      setToken(stored);
-      setReady(true);
     }
     void bootstrap();
   }, [pathname, router]);
