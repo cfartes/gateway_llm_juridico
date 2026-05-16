@@ -15,7 +15,7 @@ from app.schemas.auth import (
 from app.schemas.document import DocumentOut
 from app.schemas.tenant import TenantOut
 from app.schemas.token import APITokenCreateRequest, APITokenCreateResponse, APITokenOut
-from app.schemas.user_management import TenantUserCreateRequest, TenantUserOut
+from app.schemas.user_management import TenantUserCreateRequest, TenantUserOut, TenantUserUpdateRequest
 
 __all__ = [
     "AnalysisResult",
@@ -39,5 +39,6 @@ __all__ = [
     "APITokenOut",
     "TenantUserCreateRequest",
     "TenantUserOut",
+    "TenantUserUpdateRequest",
 ]
 

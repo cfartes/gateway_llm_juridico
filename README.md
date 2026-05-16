@@ -18,6 +18,8 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 - Gestão de usuários por tenant (somente `admin`/`superadmin` do tenant):
   - `GET /api/v1/users`
   - `POST /api/v1/users`
+  - `PATCH /api/v1/users/{user_id}` (role, status, nome)
+  - `POST /api/v1/users/{user_id}/resend-invite`
   - criação com senha temporária padrão `Mudar@123`
   - envio de e-mail de confirmação com link de ativação
   - bloqueio de login antes de confirmar e-mail

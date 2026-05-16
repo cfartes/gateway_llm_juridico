@@ -24,6 +24,7 @@ type TenantUser = {
 };
 
 type UserMe = { role: string };
+type UpdatePayload = { full_name?: string; role?: "admin" | "analyst" | "viewer"; is_active?: boolean };
 
 export default function UsersPage() {
   const { token, ready } = useAuthGuard();
@@ -34,6 +35,7 @@ export default function UsersPage() {
   const [role, setRole] = useState<"admin" | "analyst" | "viewer">("analyst");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [rowSavingId, setRowSavingId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -86,6 +88,44 @@ export default function UsersPage() {
       setError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function patchUser(userId: string, payload: UpdatePayload, successMessage: string) {
+    if (!token || !canManage) return;
+    setRowSavingId(userId);
+    setError("");
+    setSuccess("");
+    try {
+      await authenticatedJson<TenantUser>(API_BASE, `/users/${userId}`, token, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      setSuccess(successMessage);
+      await load(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update user");
+    } finally {
+      setRowSavingId("");
+    }
+  }
+
+  async function resendInvite(userId: string) {
+    if (!token || !canManage) return;
+    setRowSavingId(userId);
+    setError("");
+    setSuccess("");
+    try {
+      await authenticatedJson<TenantUser>(API_BASE, `/users/${userId}/resend-invite`, token, {
+        method: "POST",
+      });
+      setSuccess("Invitation email resent and temporary password reset to Mudar@123.");
+      await load(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to resend invitation");
+    } finally {
+      setRowSavingId("");
     }
   }
 
@@ -143,6 +183,7 @@ export default function UsersPage() {
                       <th className="py-2">Email Confirmed</th>
                       <th className="py-2">First Access</th>
                       <th className="py-2">Status</th>
+                      <th className="py-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -150,15 +191,52 @@ export default function UsersPage() {
                       <tr key={item.id} className="border-b border-[#eff3f8]">
                         <td className="py-2 text-[#334766]">{item.full_name || "-"}</td>
                         <td className="py-2 text-[#334766]">{item.email}</td>
-                        <td className="py-2 text-[#334766]">{item.role.toUpperCase()}</td>
+                        <td className="py-2 text-[#334766]">
+                          {item.role === "superadmin" ? (
+                            <span>SUPERADMIN</span>
+                          ) : (
+                            <select
+                              value={item.role}
+                              onChange={(e) => void patchUser(item.id, { role: e.target.value as "admin" | "analyst" | "viewer" }, "User role updated.")}
+                              className="h-9 rounded-lg border border-[var(--color-border-strong)] bg-white px-2 text-xs"
+                              disabled={!canManage || rowSavingId === item.id}
+                            >
+                              <option value="analyst">Analyst</option>
+                              <option value="viewer">Viewer</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          )}
+                        </td>
                         <td className="py-2 text-[#4f6386]">{item.email_verified_at ? "Yes" : "Pending"}</td>
                         <td className="py-2 text-[#4f6386]">{item.must_change_password ? "Pending" : "Completed"}</td>
                         <td className="py-2 text-[#4f6386]">{item.is_active ? "Active" : "Inactive"}</td>
+                        <td className="py-2">
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => void patchUser(item.id, { is_active: !item.is_active }, item.is_active ? "User disabled." : "User enabled.")}
+                              disabled={!canManage || rowSavingId === item.id}
+                            >
+                              {item.is_active ? "Disable" : "Enable"}
+                            </Button>
+                            {!item.email_verified_at ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => void resendInvite(item.id)}
+                                disabled={!canManage || rowSavingId === item.id}
+                              >
+                                Resend Invite
+                              </Button>
+                            ) : null}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                     {!users.length ? (
                       <tr>
-                        <td colSpan={6} className="py-6 text-center text-[#7586a3]">No users found for this tenant.</td>
+                        <td colSpan={7} className="py-6 text-center text-[#7586a3]">No users found for this tenant.</td>
                       </tr>
                     ) : null}
                   </tbody>

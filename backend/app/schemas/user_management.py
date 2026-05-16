@@ -24,3 +24,9 @@ class TenantUserOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class TenantUserUpdateRequest(BaseModel):
+    full_name: str | None = Field(default=None, min_length=2, max_length=255)
+    role: UserRole | None = None
+    is_active: bool | None = None
