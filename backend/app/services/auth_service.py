@@ -5,17 +5,21 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
+    create_email_verification_token_secret,
     create_password_reset_token_secret,
     create_refresh_token_secret,
     hash_password,
+    hash_email_verification_token,
     hash_password_reset_token,
     hash_refresh_token_secret,
     validate_password_strength,
+    verify_email_verification_token,
     verify_password,
     verify_password_reset_token,
     verify_refresh_token_secret,
 )
 from app.core.types import UserRole
+from app.models.email_verification_token import EmailVerificationToken
 from app.models.password_reset_token import PasswordResetToken
 from app.models.refresh_token import RefreshToken
 from app.models.tenant import Tenant
@@ -46,6 +50,8 @@ def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
         hashed_password=hash_password(payload.password),
         role=UserRole.ADMIN,
         is_active=True,
+        email_verified_at=datetime.now(timezone.utc),
+        must_change_password=False,
     )
     db.add(tenant)
     db.add(user)
@@ -63,6 +69,8 @@ def authenticate_user(db: Session, payload: LoginRequest) -> User | None:
     if not user:
         return None
     if not verify_password(payload.password, user.hashed_password):
+        return None
+    if user.email_verified_at is None:
         return None
     return user
 
@@ -192,3 +200,61 @@ def confirm_password_reset(db: Session, raw_reset_token: str, new_password: str)
     db.add(record)
     db.commit()
     return True
+
+
+def create_email_verification_flow(db: Session, user: User) -> str:
+    secret = create_email_verification_token_secret()
+    token_hash = hash_email_verification_token(secret)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.email_verification_token_expire_hours)
+
+    record = EmailVerificationToken(
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        hashed_token=token_hash,
+        expires_at=expires_at,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return f"{record.id}.{secret}"
+
+
+def confirm_email_verification(db: Session, raw_verification_token: str) -> User | None:
+    parts = raw_verification_token.split(".", 1)
+    if len(parts) != 2:
+        return None
+
+    token_id, token_secret = parts
+    record = db.query(EmailVerificationToken).filter(EmailVerificationToken.id == token_id).first()
+    if not record:
+        return None
+
+    now = datetime.now(timezone.utc)
+    if record.used_at is not None or record.expires_at < now:
+        return None
+    if not verify_email_verification_token(token_secret, record.hashed_token):
+        return None
+
+    user = db.query(User).filter(User.id == record.user_id, User.is_active.is_(True)).first()
+    if not user:
+        return None
+
+    user.email_verified_at = now
+    record.used_at = now
+    db.add(user)
+    db.add(record)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def change_first_access_password(db: Session, user: User, current_password: str, new_password: str) -> User:
+    if not verify_password(current_password, user.hashed_password):
+        raise ValueError("Current password is invalid")
+    validate_password_strength(new_password)
+    user.hashed_password = hash_password(new_password)
+    user.must_change_password = False
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user

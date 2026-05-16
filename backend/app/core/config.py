@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 14
     password_reset_token_expire_minutes: int = 30
+    email_verification_token_expire_hours: int = 24
     password_min_length: int = 12
     encryption_key: str = "6L4v8hktqf5YfQ1X0vC1r2lQ7Q2mL8xA1F1yQf4L2i0="
     previous_secret_keys: str = ""
@@ -68,6 +69,8 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     smtp_use_ssl: bool = False
     smtp_timeout_seconds: float = 10.0
+    frontend_base_url: str = "http://localhost:3000"
+    tenant_user_temp_password: str = "Mudar@123"
     queue_eta_worker_slots_light: int = 1
     queue_eta_worker_slots_standard: int = 1
     queue_eta_worker_slots_heavy: int = 1

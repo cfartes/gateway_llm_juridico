@@ -7,6 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.security import parse_jwt, verify_api_token_secret
 from app.core.types import UserRole
 from app.models.api_token import APIToken
@@ -22,6 +23,7 @@ class AuthContext:
     user_id: str | None
     role: str
     api_token_id: str | None
+    must_change_password: bool = False
 
 
 DbDep = Annotated[Session, Depends(get_db)]
@@ -42,7 +44,13 @@ def get_auth_context(db: DbDep, credentials: AuthDep) -> AuthContext:
         user = db.query(User).filter(User.id == payload.get("sub"), User.tenant_id == payload.get("tenant_id")).first()
         if not user or not user.is_active:
             raise _unauthorized("Invalid user context")
-        return AuthContext(tenant_id=user.tenant_id, user_id=user.id, role=str(user.role), api_token_id=None)
+        return AuthContext(
+            tenant_id=user.tenant_id,
+            user_id=user.id,
+            role=str(user.role),
+            api_token_id=None,
+            must_change_password=bool(user.must_change_password),
+        )
 
     parts = token.split(".")
     if len(parts) != 2:
@@ -66,11 +74,20 @@ def get_auth_context(db: DbDep, credentials: AuthDep) -> AuthContext:
         user_id=api_token.created_by_user_id,
         role=str(UserRole.ANALYST),
         api_token_id=api_token.id,
+        must_change_password=False,
     )
 
 
 def require_roles(*roles: UserRole):
-    def dependency(auth: Annotated[AuthContext, Depends(get_auth_context)]) -> AuthContext:
+    def dependency(request: Request, auth: Annotated[AuthContext, Depends(get_auth_context)]) -> AuthContext:
+        if auth.user_id and auth.api_token_id is None and auth.must_change_password:
+            allowed_paths = {
+                f"{settings.api_v1_prefix}/auth/me",
+                f"{settings.api_v1_prefix}/auth/logout",
+                f"{settings.api_v1_prefix}/auth/first-access/change-password",
+            }
+            if request.url.path not in allowed_paths:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Password change required")
         if roles and auth.role not in {str(r) for r in roles}:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
         return auth

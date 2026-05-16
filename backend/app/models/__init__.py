@@ -2,6 +2,7 @@ from app.core.database import Base
 from app.models.api_token import APIToken
 from app.models.audit_log import AuditLog
 from app.models.document import Document
+from app.models.email_verification_token import EmailVerificationToken
 from app.models.llm_provider_config import LLMProviderConfig
 from app.models.ops_alert_state import OpsAlertState
 from app.models.ops_slo_snapshot import OpsSLOSnapshot
@@ -34,6 +35,7 @@ __all__ = [
     "OpsAlertState",
     "OpsSLOSnapshot",
     "Document",
+    "EmailVerificationToken",
     "ScanJob",
     "SupportTicket",
     "SupportTicketAttachment",

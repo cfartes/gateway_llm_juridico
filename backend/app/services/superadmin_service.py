@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from app.core.config import settings
 from app.core.security import hash_password
@@ -17,8 +18,17 @@ def ensure_superadmin_account(db: Session) -> User:
 
     user = db.query(User).filter(User.email == settings.superadmin_email).first()
     if user:
+        changed = False
         if user.role != UserRole.SUPERADMIN:
             user.role = UserRole.SUPERADMIN
+            changed = True
+        if user.email_verified_at is None:
+            user.email_verified_at = datetime.now(timezone.utc)
+            changed = True
+        if user.must_change_password:
+            user.must_change_password = False
+            changed = True
+        if changed:
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -31,6 +41,8 @@ def ensure_superadmin_account(db: Session) -> User:
         hashed_password=hash_password(settings.superadmin_password),
         role=UserRole.SUPERADMIN,
         is_active=True,
+        email_verified_at=datetime.now(timezone.utc),
+        must_change_password=False,
     )
     db.add(user)
     db.commit()

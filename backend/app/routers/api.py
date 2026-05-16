@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.routers import analyze, audit_logs, auth, integrations, llm_admin, quarantine, queues, scans, settings, superadmin_ops, superadmin_support, superadmin_tenants, superadmin_webhooks, support, tenants, tokens, uploads, webhooks
+from app.routers import analyze, audit_logs, auth, integrations, llm_admin, quarantine, queues, scans, settings, superadmin_ops, superadmin_support, superadmin_tenants, superadmin_webhooks, support, tenants, tokens, uploads, users, webhooks
 
 
 router = APIRouter()
@@ -14,6 +14,7 @@ def health_check():
 router.include_router(auth.router)
 router.include_router(audit_logs.router)
 router.include_router(tokens.router)
+router.include_router(users.router)
 router.include_router(integrations.router)
 router.include_router(settings.router)
 router.include_router(tenants.router)

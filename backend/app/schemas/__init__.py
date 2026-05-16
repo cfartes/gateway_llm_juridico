@@ -1,5 +1,7 @@
 from app.schemas.analysis import AnalysisResult, ScanJobOut, ScanResponse
 from app.schemas.auth import (
+    EmailVerificationConfirmRequest,
+    FirstAccessPasswordChangeRequest,
     LoginRequest,
     LogoutRequest,
     PasswordResetConfirmRequest,
@@ -13,12 +15,15 @@ from app.schemas.auth import (
 from app.schemas.document import DocumentOut
 from app.schemas.tenant import TenantOut
 from app.schemas.token import APITokenCreateRequest, APITokenCreateResponse, APITokenOut
+from app.schemas.user_management import TenantUserCreateRequest, TenantUserOut
 
 __all__ = [
     "AnalysisResult",
     "ScanJobOut",
     "ScanResponse",
     "LoginRequest",
+    "EmailVerificationConfirmRequest",
+    "FirstAccessPasswordChangeRequest",
     "RegisterRequest",
     "RefreshTokenRequest",
     "LogoutRequest",
@@ -32,5 +37,7 @@ __all__ = [
     "APITokenCreateRequest",
     "APITokenCreateResponse",
     "APITokenOut",
+    "TenantUserCreateRequest",
+    "TenantUserOut",
 ]
 

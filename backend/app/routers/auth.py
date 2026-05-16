@@ -7,6 +7,8 @@ from app.core.deps import get_auth_context
 from app.core.limiter import rate_limit_dependency
 from app.models.user import User
 from app.schemas.auth import (
+    EmailVerificationConfirmRequest,
+    FirstAccessPasswordChangeRequest,
     LoginRequest,
     LogoutRequest,
     PasswordResetConfirmRequest,
@@ -20,6 +22,8 @@ from app.schemas.auth import (
 from app.services.audit_service import write_audit_log
 from app.services.auth_service import (
     authenticate_user,
+    change_first_access_password,
+    confirm_email_verification,
     confirm_password_reset,
     create_password_reset_flow,
     issue_token_pair,
@@ -83,7 +87,7 @@ def register(payload: RegisterRequest, response: Response, request: Request, db:
         source_ip=request.client.host if request.client else None,
         details={"email": user.email},
     )
-    return TokenResponse(access_token=access)
+    return TokenResponse(access_token=access, must_change_password=bool(user.must_change_password))
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -106,7 +110,7 @@ def login(payload: LoginRequest, response: Response, request: Request, db: Sessi
         source_ip=request.client.host if request.client else None,
         details={"tenant_id": user.tenant_id},
     )
-    return TokenResponse(access_token=access)
+    return TokenResponse(access_token=access, must_change_password=bool(user.must_change_password))
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -139,7 +143,7 @@ def refresh(
         source_ip=request.client.host if request.client else None,
         details={},
     )
-    return TokenResponse(access_token=access)
+    return TokenResponse(access_token=access, must_change_password=bool(user.must_change_password))
 
 
 @router.post("/logout")
@@ -188,6 +192,56 @@ def confirm_reset(payload: PasswordResetConfirmRequest, request: Request, db: Se
     if not changed:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
     return {"message": "Password updated successfully"}
+
+
+@router.post("/email-confirm")
+def confirm_email(
+    payload: EmailVerificationConfirmRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    _rate_limit(request, "email-confirm")
+    user = confirm_email_verification(db, payload.verification_token)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+    return {"message": "Email confirmed successfully. You can sign in now."}
+
+
+@router.post("/first-access/change-password", response_model=TokenResponse)
+def change_password_on_first_access(
+    payload: FirstAccessPasswordChangeRequest,
+    request: Request,
+    response: Response,
+    auth=Depends(get_auth_context),
+    db: Session = Depends(get_db),
+):
+    _rate_limit(request, "first-access-change-password")
+    if auth.api_token_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="API token cannot change user password")
+    user = db.query(User).filter(User.id == auth.user_id, User.tenant_id == auth.tenant_id, User.is_active.is_(True)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.must_change_password:
+        raise HTTPException(status_code=400, detail="First access password change is not required")
+    try:
+        updated = change_first_access_password(db, user, payload.current_password, payload.new_password)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    access, refresh = issue_token_pair(db, updated)
+    _set_refresh_cookie(response, refresh)
+    write_audit_log(
+        db,
+        tenant_id=updated.tenant_id,
+        action="auth.first_access_password_change",
+        resource_type="user",
+        resource_id=updated.id,
+        actor_user_id=updated.id,
+        actor_api_token_id=None,
+        source_ip=request.client.host if request.client else None,
+        details={},
+    )
+    return TokenResponse(access_token=access, must_change_password=False)
 
 
 @router.get("/me", response_model=UserOut)

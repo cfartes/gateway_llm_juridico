@@ -63,8 +63,12 @@ export default function LoginPage() {
         throw new Error(await response.text());
       }
 
-      const data = (await response.json()) as { access_token: string };
+      const data = (await response.json()) as { access_token: string; must_change_password?: boolean };
       setSessionTokens(data.access_token);
+      if (data.must_change_password) {
+        router.replace("/first-access");
+        return;
+      }
       router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");

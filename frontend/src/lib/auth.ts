@@ -26,7 +26,7 @@ async function refreshAccessToken(apiBase: string): Promise<string | null> {
     return null;
   }
 
-  const data = (await response.json()) as { access_token: string };
+  const data = (await response.json()) as { access_token: string; must_change_password?: boolean };
   setSessionTokens(data.access_token);
   return data.access_token;
 }
@@ -63,6 +63,14 @@ export async function authenticatedJson<T>(
   }
 
   if (!response.ok) {
+    if (response.status === 403) {
+      const bodyText = await response.text();
+      if (bodyText.includes("Password change required") && typeof window !== "undefined") {
+        window.location.href = "/first-access";
+        throw new Error("Password change required");
+      }
+      throw new Error(bodyText);
+    }
     throw new Error(await response.text());
   }
 

@@ -10,6 +10,7 @@ const ITEMS = [
   { label: "Scans" },
   { label: "Files" },
   { label: "API Tokens", href: "/api-tokens" },
+  { label: "Users", href: "/users" },
   { label: "Quarantine", href: "/quarantine" },
   { label: "Queues", href: "/queues" },
   { label: "SuperAdmin Tenants", href: "/superadmin/tenants" },

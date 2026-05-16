@@ -17,6 +17,7 @@ from app.routers import (
     tenants,
     tokens,
     uploads,
+    users,
     webhooks,
 )
 
@@ -39,6 +40,7 @@ __all__ = [
     "tenants",
     "tokens",
     "uploads",
+    "users",
     "webhooks",
 ]
 

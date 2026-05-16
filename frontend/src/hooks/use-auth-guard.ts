@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ensureAccessToken } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
 export function useAuthGuard() {
   const router = useRouter();
+  const pathname = usePathname();
   const [token, setToken] = useState("");
   const [ready, setReady] = useState(false);
 
@@ -19,11 +20,34 @@ export function useAuthGuard() {
         setReady(true);
         return;
       }
+      try {
+        const response = await fetch(`${API_BASE}/auth/me`, {
+          method: "GET",
+          credentials: "include",
+          headers: { Authorization: `Bearer ${stored}` },
+        });
+        if (!response.ok) {
+          router.replace("/login");
+          setReady(true);
+          return;
+        }
+        const me = (await response.json()) as { must_change_password?: boolean };
+        if (me.must_change_password && pathname !== "/first-access") {
+          router.replace("/first-access");
+          setToken(stored);
+          setReady(true);
+          return;
+        }
+      } catch {
+        router.replace("/login");
+        setReady(true);
+        return;
+      }
       setToken(stored);
       setReady(true);
     }
     void bootstrap();
-  }, [router]);
+  }, [pathname, router]);
 
   return { token, ready };
 }

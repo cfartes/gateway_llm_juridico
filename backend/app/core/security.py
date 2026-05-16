@@ -93,6 +93,18 @@ def verify_password_reset_token(secret: str, hashed_secret: str) -> bool:
     return hmac.compare_digest(hash_password_reset_token(secret), hashed_secret)
 
 
+def create_email_verification_token_secret() -> str:
+    return secrets.token_urlsafe(48)
+
+
+def hash_email_verification_token(secret: str) -> str:
+    return hmac.new(settings.secret_key.encode(), secret.encode(), hashlib.sha256).hexdigest()
+
+
+def verify_email_verification_token(secret: str, hashed_secret: str) -> bool:
+    return hmac.compare_digest(hash_email_verification_token(secret), hashed_secret)
+
+
 def parse_jwt(token: str) -> dict[str, Any] | None:
     try:
         return decode_access_token(token)

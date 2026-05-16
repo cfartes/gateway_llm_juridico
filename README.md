@@ -14,6 +14,17 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 
 - Multi-tenant por `tenant_id` em toda a camada de dados
 - Auth JWT + RBAC (`superadmin`, `admin`, `analyst`, `viewer`)
+- Logout em UI (com invalidação de sessão refresh cookie no backend)
+- Gestão de usuários por tenant (somente `admin`/`superadmin` do tenant):
+  - `GET /api/v1/users`
+  - `POST /api/v1/users`
+  - criação com senha temporária padrão `Mudar@123`
+  - envio de e-mail de confirmação com link de ativação
+  - bloqueio de login antes de confirmar e-mail
+  - troca obrigatória de senha no primeiro acesso
+    - `POST /api/v1/auth/first-access/change-password`
+  - confirmação de e-mail
+    - `POST /api/v1/auth/email-confirm`
 - Criação e revogação de API Bearer Tokens para integração B2B
 - Upload múltiplo de arquivos + análise por URL/texto/base64
 - Pipeline de segurança documental:
