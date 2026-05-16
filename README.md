@@ -152,3 +152,7 @@ python tests/load_gateway.py --base-url http://localhost:8000/api/v1 --email sup
 - Mover storage para S3/GCS/Azure Blob
 - Usar KMS/HSM para chaves
 - Ativar observabilidade (logs, métricas, traces)
+
+## Operação
+
+- Runbook de go-live e operação: [docs/runbook-go-live.md](docs/runbook-go-live.md)
