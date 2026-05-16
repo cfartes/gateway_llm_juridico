@@ -2,6 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 from app.core.types import UserRole
+from app.core.types import TenantPlan
 
 
 class TokenResponse(BaseModel):
@@ -44,7 +45,17 @@ class PasswordResetResponse(BaseModel):
 
 class RegisterRequest(BaseModel):
     tenant_name: str
-    tenant_slug: str
+    legal_name: str
+    cnpj: str
+    postal_code: str
+    address_line: str
+    address_number: str
+    address_complement: str | None = None
+    district: str
+    city: str
+    invoice_email: EmailStr
+    plan: TenantPlan = TenantPlan.STARTER
+    tenant_slug: str | None = None
     email: EmailStr
     full_name: str | None = None
     password: str

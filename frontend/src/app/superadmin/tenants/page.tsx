@@ -22,6 +22,15 @@ type SuperAdminTenant = {
   slug: string;
   is_active: boolean;
   plan: TenantPlan;
+  cnpj: string | null;
+  legal_name: string | null;
+  postal_code: string | null;
+  address_line: string | null;
+  address_number: string | null;
+  address_complement: string | null;
+  district: string | null;
+  city: string | null;
+  invoice_email: string | null;
   created_at: string;
   total_users: number;
   total_documents: number;
@@ -219,6 +228,7 @@ export default function SuperAdminTenantsPage() {
                       <thead>
                         <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
                           <th className="py-2">Tenant</th>
+                          <th className="py-2">CNPJ</th>
                           <th className="py-2">Slug</th>
                           <th className="py-2">Plan</th>
                           <th className="py-2">Status</th>
@@ -241,6 +251,7 @@ export default function SuperAdminTenantsPage() {
                             }}
                           >
                             <td className="py-2 text-[#2c3f5f]">{tenant.name}</td>
+                            <td className="py-2 text-[#4f6386]">{tenant.cnpj || "-"}</td>
                             <td className="py-2 text-[#4f6386]">{tenant.slug}</td>
                             <td className="py-2">
                               <Badge className={planTone(tenant.plan)}>{tenant.plan.toUpperCase()}</Badge>
@@ -259,7 +270,7 @@ export default function SuperAdminTenantsPage() {
                         ))}
                         {!tenants.length ? (
                           <tr>
-                            <td colSpan={9} className="py-6 text-center text-[#7586a3]">
+                            <td colSpan={10} className="py-6 text-center text-[#7586a3]">
                               No tenants found.
                             </td>
                           </tr>
@@ -278,6 +289,15 @@ export default function SuperAdminTenantsPage() {
                       <div className="rounded-lg border border-[#e5ecf6] bg-[#f9fbff] p-3">
                         <p className="text-sm font-semibold text-[#29415f]">{selectedTenant.name}</p>
                         <p className="mt-1 text-xs text-[#5f7393]">Slug: {selectedTenant.slug}</p>
+                        <p className="mt-1 text-xs text-[#5f7393]">CNPJ: {selectedTenant.cnpj || "-"}</p>
+                        <p className="mt-1 text-xs text-[#5f7393]">Razão Social: {selectedTenant.legal_name || "-"}</p>
+                        <p className="mt-1 text-xs text-[#5f7393]">E-mail NF: {selectedTenant.invoice_email || "-"}</p>
+                        <p className="mt-1 text-xs text-[#5f7393]">
+                          Endereço: {selectedTenant.address_line || "-"}, {selectedTenant.address_number || "-"} {selectedTenant.address_complement || ""}
+                        </p>
+                        <p className="mt-1 text-xs text-[#5f7393]">
+                          Bairro/Cidade/CEP: {selectedTenant.district || "-"} / {selectedTenant.city || "-"} / {selectedTenant.postal_code || "-"}
+                        </p>
                         <p className="mt-1 text-xs text-[#5f7393]">Created: {formatDate(selectedTenant.created_at)}</p>
                       </div>
 

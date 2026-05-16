@@ -10,6 +10,15 @@ class TenantOut(BaseModel):
     slug: str
     is_active: bool
     plan: TenantPlan
+    cnpj: str | None = None
+    legal_name: str | None = None
+    postal_code: str | None = None
+    address_line: str | None = None
+    address_number: str | None = None
+    address_complement: str | None = None
+    district: str | None = None
+    city: str | None = None
+    invoice_email: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

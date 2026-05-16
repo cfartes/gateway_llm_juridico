@@ -17,11 +17,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [tenantSlug, setTenantSlug] = useState("acme");
   const [email, setEmail] = useState("admin@acme.com");
   const [password, setPassword] = useState("StrongPass#2026");
 
-  const [tenantName, setTenantName] = useState("Acme Corp");
+  const [legalName, setLegalName] = useState("Acme Corporation LTDA");
+  const [cnpj, setCnpj] = useState("12.345.678/0001-95");
+  const [postalCode, setPostalCode] = useState("01001-000");
+  const [addressLine, setAddressLine] = useState("");
+  const [addressNumber, setAddressNumber] = useState("100");
+  const [addressComplement, setAddressComplement] = useState("");
+  const [district, setDistrict] = useState("");
+  const [city, setCity] = useState("");
+  const [invoiceEmail, setInvoiceEmail] = useState("financeiro@acme.com");
+  const [plan, setPlan] = useState<"starter" | "growth" | "business" | "enterprise">("starter");
   const [fullName, setFullName] = useState("Acme Admin");
 
   useEffect(() => {
@@ -34,6 +42,31 @@ export default function LoginPage() {
     void checkSession();
   }, [router]);
 
+  function onlyDigits(value: string): string {
+    return value.replace(/\D/g, "");
+  }
+
+  async function lookupCep() {
+    const cep = onlyDigits(postalCode);
+    if (cep.length !== 8) return;
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!response.ok) return;
+      const data = (await response.json()) as {
+        erro?: boolean;
+        logradouro?: string;
+        bairro?: string;
+        localidade?: string;
+      };
+      if (data.erro) return;
+      if (data.logradouro) setAddressLine(data.logradouro);
+      if (data.bairro) setDistrict(data.bairro);
+      if (data.localidade) setCity(data.localidade);
+    } catch {
+      // Optional helper lookup; ignore network errors.
+    }
+  }
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -45,8 +78,17 @@ export default function LoginPage() {
         mode === "login"
           ? { email, password }
           : {
-              tenant_name: tenantName,
-              tenant_slug: tenantSlug,
+              tenant_name: legalName,
+              legal_name: legalName,
+              cnpj,
+              postal_code: postalCode,
+              address_line: addressLine,
+              address_number: addressNumber,
+              address_complement: addressComplement || null,
+              district,
+              city,
+              invoice_email: invoiceEmail,
+              plan,
               email,
               full_name: fullName,
               password,
@@ -111,20 +153,85 @@ export default function LoginPage() {
             <form onSubmit={submit} className="space-y-3">
               {mode === "register" ? (
                 <Input
-                  value={tenantName}
-                  onChange={(e) => setTenantName(e.target.value)}
-                  placeholder="Tenant name"
+                  value={legalName}
+                  onChange={(e) => setLegalName(e.target.value)}
+                  placeholder="Razão Social"
                   required
                 />
               ) : null}
 
               {mode === "register" ? (
-                <Input
-                  value={tenantSlug}
-                  onChange={(e) => setTenantSlug(e.target.value)}
-                  placeholder="Tenant slug"
-                  required
-                />
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <Input
+                    value={cnpj}
+                    onChange={(e) => setCnpj(e.target.value)}
+                    placeholder="CNPJ"
+                    required
+                  />
+                  <Input
+                    type="email"
+                    value={invoiceEmail}
+                    onChange={(e) => setInvoiceEmail(e.target.value)}
+                    placeholder="E-mail NF"
+                    required
+                  />
+                </div>
+              ) : null}
+
+              {mode === "register" ? (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <Input
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    onBlur={() => void lookupCep()}
+                    placeholder="CEP"
+                    required
+                  />
+                  <select
+                    value={plan}
+                    onChange={(e) => setPlan(e.target.value as "starter" | "growth" | "business" | "enterprise")}
+                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                  >
+                    <option value="starter">Starter</option>
+                    <option value="growth">Growth</option>
+                    <option value="business">Business</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </div>
+              ) : null}
+
+              {mode === "register" ? (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <Input
+                    value={addressLine}
+                    onChange={(e) => setAddressLine(e.target.value)}
+                    placeholder="Endereço"
+                    required
+                  />
+                  <Input
+                    value={addressNumber}
+                    onChange={(e) => setAddressNumber(e.target.value)}
+                    placeholder="Nro"
+                    required
+                  />
+                  <Input
+                    value={addressComplement}
+                    onChange={(e) => setAddressComplement(e.target.value)}
+                    placeholder="Complemento"
+                  />
+                  <Input
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    placeholder="Bairro"
+                    required
+                  />
+                  <Input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Cidade"
+                    required
+                  />
+                </div>
               ) : null}
 
               <Input

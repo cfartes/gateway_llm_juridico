@@ -14,6 +14,13 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
 
 - Multi-tenant por `tenant_id` em toda a camada de dados
 - Auth JWT + RBAC (`superadmin`, `admin`, `analyst`, `viewer`)
+- Cadastro de novos clientes com dados fiscais e validações:
+  - CNPJ (validação de dígitos verificadores)
+  - Razão social
+  - CEP, endereço, número, complemento, bairro, cidade
+  - e-mail de NF
+  - plano inicial (`starter`, `growth`, `business`, `enterprise`)
+  - preenchimento automático de endereço por CEP no frontend
 - Logout em UI (com invalidação de sessão refresh cookie no backend)
 - Gestão de usuários por tenant (somente `admin`/`superadmin` do tenant):
   - `GET /api/v1/users`

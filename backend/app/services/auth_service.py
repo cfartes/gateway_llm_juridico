@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import re
 
 from sqlalchemy.orm import Session
 
@@ -25,27 +26,60 @@ from app.models.refresh_token import RefreshToken
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest
+from app.utils.br_docs import is_valid_cnpj, only_digits
+
+
+def _slugify(value: str) -> str:
+    base = re.sub(r"[^a-z0-9]+", "-", value.strip().lower())
+    base = re.sub(r"-{2,}", "-", base).strip("-")
+    return base or "tenant"
 
 
 def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
     validate_password_strength(payload.password)
+    if not is_valid_cnpj(payload.cnpj):
+        raise ValueError("CNPJ inválido")
 
-    existing_email = db.query(User).filter(User.email == payload.email).first()
+    normalized_cnpj = only_digits(payload.cnpj)
+    normalized_postal_code = only_digits(payload.postal_code)
+    if len(normalized_postal_code) != 8:
+        raise ValueError("CEP inválido")
+    tenant_slug = (payload.tenant_slug or "").strip() or _slugify(payload.tenant_name)
+    email = str(payload.email).strip().lower()
+
+    existing_email = db.query(User).filter(User.email == email).first()
     if existing_email:
         raise ValueError("Email already in use")
 
+    existing_cnpj = db.query(Tenant).filter(Tenant.cnpj == normalized_cnpj).first()
+    if existing_cnpj:
+        raise ValueError("CNPJ já cadastrado")
+
     existing_tenant = (
         db.query(Tenant)
-        .filter((Tenant.slug == payload.tenant_slug) | (Tenant.name == payload.tenant_name))
+        .filter((Tenant.slug == tenant_slug) | (Tenant.name == payload.tenant_name))
         .first()
     )
     if existing_tenant:
         raise ValueError("Tenant already exists")
 
-    tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug)
+    tenant = Tenant(
+        name=payload.tenant_name.strip(),
+        slug=tenant_slug,
+        plan=payload.plan,
+        cnpj=normalized_cnpj,
+        legal_name=payload.legal_name.strip(),
+        postal_code=normalized_postal_code,
+        address_line=payload.address_line.strip(),
+        address_number=payload.address_number.strip(),
+        address_complement=(payload.address_complement or "").strip() or None,
+        district=payload.district.strip(),
+        city=payload.city.strip(),
+        invoice_email=str(payload.invoice_email).strip().lower(),
+    )
     user = User(
         tenant=tenant,
-        email=payload.email,
+        email=email,
         full_name=payload.full_name,
         hashed_password=hash_password(payload.password),
         role=UserRole.ADMIN,

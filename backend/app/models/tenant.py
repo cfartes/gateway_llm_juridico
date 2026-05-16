@@ -17,6 +17,15 @@ class Tenant(UUIDTimestampMixin, Base):
         default=TenantPlan.STARTER,
         nullable=False,
     )
+    cnpj: Mapped[str | None] = mapped_column(String(14), unique=True, index=True, nullable=True)
+    legal_name: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    postal_code: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    address_line: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    address_number: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    address_complement: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    district: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    invoice_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
     api_tokens = relationship("APIToken", back_populates="tenant", cascade="all, delete-orphan")
