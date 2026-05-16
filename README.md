@@ -156,3 +156,4 @@ python tests/load_gateway.py --base-url http://localhost:8000/api/v1 --email sup
 ## Operação
 
 - Runbook de go-live e operação: [docs/runbook-go-live.md](docs/runbook-go-live.md)
+- Runbook one-page (plantão): [docs/runbook-one-page.md](docs/runbook-one-page.md)
