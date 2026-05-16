@@ -223,7 +223,7 @@ export default function LLMConfigPage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[#f7f9fc] text-[#4c5f82]">
+      <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
         Preparing your workspace...
       </div>
     );
@@ -232,15 +232,15 @@ export default function LLMConfigPage() {
   const isSuperAdmin = me ? me.role === "superadmin" : true;
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
 
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin LLM Configuration</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin LLM Configuration</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 Configure provider token, endpoint, model selection, and activation app-wide.
               </p>
             </Card>
@@ -255,8 +255,8 @@ export default function LLMConfigPage() {
             ) : (
               <div className="grid gap-4 xl:grid-cols-[0.9fr_1.7fr]">
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-xl font-semibold text-[#213552]">Providers</h2>
-                  <p className="mt-1 text-sm text-[#667896]">
+                  <h2 className="text-xl font-semibold text-[var(--color-heading)]">Providers</h2>
+                  <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                     Select an LLM provider to configure.
                   </p>
 
@@ -271,15 +271,15 @@ export default function LLMConfigPage() {
                           onClick={() => setSelectedProviderKey(provider.key)}
                           className={`w-full rounded-lg border px-3 py-3 text-left transition ${
                             active
-                              ? "border-[var(--color-primary)] bg-[#edf3ff]"
-                              : "border-[#e5ecf7] bg-white hover:bg-[#f8fbff]"
+                              ? "border-[var(--color-primary)] bg-[var(--color-surface-alt)]"
+                              : "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-alt)]"
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold text-[#213552]">{provider.label}</p>
+                            <p className="text-sm font-semibold text-[var(--color-heading)]">{provider.label}</p>
                             <Badge className={providerGroupTone(provider.family)}>{provider.family}</Badge>
                           </div>
-                          <p className="mt-1 text-xs text-[#6f80a0]">{provider.default_base_url}</p>
+                          <p className="mt-1 text-xs text-[var(--color-text-muted)]">{provider.default_base_url}</p>
                           <div className="mt-2 flex items-center gap-2 text-xs">
                             <Badge
                               className={
@@ -305,7 +305,7 @@ export default function LLMConfigPage() {
                     })}
 
                     {!providers.length && !loading ? (
-                      <p className="rounded-lg border border-dashed border-[#dbe5f4] px-3 py-6 text-center text-sm text-[#7182a1]">
+                      <p className="rounded-lg border border-dashed border-[var(--color-border)] px-3 py-6 text-center text-sm text-[var(--color-text-soft)]">
                         No providers found.
                       </p>
                     ) : null}
@@ -314,22 +314,22 @@ export default function LLMConfigPage() {
 
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-xl font-semibold text-[#213552]">
+                    <h2 className="text-xl font-semibold text-[var(--color-heading)]">
                       {selectedProvider ? selectedProvider.label : "Provider details"}
                     </h2>
                     {selectedProvider ? (
-                      <Badge className="bg-[#eef4ff] text-[#32558f]">{selectedProvider.key}</Badge>
+                      <Badge className="bg-[var(--color-surface-alt)] text-[var(--color-primary)]">{selectedProvider.key}</Badge>
                     ) : null}
                   </div>
 
                   {selectedProvider ? (
                     <div className="space-y-3">
-                      <p className="rounded-lg border border-[#e7edf8] bg-[#f9fbff] px-3 py-2 text-xs text-[#607392]">
+                      <p className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-xs text-[var(--color-text-soft)]">
                         {selectedProvider.notes}
                       </p>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[#324a6f]">Provider label</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Provider label</label>
                         <Input
                           value={form.provider_label}
                           onChange={(e) => setForm((prev) => ({ ...prev, provider_label: e.target.value }))}
@@ -338,7 +338,7 @@ export default function LLMConfigPage() {
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[#324a6f]">Base URL</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Base URL</label>
                         <Input
                           value={form.base_url}
                           onChange={(e) => setForm((prev) => ({ ...prev, base_url: e.target.value }))}
@@ -347,7 +347,7 @@ export default function LLMConfigPage() {
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[#324a6f]">
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">
                           {selectedProvider.token_label}
                         </label>
                         <Input
@@ -356,17 +356,17 @@ export default function LLMConfigPage() {
                           onChange={(e) => setForm((prev) => ({ ...prev, api_token: e.target.value }))}
                           placeholder="Enter token/API key"
                         />
-                        <p className="mt-1 text-xs text-[#7084a5]">
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">
                           Leave blank to keep the stored token. Current: {selectedConfig?.token_preview ?? "none"}
                         </p>
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[#324a6f]">Selected model</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Selected model</label>
                         <select
                           value={form.selected_model}
                           onChange={(e) => setForm((prev) => ({ ...prev, selected_model: e.target.value }))}
-                          className="h-11 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
+                          className="h-11 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
                         >
                           <option value="">Select a model</option>
                           {models.map((model) => (
@@ -376,13 +376,13 @@ export default function LLMConfigPage() {
                           ))}
                         </select>
                         {selectedConfig?.selected_model ? (
-                          <p className="mt-1 text-xs text-[#7084a5]">
+                          <p className="mt-1 text-xs text-[var(--color-text-soft)]">
                             Current model: <span className="font-semibold">{selectedConfig.selected_model}</span>
                           </p>
                         ) : null}
                       </div>
 
-                      <label className="flex items-center gap-2 rounded-lg border border-[#e4ebf7] bg-[#fbfcff] px-3 py-2 text-sm text-[#324a6f]">
+                      <label className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-sm text-[var(--color-text-soft)]">
                         <input
                           type="checkbox"
                           checked={form.is_enabled}
@@ -407,7 +407,7 @@ export default function LLMConfigPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="rounded-lg border border-dashed border-[#dbe5f4] px-3 py-10 text-center text-sm text-[#7182a1]">
+                    <p className="rounded-lg border border-dashed border-[var(--color-border)] px-3 py-10 text-center text-sm text-[var(--color-text-soft)]">
                       Select a provider to start configuration.
                     </p>
                   )}

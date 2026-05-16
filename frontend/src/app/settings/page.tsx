@@ -243,50 +243,50 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">Settings</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Settings</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 Configure security thresholds, retention policy e notificações do tenant.
               </p>
             </Card>
 
             {queuePolicy ? (
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Current Plan Limits</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Current Plan Limits</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
-                    <p className="text-xs text-[#6f80a0]">Plan</p>
-                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.plan.toUpperCase()}</p>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">Plan</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">{queuePolicy.plan.toUpperCase()}</p>
                   </div>
-                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
-                    <p className="text-xs text-[#6f80a0]">Sync req/min</p>
-                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.sync_requests_per_minute}</p>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">Sync req/min</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">{queuePolicy.sync_requests_per_minute}</p>
                   </div>
-                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
-                    <p className="text-xs text-[#6f80a0]">Async req/min</p>
-                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.async_requests_per_minute}</p>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">Async req/min</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">{queuePolicy.async_requests_per_minute}</p>
                   </div>
-                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
-                    <p className="text-xs text-[#6f80a0]">URL req/min</p>
-                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.url_requests_per_minute}</p>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">URL req/min</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">{queuePolicy.url_requests_per_minute}</p>
                   </div>
-                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
-                    <p className="text-xs text-[#6f80a0]">Max files/batch</p>
-                    <p className="text-lg font-semibold text-[#1f3f72]">{queuePolicy.max_files_per_batch}</p>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">Max files/batch</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">{queuePolicy.max_files_per_batch}</p>
                   </div>
-                  <div className="rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
-                    <p className="text-xs text-[#6f80a0]">In-flight usage</p>
-                    <p className="text-lg font-semibold text-[#1f3f72]">
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">In-flight usage</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">
                       {queuePolicy.current_inflight_jobs}/{queuePolicy.max_inflight_jobs}
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-[#6f80a0]">
+                <p className="mt-3 text-xs text-[var(--color-text-muted)]">
                   Pending queue: {queuePolicy.current_pending_jobs}/{queuePolicy.max_pending_jobs} ({queuePolicy.pending_usage_percent}%) | In-flight usage: {queuePolicy.inflight_usage_percent}% | Burst/min: {queuePolicy.burst_per_minute}
                 </p>
                 {queuePolicy.upgrade_recommended ? (
@@ -300,7 +300,7 @@ export default function SettingsPage() {
                       ))}
                     </ul>
                     <textarea
-                      className="mt-3 h-20 w-full rounded-md border border-amber-200 bg-white px-2 py-1 text-sm text-[#5a4200]"
+                      className="mt-3 h-20 w-full rounded-md border border-amber-200 bg-[var(--color-surface)] px-2 py-1 text-sm text-[var(--color-warn-text)]"
                       placeholder="Optional business justification for this upgrade request"
                       value={upgradeReason}
                       onChange={(e) => setUpgradeReason(e.target.value)}
@@ -317,11 +317,11 @@ export default function SettingsPage() {
             ) : null}
 
             <Card className="rounded-xl p-4">
-              <h2 className="text-lg font-semibold text-[#213552]">Upgrade Requests</h2>
+              <h2 className="text-lg font-semibold text-[var(--color-heading)]">Upgrade Requests</h2>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[760px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                    <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                       <th className="py-2">Created</th>
                       <th className="py-2">From</th>
                       <th className="py-2">To</th>
@@ -332,10 +332,10 @@ export default function SettingsPage() {
                   </thead>
                   <tbody>
                     {upgradeRequests.map((item) => (
-                      <tr key={item.id} className="border-b border-[#eff3f8]">
-                        <td className="py-2 text-[#4f6386]">{new Date(item.created_at).toLocaleString()}</td>
-                        <td className="py-2 text-[#334766]">{item.current_plan.toUpperCase()}</td>
-                        <td className="py-2 text-[#334766]">{item.requested_plan.toUpperCase()}</td>
+                      <tr key={item.id} className="border-b border-[var(--color-border-soft)]">
+                        <td className="py-2 text-[var(--color-text-soft)]">{new Date(item.created_at).toLocaleString()}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.current_plan.toUpperCase()}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.requested_plan.toUpperCase()}</td>
                         <td className="py-2">
                           <span className={`rounded px-2 py-1 text-xs ${
                             item.status === "approved"
@@ -347,13 +347,13 @@ export default function SettingsPage() {
                             {item.status.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-2 text-[#4f6386]">{item.reason || "-"}</td>
-                        <td className="py-2 text-[#4f6386]">{item.admin_note || "-"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.reason || "-"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.admin_note || "-"}</td>
                       </tr>
                     ))}
                     {!upgradeRequests.length ? (
                       <tr>
-                        <td colSpan={6} className="py-6 text-center text-[#7586a3]">
+                        <td colSpan={6} className="py-6 text-center text-[var(--color-text-soft)]">
                           No upgrade requests yet.
                         </td>
                       </tr>
@@ -365,7 +365,7 @@ export default function SettingsPage() {
 
             <form onSubmit={onSubmit} className="space-y-4">
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Security</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Security</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   <Input
                     type="number"
@@ -385,7 +385,7 @@ export default function SettingsPage() {
                     onChange={(e) => update("block_threshold", e.target.value)}
                     disabled={!canEdit}
                   />
-                  <label className="rounded-lg border border-[#e4ebf7] bg-[#fbfcff] px-3 py-2 text-sm text-[#324a6f]">
+                  <label className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -399,7 +399,7 @@ export default function SettingsPage() {
               </Card>
 
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Retention</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Retention</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Input
                     type="number"
@@ -423,16 +423,16 @@ export default function SettingsPage() {
               </Card>
 
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Notifications</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Notifications</h2>
                 <div className="mt-3 space-y-3">
                   <textarea
-                    className="h-28 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                    className="h-28 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                     placeholder="One email per line, or comma-separated"
                     value={form.emails}
                     onChange={(e) => update("emails", e.target.value)}
                     disabled={!canEdit}
                   />
-                  <div className="grid gap-2 md:grid-cols-3 text-sm text-[#324a6f]">
+                  <div className="grid gap-2 md:grid-cols-3 text-sm text-[var(--color-text-soft)]">
                     <label>
                       <input
                         type="checkbox"
@@ -465,9 +465,9 @@ export default function SettingsPage() {
                     </label>
                   </div>
                 </div>
-                <div className="mt-4 rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-3">
-                  <p className="text-sm font-semibold text-[#2c456b]">SMTP Test</p>
-                  <p className="mt-1 text-xs text-[#6f80a0]">Send a test email using current SMTP backend settings.</p>
+                <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                  <p className="text-sm font-semibold text-[var(--color-text)]">SMTP Test</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">Send a test email using current SMTP backend settings.</p>
                   <div className="mt-2 flex flex-col gap-2 md:flex-row">
                     <Input
                       type="email"

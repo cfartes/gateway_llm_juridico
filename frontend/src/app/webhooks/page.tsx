@@ -138,24 +138,24 @@ export default function WebhooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">Webhook Deliveries</h1>
-              <p className="mt-1 text-sm text-[#667896]">Tenant-level callback delivery tracking and manual retry.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Webhook Deliveries</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Tenant-level callback delivery tracking and manual retry.</p>
             </Card>
 
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex items-end gap-2">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Status</label>
+                  <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Status</label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                   >
                     <option value="all">All</option>
                     <option value="dead_letter">Dead-letter</option>
@@ -171,7 +171,7 @@ export default function WebhooksPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[860px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                    <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                       <th className="py-2">Status</th>
                       <th className="py-2">Callback</th>
                       <th className="py-2">Attempts</th>
@@ -183,14 +183,14 @@ export default function WebhooksPage() {
                     {data.items.map((item) => (
                       <tr
                         key={item.id}
-                        className={`cursor-pointer border-b border-[#eff3f8] ${selectedId === item.id ? "bg-[#f4f8ff]" : ""}`}
+                        className={`cursor-pointer border-b border-[var(--color-border-soft)] ${selectedId === item.id ? "bg-[var(--color-surface-alt)]" : ""}`}
                         onClick={() => setSelectedId(item.id)}
                       >
                         <td className="py-2"><Badge className={statusTone(item.status)}>{item.status.toUpperCase()}</Badge></td>
-                        <td className="py-2 text-[#4f6386]">{item.callback_url}</td>
-                        <td className="py-2 text-[#334766]">{item.attempt_count}/{item.max_attempts}</td>
-                        <td className="py-2 text-[#334766]">{item.last_http_status ?? "-"}</td>
-                        <td className="py-2 text-[#4f6386]">{formatDate(item.updated_at)}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.callback_url}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.attempt_count}/{item.max_attempts}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.last_http_status ?? "-"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.updated_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -200,7 +200,7 @@ export default function WebhooksPage() {
 
             <Card className="rounded-xl p-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-[#213552]">Delivery Detail</h2>
+                <h2 className="text-xl font-semibold text-[var(--color-heading)]">Delivery Detail</h2>
                 <Button
                   onClick={() => void retrySelected()}
                   disabled={!selected || retrying || selected.status === "discarded"}
@@ -208,7 +208,7 @@ export default function WebhooksPage() {
                   {retrying ? "Retrying..." : "Retry Now"}
                 </Button>
               </div>
-              <div className="mt-3 text-sm text-[#5f7393]">
+              <div className="mt-3 text-sm text-[var(--color-text-soft)]">
                 {selected ? (
                   <>
                     <p><span className="font-semibold">ID:</span> {selected.id}</p>
@@ -220,7 +220,7 @@ export default function WebhooksPage() {
               </div>
               <div className="mt-3 space-y-2">
                 {detail?.attempts?.map((attempt) => (
-                  <div key={attempt.id} className="rounded-lg border border-[#edf2f9] bg-[#fbfdff] p-2 text-xs">
+                  <div key={attempt.id} className="rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface-alt)] p-2 text-xs">
                     Attempt #{attempt.attempt_number} | HTTP {attempt.http_status ?? "-"} | {attempt.duration_ms ?? "-"} ms | {formatDate(attempt.created_at)}
                   </div>
                 ))}

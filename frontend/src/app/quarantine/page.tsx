@@ -201,14 +201,14 @@ export default function QuarantinePage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen bg-[#f7f9fc] grid place-items-center text-[#4c5f82]">
+      <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
         Preparing your workspace...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
@@ -216,8 +216,8 @@ export default function QuarantinePage() {
             <Card className="rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-semibold text-[#213552]">Quarantine Queue</h1>
-                  <p className="mt-1 text-sm text-[#667896]">
+                  <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Quarantine Queue</h1>
+                  <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                     Review and decide if suspicious documents can move forward to sanitized RAG ingestion.
                   </p>
                 </div>
@@ -225,7 +225,7 @@ export default function QuarantinePage() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-9 rounded-lg border border-[#dce4f2] bg-white px-3 text-sm text-[#334766]"
+                    className="h-9 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)]"
                   >
                     {FILTERS.map((filter) => (
                       <option key={filter.value} value={filter.value}>
@@ -242,11 +242,11 @@ export default function QuarantinePage() {
 
             <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
               <Card className="rounded-xl p-4">
-                <h2 className="mb-3 text-xl font-semibold text-[#213552]">Queue Items</h2>
+                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Queue Items</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px] text-left text-sm">
                     <thead>
-                      <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                      <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                         <th className="py-2">File</th>
                         <th className="py-2">Risk</th>
                         <th className="py-2">Score</th>
@@ -258,25 +258,25 @@ export default function QuarantinePage() {
                       {rows.map((row) => (
                         <tr
                           key={row.scan_id}
-                          className={`cursor-pointer border-b border-[#eff3f8] ${selectedId === row.scan_id ? "bg-[#f4f8ff]" : ""}`}
+                          className={`cursor-pointer border-b border-[var(--color-border-soft)] ${selectedId === row.scan_id ? "bg-[var(--color-surface-alt)]" : ""}`}
                           onClick={() => setSelectedId(row.scan_id)}
                         >
-                          <td className="py-2 text-[#2c3f5f]">{row.file_name}</td>
+                          <td className="py-2 text-[var(--color-text)]">{row.file_name}</td>
                           <td className="py-2">
                             <Badge className={riskTone(row.risk_level)}>{(row.risk_level ?? "unknown").toUpperCase()}</Badge>
                           </td>
-                          <td className="py-2 text-[#334766]">{row.threat_score ?? 0}</td>
+                          <td className="py-2 text-[var(--color-text)]">{row.threat_score ?? 0}</td>
                           <td className="py-2">
                             <Badge className={statusTone(row.quarantine_status)}>
                               {(row.quarantine_status ?? "unknown").toUpperCase()}
                             </Badge>
                           </td>
-                          <td className="py-2 text-[#4f6386]">{formatDate(row.updated_at)}</td>
+                          <td className="py-2 text-[var(--color-text-soft)]">{formatDate(row.updated_at)}</td>
                         </tr>
                       ))}
                       {!rows.length ? (
                         <tr>
-                          <td colSpan={5} className="py-6 text-center text-[#7586a3]">
+                          <td colSpan={5} className="py-6 text-center text-[var(--color-text-soft)]">
                             No items for this filter.
                           </td>
                         </tr>
@@ -287,29 +287,29 @@ export default function QuarantinePage() {
               </Card>
 
               <Card className="rounded-xl p-4">
-                <h2 className="mb-3 text-xl font-semibold text-[#213552]">Review Detail</h2>
+                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Review Detail</h2>
                 {loadingDetail ? (
-                  <p className="text-sm text-[#5f7393]">Loading detail...</p>
+                  <p className="text-sm text-[var(--color-text-soft)]">Loading detail...</p>
                 ) : !detail ? (
-                  <p className="text-sm text-[#5f7393]">Select one item to review.</p>
+                  <p className="text-sm text-[var(--color-text-soft)]">Select one item to review.</p>
                 ) : (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-[#e5ecf6] bg-[#f9fbff] p-3">
-                      <p className="text-sm font-semibold text-[#29415f]">{detail.file_name}</p>
-                      <p className="mt-1 text-xs text-[#5f7393]">Scan ID: {detail.scan_id}</p>
-                      <p className="mt-1 text-xs text-[#5f7393]">Policy: {detail.policy_action ?? "-"}</p>
-                      <p className="mt-1 text-xs text-[#5f7393]">{detail.policy_reason ?? "-"}</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                      <p className="text-sm font-semibold text-[var(--color-text)]">{detail.file_name}</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-soft)]">Scan ID: {detail.scan_id}</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-soft)]">Policy: {detail.policy_action ?? "-"}</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-soft)]">{detail.policy_reason ?? "-"}</p>
                     </div>
 
-                    <div className="rounded-lg border border-[#e5ecf6] p-3">
-                      <p className="mb-2 text-sm font-semibold text-[#29415f]">Review Note</p>
+                    <div className="rounded-lg border border-[var(--color-border)] p-3">
+                      <p className="mb-2 text-sm font-semibold text-[var(--color-text)]">Review Note</p>
                       <Input
                         value={reviewNote}
                         onChange={(e) => setReviewNote(e.target.value)}
                         placeholder="Reason for decision..."
                         disabled={!canReview || reviewing}
                       />
-                      <label className="mt-3 flex items-center gap-2 text-xs text-[#5f7393]">
+                      <label className="mt-3 flex items-center gap-2 text-xs text-[var(--color-text-soft)]">
                         <input
                           type="checkbox"
                           checked={generateRag}
@@ -338,13 +338,13 @@ export default function QuarantinePage() {
 
                     {detail.result?.evidences?.length ? (
                       <div className="space-y-2">
-                        <p className="text-sm font-semibold text-[#29415f]">Top Evidences</p>
+                        <p className="text-sm font-semibold text-[var(--color-text)]">Top Evidences</p>
                         {detail.result.evidences.slice(0, 5).map((ev, idx) => (
                           <div key={`${ev.category}-${idx}`} className={`rounded-lg border p-2 ${severityTone(ev.severity)}`}>
-                            <p className="text-xs font-semibold text-[#213552]">
+                            <p className="text-xs font-semibold text-[var(--color-heading)]">
                               {ev.category} ({ev.severity.toUpperCase()})
                             </p>
-                            <p className="mt-1 text-xs text-[#4f6386]">{ev.snippet}</p>
+                            <p className="mt-1 text-xs text-[var(--color-text-soft)]">{ev.snippet}</p>
                           </div>
                         ))}
                       </div>

@@ -135,10 +135,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f6f9ff_0%,#fdfefe_100%)] p-4">
+    <div className="min-h-screen bg-[linear-gradient(180deg,var(--color-bg-app)_0%,var(--color-surface)_100%)] p-4">
       <div className="mx-auto flex min-h-[92vh] w-full max-w-[1080px] items-center justify-center">
         <Card className="grid w-full max-w-[880px] grid-cols-1 overflow-hidden p-0 md:grid-cols-[1.05fr_1fr]">
-          <div className="bg-[linear-gradient(145deg,#2f6fff,#1748bb)] p-8 text-white">
+          <div className="bg-[linear-gradient(145deg,var(--color-primary),var(--color-primary-strong))] p-8 text-white">
             <p className="text-3xl font-extrabold">NEXUS</p>
             <p className="text-sm font-semibold text-blue-100">GATEWAY LLM SHIELD</p>
             <h1 className="mt-10 text-3xl font-bold">Secure AI Document Pipeline</h1>
@@ -205,7 +205,7 @@ export default function LoginPage() {
                   <select
                     value={plan}
                     onChange={(e) => setPlan(e.target.value as "starter" | "growth" | "business" | "enterprise")}
-                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                   >
                     <option value="starter">Starter</option>
                     <option value="growth">Growth</option>

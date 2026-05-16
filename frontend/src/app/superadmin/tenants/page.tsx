@@ -185,7 +185,7 @@ export default function SuperAdminTenantsPage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[#f7f9fc] text-[#4c5f82]">
+      <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
         Preparing your workspace...
       </div>
     );
@@ -194,7 +194,7 @@ export default function SuperAdminTenantsPage() {
   const isSuperAdmin = me ? me.role === "superadmin" : true;
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
@@ -202,8 +202,8 @@ export default function SuperAdminTenantsPage() {
             <Card className="rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin Tenant Management</h1>
-                  <p className="mt-1 text-sm text-[#667896]">
+                  <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Tenant Management</h1>
+                  <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                     Global controls to manage tenant plan and account status across the SaaS platform.
                   </p>
                 </div>
@@ -222,11 +222,11 @@ export default function SuperAdminTenantsPage() {
               <>
                 <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
                 <Card className="rounded-xl p-4">
-                  <h2 className="mb-3 text-xl font-semibold text-[#213552]">Tenants</h2>
+                  <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Tenants</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[860px] text-left text-sm">
                       <thead>
-                        <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                        <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                           <th className="py-2">Tenant</th>
                           <th className="py-2">CNPJ</th>
                           <th className="py-2">Slug</th>
@@ -243,16 +243,16 @@ export default function SuperAdminTenantsPage() {
                         {tenants.map((tenant) => (
                           <tr
                             key={tenant.id}
-                            className={`cursor-pointer border-b border-[#eff3f8] ${selectedId === tenant.id ? "bg-[#f4f8ff]" : ""}`}
+                            className={`cursor-pointer border-b border-[var(--color-border-soft)] ${selectedId === tenant.id ? "bg-[var(--color-surface-alt)]" : ""}`}
                             onClick={() => {
                               setSelectedId(tenant.id);
                               setSelectedPlan(tenant.plan);
                               setSelectedActive(tenant.is_active);
                             }}
                           >
-                            <td className="py-2 text-[#2c3f5f]">{tenant.name}</td>
-                            <td className="py-2 text-[#4f6386]">{tenant.cnpj || "-"}</td>
-                            <td className="py-2 text-[#4f6386]">{tenant.slug}</td>
+                            <td className="py-2 text-[var(--color-text)]">{tenant.name}</td>
+                            <td className="py-2 text-[var(--color-text-soft)]">{tenant.cnpj || "-"}</td>
+                            <td className="py-2 text-[var(--color-text-soft)]">{tenant.slug}</td>
                             <td className="py-2">
                               <Badge className={planTone(tenant.plan)}>{tenant.plan.toUpperCase()}</Badge>
                             </td>
@@ -261,16 +261,16 @@ export default function SuperAdminTenantsPage() {
                                 {tenant.is_active ? "ACTIVE" : "INACTIVE"}
                               </Badge>
                             </td>
-                            <td className="py-2 text-[#334766]">{tenant.total_users}</td>
-                            <td className="py-2 text-[#334766]">{tenant.total_documents}</td>
-                            <td className="py-2 text-[#334766]">{tenant.total_scans}</td>
-                            <td className="py-2 text-[#334766]">{tenant.active_api_tokens}</td>
-                            <td className="py-2 text-[#4f6386]">{formatDate(tenant.created_at)}</td>
+                            <td className="py-2 text-[var(--color-text)]">{tenant.total_users}</td>
+                            <td className="py-2 text-[var(--color-text)]">{tenant.total_documents}</td>
+                            <td className="py-2 text-[var(--color-text)]">{tenant.total_scans}</td>
+                            <td className="py-2 text-[var(--color-text)]">{tenant.active_api_tokens}</td>
+                            <td className="py-2 text-[var(--color-text-soft)]">{formatDate(tenant.created_at)}</td>
                           </tr>
                         ))}
                         {!tenants.length ? (
                           <tr>
-                            <td colSpan={10} className="py-6 text-center text-[#7586a3]">
+                            <td colSpan={10} className="py-6 text-center text-[var(--color-text-soft)]">
                               No tenants found.
                             </td>
                           </tr>
@@ -281,32 +281,32 @@ export default function SuperAdminTenantsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="mb-3 text-xl font-semibold text-[#213552]">Tenant Controls</h2>
+                  <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Tenant Controls</h2>
                   {!selectedTenant ? (
-                    <p className="text-sm text-[#5f7393]">Select one tenant to edit.</p>
+                    <p className="text-sm text-[var(--color-text-soft)]">Select one tenant to edit.</p>
                   ) : (
                     <div className="space-y-3">
-                      <div className="rounded-lg border border-[#e5ecf6] bg-[#f9fbff] p-3">
-                        <p className="text-sm font-semibold text-[#29415f]">{selectedTenant.name}</p>
-                        <p className="mt-1 text-xs text-[#5f7393]">Slug: {selectedTenant.slug}</p>
-                        <p className="mt-1 text-xs text-[#5f7393]">CNPJ: {selectedTenant.cnpj || "-"}</p>
-                        <p className="mt-1 text-xs text-[#5f7393]">Razão Social: {selectedTenant.legal_name || "-"}</p>
-                        <p className="mt-1 text-xs text-[#5f7393]">E-mail NF: {selectedTenant.invoice_email || "-"}</p>
-                        <p className="mt-1 text-xs text-[#5f7393]">
+                      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                        <p className="text-sm font-semibold text-[var(--color-text)]">{selectedTenant.name}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">Slug: {selectedTenant.slug}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">CNPJ: {selectedTenant.cnpj || "-"}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">Razão Social: {selectedTenant.legal_name || "-"}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">E-mail NF: {selectedTenant.invoice_email || "-"}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">
                           Endereço: {selectedTenant.address_line || "-"}, {selectedTenant.address_number || "-"} {selectedTenant.address_complement || ""}
                         </p>
-                        <p className="mt-1 text-xs text-[#5f7393]">
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">
                           Bairro/Cidade/CEP: {selectedTenant.district || "-"} / {selectedTenant.city || "-"} / {selectedTenant.postal_code || "-"}
                         </p>
-                        <p className="mt-1 text-xs text-[#5f7393]">Created: {formatDate(selectedTenant.created_at)}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-soft)]">Created: {formatDate(selectedTenant.created_at)}</p>
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[#324a6f]">Plan</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Plan</label>
                         <select
                           value={selectedPlan}
                           onChange={(e) => setSelectedPlan(e.target.value as TenantPlan)}
-                          className="h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
+                          className="h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
                         >
                           <option value="starter">Starter</option>
                           <option value="growth">Growth</option>
@@ -315,7 +315,7 @@ export default function SuperAdminTenantsPage() {
                         </select>
                       </div>
 
-                      <label className="flex items-center gap-2 rounded-lg border border-[#e4ebf7] bg-[#fbfcff] px-3 py-2 text-sm text-[#324a6f]">
+                      <label className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-sm text-[var(--color-text-soft)]">
                         <input
                           type="checkbox"
                           checked={selectedActive}
@@ -334,10 +334,10 @@ export default function SuperAdminTenantsPage() {
                 </div>
 
                 <Card className="rounded-xl p-4">
-                <h2 className="mb-3 text-xl font-semibold text-[#213552]">Pending Upgrade Requests</h2>
+                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Pending Upgrade Requests</h2>
                 <div className="mb-3">
                   <textarea
-                    className="h-20 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                    className="h-20 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                     placeholder="Optional admin note for approve/reject actions"
                     value={decisionNote}
                     onChange={(e) => setDecisionNote(e.target.value)}
@@ -346,7 +346,7 @@ export default function SuperAdminTenantsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[860px] text-left text-sm">
                     <thead>
-                      <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                      <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                         <th className="py-2">Tenant ID</th>
                         <th className="py-2">From</th>
                         <th className="py-2">To</th>
@@ -357,12 +357,12 @@ export default function SuperAdminTenantsPage() {
                     </thead>
                     <tbody>
                       {upgradeRequests.map((item) => (
-                        <tr key={item.id} className="border-b border-[#eff3f8]">
-                          <td className="py-2 text-[#334766]">{item.tenant_id}</td>
-                          <td className="py-2 text-[#334766]">{item.current_plan.toUpperCase()}</td>
-                          <td className="py-2 text-[#334766]">{item.requested_plan.toUpperCase()}</td>
-                          <td className="py-2 text-[#4f6386]">{item.reason || "-"}</td>
-                          <td className="py-2 text-[#4f6386]">{formatDate(item.created_at)}</td>
+                        <tr key={item.id} className="border-b border-[var(--color-border-soft)]">
+                          <td className="py-2 text-[var(--color-text)]">{item.tenant_id}</td>
+                          <td className="py-2 text-[var(--color-text)]">{item.current_plan.toUpperCase()}</td>
+                          <td className="py-2 text-[var(--color-text)]">{item.requested_plan.toUpperCase()}</td>
+                          <td className="py-2 text-[var(--color-text-soft)]">{item.reason || "-"}</td>
+                          <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.created_at)}</td>
                           <td className="py-2">
                             <div className="flex items-center gap-2">
                               <Button
@@ -385,7 +385,7 @@ export default function SuperAdminTenantsPage() {
                       ))}
                       {!upgradeRequests.length ? (
                         <tr>
-                          <td colSpan={6} className="py-6 text-center text-[#7586a3]">
+                          <td colSpan={6} className="py-6 text-center text-[var(--color-text-soft)]">
                             No pending upgrade requests.
                           </td>
                         </tr>

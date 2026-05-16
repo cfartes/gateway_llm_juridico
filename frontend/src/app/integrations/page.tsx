@@ -269,14 +269,14 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">Integrations</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Integrations</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 Configure webhook, SIEM e Slack para integração operacional e de segurança.
               </p>
             </Card>
@@ -284,8 +284,8 @@ export default function IntegrationsPage() {
             <form onSubmit={onSubmit} className="space-y-4">
               <Card className="rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-[#213552]">Webhook</h2>
-                  <label className="text-sm text-[#4f6386]">
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">Webhook</h2>
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -315,7 +315,7 @@ export default function IntegrationsPage() {
                     onChange={(e) => update("webhook_auth_bearer", e.target.value)}
                     disabled={!canEdit}
                   />
-                  <div className="flex gap-4 text-sm text-[#5f7393]">
+                  <div className="flex gap-4 text-sm text-[var(--color-text-soft)]">
                     <label>
                       <input
                         type="checkbox"
@@ -338,15 +338,15 @@ export default function IntegrationsPage() {
                     </label>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-[#6b7b95]">
+                <p className="mt-2 text-xs text-[var(--color-text-soft)]">
                   Secret configured: {config?.webhook.secret_configured ? "yes" : "no"} | Bearer configured: {config?.webhook.auth_bearer_configured ? "yes" : "no"}
                 </p>
               </Card>
 
               <Card className="rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-[#213552]">SIEM</h2>
-                  <label className="text-sm text-[#4f6386]">
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">SIEM</h2>
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -376,7 +376,7 @@ export default function IntegrationsPage() {
                     onChange={(e) => update("siem_auth_token", e.target.value)}
                     disabled={!canEdit}
                   />
-                  <label className="text-sm text-[#5f7393]">
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -387,15 +387,15 @@ export default function IntegrationsPage() {
                     Clear SIEM token
                   </label>
                 </div>
-                <p className="mt-2 text-xs text-[#6b7b95]">
+                <p className="mt-2 text-xs text-[var(--color-text-soft)]">
                   Auth token configured: {config?.siem.auth_token_configured ? "yes" : "no"}
                 </p>
               </Card>
 
               <Card className="rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-[#213552]">Slack / ChatOps</h2>
-                  <label className="text-sm text-[#4f6386]">
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">Slack / ChatOps</h2>
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -425,7 +425,7 @@ export default function IntegrationsPage() {
                     onChange={(e) => update("slack_bot_token", e.target.value)}
                     disabled={!canEdit}
                   />
-                  <label className="text-sm text-[#5f7393]">
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -436,15 +436,15 @@ export default function IntegrationsPage() {
                     Clear bot token
                   </label>
                 </div>
-                <p className="mt-2 text-xs text-[#6b7b95]">
+                <p className="mt-2 text-xs text-[var(--color-text-soft)]">
                   Bot token configured: {config?.slack.bot_token_configured ? "yes" : "no"}
                 </p>
               </Card>
 
               <Card className="rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-[#213552]">Ops Alerts (Tenant)</h2>
-                  <label className="text-sm text-[#4f6386]">
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">Ops Alerts (Tenant)</h2>
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -455,11 +455,11 @@ export default function IntegrationsPage() {
                     Enabled
                   </label>
                 </div>
-                <p className="mt-1 text-xs text-[#667896]">
+                <p className="mt-1 text-xs text-[var(--color-text-soft)]">
                   Alertas operacionais do tenant (SLO breach/recovery e webhook dead-letter).
                 </p>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <label className="text-sm text-[#5f7393]">
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -481,7 +481,7 @@ export default function IntegrationsPage() {
                     onChange={(e) => update("ops_alert_webhook_auth_bearer", e.target.value)}
                     disabled={!canEdit}
                   />
-                  <label className="text-sm text-[#5f7393]">
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -491,7 +491,7 @@ export default function IntegrationsPage() {
                     />
                     Clear webhook bearer
                   </label>
-                  <label className="text-sm text-[#5f7393]">
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -501,7 +501,7 @@ export default function IntegrationsPage() {
                     />
                     Send to Slack (uses Slack webhook above)
                   </label>
-                  <label className="text-sm text-[#5f7393]">
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -517,7 +517,7 @@ export default function IntegrationsPage() {
                     onChange={(e) => update("ops_alert_teams_webhook_url", e.target.value)}
                     disabled={!canEdit}
                   />
-                  <label className="text-sm text-[#5f7393]">
+                  <label className="text-sm text-[var(--color-text-soft)]">
                     <input
                       type="checkbox"
                       className="mr-2"
@@ -534,7 +534,7 @@ export default function IntegrationsPage() {
                     disabled={!canEdit}
                   />
                 </div>
-                <p className="mt-2 text-xs text-[#6b7b95]">
+                <p className="mt-2 text-xs text-[var(--color-text-soft)]">
                   Webhook bearer configured: {config?.ops_alerts.webhook_auth_bearer_configured ? "yes" : "no"}
                 </p>
               </Card>

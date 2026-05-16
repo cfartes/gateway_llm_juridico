@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
+import { ThemeInit } from "@/components/theme-init";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -19,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${manrope.variable} h-full`}>
-      <body className="min-h-full antialiased">{children}</body>
+      <body className="min-h-full antialiased">
+        <ThemeInit />
+        {children}
+      </body>
     </html>
   );
 }

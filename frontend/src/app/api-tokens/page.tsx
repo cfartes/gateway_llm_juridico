@@ -80,28 +80,31 @@ export default function ApiTokensPage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen bg-[#f7f9fc] grid place-items-center text-[#4c5f82]">
+      <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
         Preparing your workspace...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">API Tokens</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">API Tokens</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 Create and manage integration bearer tokens. Use these tokens only in API calls.
               </p>
+              <div className="mt-3 rounded-lg bg-[var(--color-surface-alt)] px-3 py-2 text-xs text-[var(--color-text-soft)]">
+                API token usage only via endpoint (Bearer header)
+              </div>
             </Card>
 
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-2xl font-semibold text-[#213552]">Token Management</h2>
+                <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Token Management</h2>
                 <form onSubmit={generateToken} className="flex items-center gap-2">
                   <Input
                     value={tokenName}
@@ -117,7 +120,7 @@ export default function ApiTokensPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                    <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                       <th className="py-2">Token Name</th>
                       <th className="py-2">Prefix</th>
                       <th className="py-2">Created</th>
@@ -127,11 +130,11 @@ export default function ApiTokensPage() {
                   </thead>
                   <tbody>
                     {tokens.map((item) => (
-                      <tr key={item.id} className="border-b border-[#eff3f8]">
-                        <td className="py-2 text-[#2c3f5f]">{item.name}</td>
-                        <td className="py-2 text-[#4f6386]">{item.token_prefix}</td>
-                        <td className="py-2 text-[#4f6386]">{formatDate(item.created_at)}</td>
-                        <td className="py-2 text-[#4f6386]">{formatDate(item.last_used_at)}</td>
+                      <tr key={item.id} className="border-b border-[var(--color-border-soft)]">
+                        <td className="py-2 text-[var(--color-text)]">{item.name}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.token_prefix}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.created_at)}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.last_used_at)}</td>
                         <td className="py-2">
                           <Badge className={item.revoked_at ? "bg-gray-100 text-gray-700" : "bg-emerald-100 text-emerald-700"}>
                             {item.revoked_at ? "Revoked" : "Active"}
@@ -141,7 +144,7 @@ export default function ApiTokensPage() {
                     ))}
                     {!tokens.length ? (
                       <tr>
-                        <td colSpan={5} className="py-5 text-center text-[#6f80a0]">
+                        <td colSpan={5} className="py-5 text-center text-[var(--color-text-muted)]">
                           No tokens yet.
                         </td>
                       </tr>
@@ -151,7 +154,7 @@ export default function ApiTokensPage() {
               </div>
 
               {generatedToken ? (
-                <div className="mt-3 rounded-lg border border-[#dce4f2] bg-[#f8fbff] p-2 text-xs text-[#314765]">
+                <div className="mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-2 text-xs text-[var(--color-text)]">
                   <p className="font-semibold">Generated token (shown only once)</p>
                   <code className="break-all">{generatedToken}</code>
                 </div>
@@ -159,8 +162,8 @@ export default function ApiTokensPage() {
             </Card>
 
             <Card className="rounded-xl p-4">
-              <h3 className="text-lg font-semibold text-[#213552]">API usage example</h3>
-              <pre className="mt-2 overflow-x-auto rounded-lg bg-[#0f1729] p-3 text-xs text-[#d4e0ff]">
+              <h3 className="text-lg font-semibold text-[var(--color-heading)]">API usage example</h3>
+              <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--color-code-bg)] p-3 text-xs text-[var(--color-code-text)]">
 {`curl -X POST ${API_BASE}/uploads/scan-sync \
   -H "Authorization: Bearer <API_TOKEN>" \
   -F "files=@./sample.pdf"`}

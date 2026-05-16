@@ -159,7 +159,7 @@ export default function SuperAdminQueuesPage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[#f7f9fc] text-[#4c5f82]">
+      <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
         Preparing your workspace...
       </div>
     );
@@ -204,14 +204,14 @@ export default function SuperAdminQueuesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin Queue Dashboard</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Queue Dashboard</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 Real-time queue pressure, throughput window, and ETA estimation by processing tier.
               </p>
             </Card>
@@ -226,11 +226,11 @@ export default function SuperAdminQueuesPage() {
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex flex-wrap items-end gap-2">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Window</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Window</label>
                       <select
                         value={windowHours}
                         onChange={(e) => setWindowHours(Number(e.target.value))}
-                        className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                        className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                       >
                         <option value={1}>1h</option>
                         <option value={6}>6h</option>
@@ -240,14 +240,14 @@ export default function SuperAdminQueuesPage() {
                       </select>
                     </div>
                     <div className="min-w-[240px] flex-1">
-                      <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Tenant ID (optional)</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Tenant ID (optional)</label>
                       <Input
                         value={tenantFilter}
                         onChange={(e) => setTenantFilter(e.target.value)}
                         placeholder="Filter by tenant UUID"
                       />
                     </div>
-                    <label className="flex items-center gap-2 rounded-lg border border-[#e4ebf7] bg-[#fbfcff] px-3 py-2 text-sm text-[#324a6f]">
+                    <label className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-sm text-[var(--color-text-soft)]">
                       <input
                         type="checkbox"
                         checked={autoRefresh}
@@ -262,21 +262,21 @@ export default function SuperAdminQueuesPage() {
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-4">
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Total Pending</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{overview.total_pending}</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Total Pending</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{overview.total_pending}</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Total Running</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{overview.total_running}</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Total Running</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{overview.total_running}</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Estimated Queue Wait</p>
-                      <p className="text-2xl font-bold text-[#7b4f00]">{Math.round(totalEta)}s</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Estimated Queue Wait</p>
+                      <p className="text-2xl font-bold text-[var(--color-warn-text)]">{Math.round(totalEta)}s</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Generated At</p>
-                      <p className="text-sm font-semibold text-[#2c3f5f]">{formatDate(overview.generated_at)}</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Generated At</p>
+                      <p className="text-sm font-semibold text-[var(--color-text)]">{formatDate(overview.generated_at)}</p>
                     </div>
                   </div>
                 </Card>
@@ -292,7 +292,7 @@ export default function SuperAdminQueuesPage() {
                     <h2 className={`text-lg font-semibold ${overview.alert_level === "critical" ? "text-red-700" : "text-amber-700"}`}>
                       {overview.alert_level === "critical" ? "Queue Alert: Critical" : "Queue Alert: Warning"}
                     </h2>
-                    <div className="mt-2 space-y-1 text-sm text-[#5f7393]">
+                    <div className="mt-2 space-y-1 text-sm text-[var(--color-text-soft)]">
                       {overview.alerts.map((item, index) => (
                         <p key={`${index}-${item}`}>- {item}</p>
                       ))}
@@ -307,17 +307,17 @@ export default function SuperAdminQueuesPage() {
                 ) : null}
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-xl font-semibold text-[#213552]">Queue Alert History</h2>
+                  <h2 className="text-xl font-semibold text-[var(--color-heading)]">Queue Alert History</h2>
                   <div className="mt-2 space-y-2">
                     {history.length ? (
                       history.map((item) => (
-                        <div key={item.id} className="rounded-lg border border-[#e8edf5] bg-white p-2 text-xs text-[#4f6386]">
+                        <div key={item.id} className="rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-2 text-xs text-[var(--color-text-soft)]">
                           [{new Date(item.timestamp).toLocaleString()}] {item.page.toUpperCase()} {item.level.toUpperCase()}
                           {item.messages[0] ? ` - ${item.messages[0]}` : ""}
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-[#667896]">No alert history yet.</p>
+                      <p className="text-sm text-[var(--color-text-soft)]">No alert history yet.</p>
                     )}
                   </div>
                 </Card>
@@ -326,7 +326,7 @@ export default function SuperAdminQueuesPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[920px] text-left text-sm">
                       <thead>
-                        <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                        <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                           <th className="py-2">Queue</th>
                           <th className="py-2">Pending</th>
                           <th className="py-2">Running</th>
@@ -339,22 +339,22 @@ export default function SuperAdminQueuesPage() {
                       </thead>
                       <tbody>
                         {overview.items.map((item) => (
-                          <tr key={item.queue_name} className="border-b border-[#eff3f8]">
+                          <tr key={item.queue_name} className="border-b border-[var(--color-border-soft)]">
                             <td className="py-2">
                               <Badge className={queueTone(item.queue_name)}>{item.queue_name}</Badge>
                             </td>
-                            <td className="py-2 text-[#334766]">{item.pending_jobs}</td>
-                            <td className="py-2 text-[#334766]">{item.running_jobs}</td>
-                            <td className="py-2 text-[#334766]">{item.completed_window}</td>
-                            <td className="py-2 text-[#334766]">{item.failed_window}</td>
-                            <td className="py-2 text-[#334766]">{item.avg_processing_seconds}s</td>
-                            <td className="py-2 text-[#7b4f00]">{Math.round(item.estimated_wait_seconds)}s</td>
-                            <td className="py-2 text-[#4f6386]">{formatDate(item.last_completed_at)}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.pending_jobs}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.running_jobs}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.completed_window}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.failed_window}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.avg_processing_seconds}s</td>
+                            <td className="py-2 text-[var(--color-warn-text)]">{Math.round(item.estimated_wait_seconds)}s</td>
+                            <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.last_completed_at)}</td>
                           </tr>
                         ))}
                         {!overview.items.length ? (
                           <tr>
-                            <td colSpan={8} className="py-6 text-center text-[#7586a3]">
+                            <td colSpan={8} className="py-6 text-center text-[var(--color-text-soft)]">
                               No queue data available for this filter.
                             </td>
                           </tr>

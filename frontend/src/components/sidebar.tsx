@@ -1,27 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { clearSessionTokens, getAccessToken } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { clearSessionTokens, ensureAccessToken, getAccessToken } from "@/lib/auth";
 
-const ITEMS = [
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+
+type NavItem = {
+  label: string;
+  href: string;
+  superadminOnly?: boolean;
+};
+
+const ITEMS: NavItem[] = [
   { label: "Overview", href: "/" },
-  { label: "Scans" },
-  { label: "Files" },
   { label: "API Tokens", href: "/api-tokens" },
   { label: "Users", href: "/users" },
   { label: "Quarantine", href: "/quarantine" },
   { label: "Queues", href: "/queues" },
-  { label: "SuperAdmin Tenants", href: "/superadmin/tenants" },
-  { label: "SuperAdmin LLM", href: "/superadmin/llm-config" },
-  { label: "SuperAdmin Webhooks", href: "/superadmin/webhooks" },
-  { label: "SuperAdmin Queues", href: "/superadmin/queues" },
-  { label: "SuperAdmin Ops", href: "/superadmin/ops" },
-  { label: "SuperAdmin Support", href: "/superadmin/support" },
+  { label: "SuperAdmin Tenants", href: "/superadmin/tenants", superadminOnly: true },
+  { label: "SuperAdmin LLM", href: "/superadmin/llm-config", superadminOnly: true },
+  { label: "SuperAdmin Webhooks", href: "/superadmin/webhooks", superadminOnly: true },
+  { label: "SuperAdmin Queues", href: "/superadmin/queues", superadminOnly: true },
+  { label: "SuperAdmin Ops", href: "/superadmin/ops", superadminOnly: true },
+  { label: "SuperAdmin Support", href: "/superadmin/support", superadminOnly: true },
   { label: "Webhook Deliveries", href: "/webhooks" },
-  { label: "Policies" },
-  { label: "Allow / Block Lists" },
   { label: "Integrations", href: "/integrations" },
   { label: "Audit Log", href: "/audit-log" },
   { label: "Support", href: "/support" },
@@ -31,6 +37,32 @@ const ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    async function loadRole() {
+      const accessToken = await ensureAccessToken(API_BASE);
+      if (!accessToken) return;
+      try {
+        const response = await fetch(`${API_BASE}/auth/me`, {
+          method: "GET",
+          credentials: "include",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!response.ok) return;
+        const me = (await response.json()) as { role?: string };
+        setRole((me.role ?? "").toLowerCase());
+      } catch {
+        // Ignore profile fetch issues and keep a safe default visibility.
+      }
+    }
+    void loadRole();
+  }, []);
+
+  const visibleItems = useMemo(
+    () => ITEMS.filter((item) => !item.superadminOnly || role === "superadmin"),
+    [role],
+  );
 
   async function logout() {
     const accessToken = getAccessToken();
@@ -52,30 +84,20 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="hidden w-[238px] flex-col border-r border-[#e6ebf3] bg-white lg:flex">
+    <aside className="hidden w-[238px] flex-col border-r border-[var(--color-border-soft)] bg-[var(--color-surface)] lg:flex">
       <div className="px-6 pb-4 pt-5">
         <p className="text-[33px] font-extrabold leading-none text-[var(--color-primary)]">NEXUS</p>
-        <p className="text-xs font-semibold tracking-wide text-[#8292af]">GATEWAY LLM SHIELD</p>
+        <p className="text-xs font-semibold tracking-wide text-[var(--color-text-muted)]">GATEWAY LLM SHIELD</p>
       </div>
       <nav className="px-3">
-        {ITEMS.map((item) => {
-          const hasLink = Boolean(item.href);
-          const active = hasLink && pathname === item.href;
+        {visibleItems.map((item) => {
+          const active = pathname === item.href;
           const className = `mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-            active ? "bg-[#edf3ff] text-[var(--color-primary)]" : "text-[#4c5f82]"
+            active ? "bg-[var(--color-surface-alt)] text-[var(--color-primary)]" : "text-[var(--color-text-soft)]"
           }`;
 
-          if (!hasLink) {
-            return (
-              <div key={item.label} className={`${className} opacity-70`}>
-                <span className="inline-block h-4 w-4 rounded-full border border-current opacity-80" />
-                {item.label}
-              </div>
-            );
-          }
-
           return (
-            <Link href={item.href!} key={item.label} className={className}>
+            <Link href={item.href} key={item.label} className={className}>
               <span className="inline-block h-4 w-4 rounded-full border border-current opacity-80" />
               {item.label}
             </Link>
@@ -83,14 +105,15 @@ export function Sidebar() {
         })}
       </nav>
       <div className="mt-auto p-3 space-y-2">
-        <Card className="rounded-xl bg-[#f5f8ff] p-3">
+        <Card className="rounded-xl bg-[var(--color-surface-alt)] p-3">
           <p className="text-sm font-semibold text-[var(--color-primary)]">Enterprise Plan</p>
-          <p className="mt-1 text-xs text-[#6a7a95]">Unlimited scans</p>
+          <p className="mt-1 text-xs text-[var(--color-text-soft)]">Unlimited scans</p>
         </Card>
+        <ThemeToggle />
         <button
           type="button"
           onClick={logout}
-          className="w-full rounded-lg border border-[#e0e7f3] bg-white px-3 py-2 text-sm font-semibold text-[#4c5f82] hover:bg-[#f6f9ff]"
+          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold text-[var(--color-text-soft)] hover:bg-[var(--color-surface-alt)]"
         >
           Logout
         </button>

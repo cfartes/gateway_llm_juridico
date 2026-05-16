@@ -7,9 +7,9 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const styles: Record<NonNullable<ButtonProps["variant"]>, string> = {
   default: "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-strong)]",
-  outline: "border border-[var(--color-border-strong)] text-[var(--color-text)] hover:bg-white/80",
-  ghost: "text-[var(--color-text)] hover:bg-white/80",
-  danger: "bg-[var(--color-danger)] text-white hover:bg-[#e53935]",
+  outline: "border border-[var(--color-border-strong)] text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]",
+  ghost: "text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]",
+  danger: "bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger-strong)]",
 };
 
 export function Button({ className, variant = "default", ...props }: ButtonProps) {

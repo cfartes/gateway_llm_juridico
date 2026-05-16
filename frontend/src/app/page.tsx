@@ -55,24 +55,6 @@ type QuarantineItem = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
-const SAMPLE_EVIDENCE = [
-  {
-    title: "Potential PII Detected",
-    level: "high",
-    snippet: "please contact John Smith at john.smith@acme.com",
-  },
-  {
-    title: "Sensitive Policy Information",
-    level: "medium",
-    snippet: "vendor must adhere to retention policy of 7 years",
-  },
-  {
-    title: "Secrets / Credentials",
-    level: "critical",
-    snippet: "api_key: sk_live_... endpoint: https://api.internal.acme.com/v1",
-  },
-];
-
 function riskTone(risk?: string | null): string {
   switch ((risk ?? "").toLowerCase()) {
     case "critical":
@@ -139,14 +121,7 @@ export default function Home() {
   }, [scans]);
 
   const evidenceBlocks = useMemo(() => {
-    if (!selectedScan?.result?.evidences?.length) {
-      return SAMPLE_EVIDENCE.map((item) => ({
-        title: item.title,
-        severity: item.level,
-        snippet: item.snippet,
-      }));
-    }
-    return selectedScan.result.evidences.slice(0, 3).map((ev) => ({
+    return (selectedScan?.result?.evidences ?? []).slice(0, 3).map((ev) => ({
       title: ev.category.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       severity: ev.severity,
       snippet: ev.snippet,
@@ -235,42 +210,39 @@ export default function Home() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen bg-[#f7f9fc] grid place-items-center text-[#4c5f82]">
+      <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
         Preparing your workspace...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
 
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px]">
-            <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e6ebf3] bg-white px-4 py-3">
+            <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
               <div className="flex min-w-[300px] items-center gap-3">
-                <span className="text-sm font-semibold text-[#4c5f82]">Tenant</span>
-                <div className="rounded-lg border border-[#dce4f2] bg-[#f8faff] px-3 py-2 text-sm text-[#334766]">
+                <span className="text-sm font-semibold text-[var(--color-text-soft)]">Tenant</span>
+                <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-sm text-[var(--color-text)]">
                   Acme Corporation
                 </div>
               </div>
-              <div className="rounded-lg bg-[#f8fbff] px-3 py-2 text-xs text-[#607495]">
-                API token usage only via endpoint (Bearer header)
-              </div>
             </header>
 
-            <Card className="mb-4 rounded-xl border-[#f0e3bf] bg-[#fffdf6] p-4">
+            <Card className="mb-4 rounded-xl border-[var(--color-warn-border)] bg-[var(--color-warn-surface)] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-[#785a12]">Pending Quarantine Reviews</p>
-                  <p className="mt-1 text-3xl font-bold text-[#6b5112]">{pendingQuarantineCount}</p>
-                  <p className="mt-1 text-xs text-[#8a6e2a]">
+                  <p className="text-sm font-semibold text-[var(--color-warn-text)]">Pending Quarantine Reviews</p>
+                  <p className="mt-1 text-3xl font-bold text-[var(--color-warn-text)]">{pendingQuarantineCount}</p>
+                  <p className="mt-1 text-xs text-[var(--color-warn-soft)]">
                     Documents waiting manual decision before secure RAG release.
                   </p>
                 </div>
                 <Link href="/quarantine">
-                  <Button className="bg-[#1f3f72] hover:bg-[#183561]">Open Quarantine Queue</Button>
+                  <Button className="bg-[var(--color-primary-strong)] hover:bg-[var(--color-primary)]">Open Quarantine Queue</Button>
                 </Link>
               </div>
             </Card>
@@ -279,32 +251,32 @@ export default function Home() {
               <section className="space-y-4">
                 <div className="grid gap-3 md:grid-cols-3">
                   <Card className="rounded-xl p-4">
-                    <p className="text-sm font-semibold text-[#293b57]">Threat Score</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)]">Threat Score</p>
                     <p className="mt-3 text-4xl font-bold text-[var(--color-primary)]">{stats.avg}</p>
-                    <p className="text-xs text-[#7a89a5]">/ 100</p>
+                    <p className="text-xs text-[var(--color-text-soft)]">/ 100</p>
                   </Card>
                   <Card className="rounded-xl p-4">
-                    <p className="text-sm font-semibold text-[#293b57]">Risk Level</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)]">Risk Level</p>
                     <Badge className={`mt-3 ${riskTone(stats.latestRisk)}`}>
                       {stats.latestRisk.toUpperCase()}
                     </Badge>
-                    <p className="mt-2 text-xs text-[#7a89a5]">Current environment risk status</p>
+                    <p className="mt-2 text-xs text-[var(--color-text-soft)]">Current environment risk status</p>
                   </Card>
                   <Card className="rounded-xl p-4">
-                    <p className="text-sm font-semibold text-[#293b57]">Files Scanned</p>
-                    <p className="mt-3 text-4xl font-bold text-[#182746]">{stats.total.toLocaleString()}</p>
-                    <p className="text-xs text-[#7a89a5]">Total analyzed files</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)]">Files Scanned</p>
+                    <p className="mt-3 text-4xl font-bold text-[var(--color-text)]">{stats.total.toLocaleString()}</p>
+                    <p className="text-xs text-[var(--color-text-soft)]">Total analyzed files</p>
                   </Card>
                 </div>
 
                 <Card className="rounded-xl p-4">
                   <form onSubmit={handleScanUpload}>
-                    <label className="flex min-h-[145px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#8ea9de] bg-[#f8fbff] px-4 text-center">
+                    <label className="flex min-h-[145px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-alt)] px-4 text-center">
                       <span className="text-2xl text-[var(--color-primary)]">+</span>
                       <span className="mt-2 text-2xl font-semibold text-[var(--color-primary)]">
                         Drag and drop files to scan
                       </span>
-                      <span className="mt-1 text-sm text-[#6e7f9b]">
+                      <span className="mt-1 text-sm text-[var(--color-text-soft)]">
                         Supports PDF, DOCX, TXT, MD, HTML, CSV, and images
                       </span>
                       <input type="file" className="hidden" multiple onChange={(e) => setFiles(e.target.files)} />
@@ -317,7 +289,7 @@ export default function Home() {
 
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-[#213552]">Recent Scans</h2>
+                    <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Recent Scans</h2>
                     <Button variant="outline" onClick={loadScans} disabled={loading}>
                       Refresh
                     </Button>
@@ -325,7 +297,7 @@ export default function Home() {
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[730px] text-left text-sm">
                       <thead>
-                        <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                        <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                           <th className="py-2">File Name</th>
                           <th className="py-2">Risk Level</th>
                           <th className="py-2">Threat Score</th>
@@ -335,8 +307,8 @@ export default function Home() {
                       </thead>
                       <tbody>
                         {scans.map((scan) => (
-                          <tr key={scan.scan.id} className="border-b border-[#eff3f8]">
-                            <td className="py-2 text-[#2c3f5f]">{scan.document.original_name}</td>
+                          <tr key={scan.scan.id} className="border-b border-[var(--color-border-soft)]">
+                            <td className="py-2 text-[var(--color-text)]">{scan.document.original_name}</td>
                             <td className="py-2">
                               <Badge className={riskTone(scan.scan.risk_level)}>
                                 {(scan.scan.risk_level ?? "unknown").toUpperCase()}
@@ -345,7 +317,7 @@ export default function Home() {
                             <td className={`py-2 font-semibold ${riskScoreColor(scan.scan.threat_score ?? 0)}`}>
                               {scan.scan.threat_score ?? 0} / 100
                             </td>
-                            <td className="py-2 text-[#4f6386]">{formatDate(scan.scan.created_at)}</td>
+                            <td className="py-2 text-[var(--color-text-soft)]">{formatDate(scan.scan.created_at)}</td>
                             <td className="py-2">
                               <div className="flex items-center gap-1">
                                 <Button variant="ghost" onClick={() => setSelectedScan(scan)}>
@@ -366,7 +338,7 @@ export default function Home() {
                         ))}
                         {!scans.length ? (
                           <tr>
-                            <td colSpan={5} className="py-6 text-center text-[#7586a3]">
+                            <td colSpan={5} className="py-6 text-center text-[var(--color-text-soft)]">
                               No scan data yet. Upload files and press refresh to see history.
                             </td>
                           </tr>
@@ -380,28 +352,34 @@ export default function Home() {
               <section className="space-y-4">
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-[#213552]">Analysis Evidence</h2>
+                    <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Analysis Evidence</h2>
                   </div>
                   <div className="space-y-3">
-                    {evidenceBlocks.map((item, index) => (
-                      <div
-                        key={`${item.title}-${index}`}
-                        className={`rounded-lg border p-3 ${severityTone(item.severity)}`}
-                      >
-                        <p className="text-sm font-semibold text-[#213552]">{item.title}</p>
-                        <p className="mt-1 text-xs text-[#4f6386]">{item.snippet}</p>
-                      </div>
-                    ))}
+                    {evidenceBlocks.length ? (
+                      evidenceBlocks.map((item, index) => (
+                        <div
+                          key={`${item.title}-${index}`}
+                          className={`rounded-lg border p-3 ${severityTone(item.severity)}`}
+                        >
+                          <p className="text-sm font-semibold text-[var(--color-heading)]">{item.title}</p>
+                          <p className="mt-1 text-xs text-[var(--color-text-soft)]">{item.snippet}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface-alt)] p-3 text-sm text-[var(--color-text-soft)]">
+                        No evidence found yet. Select a scan report with findings to display this panel.
+                      </p>
+                    )}
                   </div>
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-2xl font-semibold text-[#213552]">Sanitized Export</h2>
-                  <p className="mt-2 text-sm text-[#667896]">
+                  <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Sanitized Export</h2>
+                  <p className="mt-2 text-sm text-[var(--color-text-soft)]">
                     Export a sanitized text version with sensitive instructions removed.
                   </p>
                   <Button
-                    className="mt-4 w-full bg-[#0ea56d] hover:bg-[#0b915f]"
+                    className="mt-4 w-full bg-[var(--color-emerald)] hover:bg-[var(--color-emerald-strong)]"
                     disabled={!selectedScan?.scan.id}
                     onClick={() =>
                       selectedScan?.scan.id &&

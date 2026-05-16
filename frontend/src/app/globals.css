@@ -1,16 +1,59 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --color-primary: #2f6fff;
   --color-primary-strong: #1f5ae0;
   --color-primary-soft: rgba(47, 111, 255, 0.2);
   --color-emerald: #05a87c;
+  --color-emerald-strong: #0b915f;
   --color-danger: #ef5350;
+  --color-danger-strong: #e53935;
+  --color-bg-app: #f7f9fc;
+  --color-surface: #ffffff;
   --color-border: #dce4f3;
   --color-border-strong: #c2d0ea;
+  --color-border-soft: #e8edf5;
+  --color-heading: #213552;
   --color-text: #182742;
   --color-text-soft: #5e6f8f;
+  --color-text-muted: #6f80a0;
   --color-surface-alt: #f4f8ff;
+  --color-overlay: rgba(15, 23, 41, 0.68);
+  --color-code-bg: #0f1729;
+  --color-code-text: #d4e0ff;
+  --color-warn-text: #7b4f00;
+  --color-warn-soft: #8a6e2a;
+  --color-warn-surface: #fffdf6;
+  --color-warn-border: #f0e3bf;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-primary: #72a2ff;
+  --color-primary-strong: #5f90ef;
+  --color-primary-soft: rgba(114, 162, 255, 0.2);
+  --color-emerald: #10b981;
+  --color-emerald-strong: #0f9e6d;
+  --color-danger: #f87171;
+  --color-danger-strong: #ef4444;
+  --color-bg-app: #0f172a;
+  --color-surface: #111b30;
+  --color-surface-alt: #16233d;
+  --color-border: #253451;
+  --color-border-strong: #324667;
+  --color-border-soft: #2b3b5b;
+  --color-heading: #dde8ff;
+  --color-text: #d4def2;
+  --color-text-soft: #9dafcf;
+  --color-text-muted: #8ca0c3;
+  --color-overlay: rgba(2, 6, 23, 0.72);
+  --color-code-bg: #060b1a;
+  --color-code-text: #c7d6f7;
+  --color-warn-text: #d9b76f;
+  --color-warn-soft: #c4a464;
+  --color-warn-surface: #2d2412;
+  --color-warn-border: #5f4b1f;
 }
 
 * {
@@ -25,5 +68,40 @@ body {
 
 body {
   font-family: var(--font-manrope), "Segoe UI", sans-serif;
+  background: var(--color-bg-app);
+  color: var(--color-text);
+}
+
+/* Global semantic aliases for repeated utility classes */
+.bg-app {
+  background-color: var(--color-bg-app);
+}
+
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.bg-surface-alt {
+  background-color: var(--color-surface-alt);
+}
+
+.text-heading {
+  color: var(--color-heading);
+}
+
+.text-soft {
+  color: var(--color-text-soft);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.border-soft {
+  border-color: var(--color-border-soft);
+}
+
+.panel-overlay {
+  background-color: var(--color-overlay);
 }
 

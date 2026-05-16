@@ -210,14 +210,14 @@ export default function SuperAdminSupportPage() {
   if (!ready || !token) return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin Support Desk</h1>
-              <p className="mt-1 text-sm text-[#667896]">Triage and resolve customer support tickets.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Support Desk</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Triage and resolve customer support tickets.</p>
             </Card>
             {!isSuperAdmin ? (
               <Card className="rounded-xl border-red-200 bg-red-50 p-4 text-red-700">Access denied.</Card>
@@ -227,7 +227,7 @@ export default function SuperAdminSupportPage() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                   >
                     <option value="all">All statuses</option>
                     <option value="open">Open</option>
@@ -244,7 +244,7 @@ export default function SuperAdminSupportPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1000px] text-left text-sm">
                     <thead>
-                      <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                      <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                         <th className="py-2">Created</th>
                         <th className="py-2">Tenant</th>
                         <th className="py-2">Subject</th>
@@ -256,12 +256,12 @@ export default function SuperAdminSupportPage() {
                     </thead>
                     <tbody>
                       {tickets.map((t) => (
-                        <tr key={t.id} className="border-b border-[#eff3f8]">
-                          <td className="py-2 text-[#4f6386]">{new Date(t.created_at).toLocaleString()}</td>
-                          <td className="py-2 text-[#334766]">{t.tenant_id}</td>
-                          <td className="py-2 text-[#334766]">{t.subject}</td>
-                          <td className="py-2 text-[#334766]">{t.priority.toUpperCase()}</td>
-                          <td className="py-2 text-[#334766]">{t.status.toUpperCase()}</td>
+                        <tr key={t.id} className="border-b border-[var(--color-border-soft)]">
+                          <td className="py-2 text-[var(--color-text-soft)]">{new Date(t.created_at).toLocaleString()}</td>
+                          <td className="py-2 text-[var(--color-text)]">{t.tenant_id}</td>
+                          <td className="py-2 text-[var(--color-text)]">{t.subject}</td>
+                          <td className="py-2 text-[var(--color-text)]">{t.priority.toUpperCase()}</td>
+                          <td className="py-2 text-[var(--color-text)]">{t.status.toUpperCase()}</td>
                           <td className="py-2">
                             <div className="flex gap-2">
                               <Button variant="outline" onClick={() => void updateStatus(t.id, "in_progress")} disabled={savingId === t.id}>
@@ -281,7 +281,7 @@ export default function SuperAdminSupportPage() {
                       ))}
                       {!tickets.length ? (
                         <tr>
-                          <td colSpan={7} className="py-6 text-center text-[#7586a3]">No tickets found.</td>
+                          <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">No tickets found.</td>
                         </tr>
                       ) : null}
                     </tbody>
@@ -292,30 +292,30 @@ export default function SuperAdminSupportPage() {
 
             {isSuperAdmin && selectedTicketId ? (
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Ticket Thread</h2>
-                <p className="mt-1 text-xs text-[#667896]">Ticket: {selectedTicketId}</p>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Ticket Thread</h2>
+                <p className="mt-1 text-xs text-[var(--color-text-soft)]">Ticket: {selectedTicketId}</p>
                 <div className="mt-3 space-y-2">
                   {thread.map((msg) => (
-                    <div key={msg.id} className={`rounded-lg border p-3 ${msg.is_internal ? "border-amber-200 bg-amber-50" : "border-[#e6edf8] bg-white"}`}>
-                      <p className="text-xs text-[#6f80a0]">
+                    <div key={msg.id} className={`rounded-lg border p-3 ${msg.is_internal ? "border-amber-200 bg-amber-50" : "border-[var(--color-border)] bg-[var(--color-surface)]"}`}>
+                      <p className="text-xs text-[var(--color-text-muted)]">
                         {new Date(msg.created_at).toLocaleString()} | {msg.author_role}
                         {msg.is_internal ? " | internal" : ""}
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-[#2f4667]">{msg.message}</p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--color-text)]">{msg.message}</p>
                     </div>
                   ))}
                   {!thread.length ? (
-                    <div className="rounded-lg border border-dashed border-[#d9e4f5] bg-[#fbfdff] px-3 py-4 text-center text-sm text-[#7586a3]">
+                    <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-4 text-center text-sm text-[var(--color-text-soft)]">
                       No messages yet.
                     </div>
                   ) : null}
                 </div>
-                <div className="mt-4 rounded-lg border border-[#e6edf8] bg-[#fbfdff] p-3">
-                  <h3 className="text-sm font-semibold text-[#2c3f5f]">Attachments</h3>
+                <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">Attachments</h3>
                   <div className="mt-2 space-y-2">
                     {attachments.map((att) => (
-                      <div key={att.id} className={`flex items-center justify-between rounded border px-3 py-2 text-sm ${att.is_internal ? "border-amber-200 bg-amber-50" : "border-[#e8edf6] bg-white"}`}>
-                        <span className="text-[#334766]">
+                      <div key={att.id} className={`flex items-center justify-between rounded border px-3 py-2 text-sm ${att.is_internal ? "border-amber-200 bg-amber-50" : "border-[var(--color-border)] bg-[var(--color-surface)]"}`}>
+                        <span className="text-[var(--color-text)]">
                           {att.original_name} ({Math.round(att.size_bytes / 1024)} KB)
                           {att.is_internal ? " [internal]" : ""}
                           {att.message_id ? ` | linked to message ${att.message_id.slice(0, 8)}` : ""}
@@ -325,14 +325,14 @@ export default function SuperAdminSupportPage() {
                         </Button>
                       </div>
                     ))}
-                    {!attachments.length ? <p className="text-xs text-[#7586a3]">No attachments yet.</p> : null}
+                    {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">No attachments yet.</p> : null}
                   </div>
                   <div className="mt-3">
-                    <label className="mb-1 block text-xs text-[#6f80a0]">Link attachment to message (optional)</label>
+                    <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Link attachment to message (optional)</label>
                     <select
                       value={attachmentMessageId}
                       onChange={(e) => setAttachmentMessageId(e.target.value)}
-                      className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                      className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                     >
                       <option value="">No message link</option>
                       {thread.map((msg) => (
@@ -342,16 +342,16 @@ export default function SuperAdminSupportPage() {
                       ))}
                     </select>
                     <input type="file" onChange={uploadAttachment} disabled={uploadingAttachment} />
-                    <p className="mt-1 text-xs text-[#6f80a0]">Internal flag follows checkbox below when uploading.</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">Internal flag follows checkbox below when uploading.</p>
                   </div>
                 </div>
                 <textarea
-                  className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                  className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                   placeholder="Write a reply"
                   value={threadMessage}
                   onChange={(e) => setThreadMessage(e.target.value)}
                 />
-                <label className="mt-2 inline-flex items-center text-sm text-[#4f6386]">
+                <label className="mt-2 inline-flex items-center text-sm text-[var(--color-text-soft)]">
                   <input type="checkbox" className="mr-2" checked={threadInternal} onChange={(e) => setThreadInternal(e.target.checked)} />
                   Internal note (hidden from tenant)
                 </label>

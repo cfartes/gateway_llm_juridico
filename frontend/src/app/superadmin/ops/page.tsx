@@ -225,14 +225,14 @@ export default function SuperAdminOpsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin Operations</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Operations</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 SLO, fila, throughput e saude operacional para acompanhamento em tempo real.
               </p>
             </Card>
@@ -246,11 +246,11 @@ export default function SuperAdminOpsPage() {
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex flex-wrap items-end gap-2">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Window</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Window</label>
                       <select
                         value={windowHours}
                         onChange={(event) => setWindowHours(Number(event.target.value))}
-                        className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                        className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                       >
                         <option value={1}>1h</option>
                         <option value={6}>6h</option>
@@ -260,7 +260,7 @@ export default function SuperAdminOpsPage() {
                       </select>
                     </div>
                     <div className="min-w-[240px] flex-1">
-                      <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Tenant ID (optional)</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Tenant ID (optional)</label>
                       <Input
                         value={tenantFilter}
                         onChange={(event) => setTenantFilter(event.target.value)}
@@ -270,7 +270,7 @@ export default function SuperAdminOpsPage() {
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
                       {loading ? "Refreshing..." : "Refresh"}
                     </Button>
-                    <Button className="bg-[#1f3f72] hover:bg-[#183561]" onClick={() => void runAlertEvaluation()} disabled={evaluating}>
+                    <Button className="bg-[var(--color-primary-strong)] hover:bg-[var(--color-primary)]" onClick={() => void runAlertEvaluation()} disabled={evaluating}>
                       {evaluating ? "Evaluating..." : "Run Alert Evaluation"}
                     </Button>
                   </div>
@@ -278,39 +278,39 @@ export default function SuperAdminOpsPage() {
 
                 <Card className="rounded-xl p-4">
                   <div className="grid gap-3 md:grid-cols-4">
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">SLO Pass</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{passCount}/{totalCount}</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">SLO Pass</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{passCount}/{totalCount}</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Scan Success</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{overview?.scans.success_rate_percent ?? 0}%</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Scan Success</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{overview?.scans.success_rate_percent ?? 0}%</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">P95 Scan Latency</p>
-                      <p className="text-2xl font-bold text-[#7b4f00]">{overview?.scans.p95_processing_seconds ?? 0}s</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">P95 Scan Latency</p>
+                      <p className="text-2xl font-bold text-[var(--color-warn-text)]">{overview?.scans.p95_processing_seconds ?? 0}s</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Generated At</p>
-                      <p className="text-sm font-semibold text-[#2c3f5f]">{fmtDate(overview?.generated_at)}</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Generated At</p>
+                      <p className="text-sm font-semibold text-[var(--color-text)]">{fmtDate(overview?.generated_at)}</p>
                     </div>
                   </div>
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[#213552]">Operational SLAs</h2>
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">Operational SLAs</h2>
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Pending Upgrade Requests</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{overview?.upgrade_requests.pending_count ?? 0}</p>
-                      <p className="mt-1 text-xs text-[#7b4f00]">
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Pending Upgrade Requests</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{overview?.upgrade_requests.pending_count ?? 0}</p>
+                      <p className="mt-1 text-xs text-[var(--color-warn-text)]">
                         Over SLA ({overview?.upgrade_requests.sla_hours ?? 24}h): {overview?.upgrade_requests.pending_over_sla_count ?? 0}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Open Support Tickets</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{overview?.support_tickets.open_count ?? 0}</p>
-                      <p className="mt-1 text-xs text-[#7b4f00]">
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Open Support Tickets</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{overview?.support_tickets.open_count ?? 0}</p>
+                      <p className="mt-1 text-xs text-[var(--color-warn-text)]">
                         Waiting first response over {overview?.support_tickets.first_response_sla_hours ?? 8}h: {overview?.support_tickets.waiting_first_response_over_sla_count ?? 0}
                       </p>
                     </div>
@@ -318,11 +318,11 @@ export default function SuperAdminOpsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[#213552]">SLO Indicators</h2>
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">SLO Indicators</h2>
                   <div className="mt-3 overflow-x-auto">
                     <table className="w-full min-w-[760px] text-left text-sm">
                       <thead>
-                        <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                        <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                           <th className="py-2">Indicator</th>
                           <th className="py-2">Target</th>
                           <th className="py-2">Actual</th>
@@ -331,10 +331,10 @@ export default function SuperAdminOpsPage() {
                       </thead>
                       <tbody>
                         {(overview?.slo ?? []).map((item) => (
-                          <tr key={item.name} className="border-b border-[#eff3f8]">
-                            <td className="py-2 text-[#334766]">{item.name}</td>
-                            <td className="py-2 text-[#334766]">{item.target} {item.unit}</td>
-                            <td className="py-2 text-[#334766]">{item.actual} {item.unit}</td>
+                          <tr key={item.name} className="border-b border-[var(--color-border-soft)]">
+                            <td className="py-2 text-[var(--color-text)]">{item.name}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.target} {item.unit}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.actual} {item.unit}</td>
                             <td className="py-2">
                               <Badge className={sloTone(item.status)}>{item.status.toUpperCase()}</Badge>
                             </td>
@@ -346,11 +346,11 @@ export default function SuperAdminOpsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[#213552]">Active Alerts</h2>
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">Active Alerts</h2>
                   <div className="mt-3 overflow-x-auto">
                     <table className="w-full min-w-[760px] text-left text-sm">
                       <thead>
-                        <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                        <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                           <th className="py-2">Indicator</th>
                           <th className="py-2">Status</th>
                           <th className="py-2">Actual</th>
@@ -361,18 +361,18 @@ export default function SuperAdminOpsPage() {
                       </thead>
                       <tbody>
                         {(overview?.active_alerts ?? []).map((item) => (
-                          <tr key={`${item.scope_key}:${item.indicator_name}`} className="border-b border-[#eff3f8]">
-                            <td className="py-2 text-[#334766]">{item.indicator_name}</td>
+                          <tr key={`${item.scope_key}:${item.indicator_name}`} className="border-b border-[var(--color-border-soft)]">
+                            <td className="py-2 text-[var(--color-text)]">{item.indicator_name}</td>
                             <td className="py-2"><Badge className={sloTone(item.status)}>{item.status.toUpperCase()}</Badge></td>
-                            <td className="py-2 text-[#334766]">{item.actual} {item.unit}</td>
-                            <td className="py-2 text-[#334766]">{item.target} {item.unit}</td>
-                            <td className="py-2 text-[#334766]">{item.alert_count}</td>
-                            <td className="py-2 text-[#4f6386]">{fmtDate(item.last_sent_at ?? item.updated_at)}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.actual} {item.unit}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.target} {item.unit}</td>
+                            <td className="py-2 text-[var(--color-text)]">{item.alert_count}</td>
+                            <td className="py-2 text-[var(--color-text-soft)]">{fmtDate(item.last_sent_at ?? item.updated_at)}</td>
                           </tr>
                         ))}
                         {!(overview?.active_alerts?.length) ? (
                           <tr>
-                            <td colSpan={6} className="py-6 text-center text-[#7586a3]">
+                            <td colSpan={6} className="py-6 text-center text-[var(--color-text-soft)]">
                               No active SLO alerts.
                             </td>
                           </tr>
@@ -383,18 +383,18 @@ export default function SuperAdminOpsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[#213552]">SLO History Timeline</h2>
-                  <p className="mt-1 text-xs text-[#667896]">
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">SLO History Timeline</h2>
+                  <p className="mt-1 text-xs text-[var(--color-text-soft)]">
                     Recent snapshots per indicator for the selected scope and window.
                   </p>
                   <div className="mt-3 space-y-3">
                     {Object.entries(historyByIndicator).map(([indicator, points]) => (
-                      <div key={indicator} className="rounded-lg border border-[#e8edf5] bg-white p-3">
+                      <div key={indicator} className="rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-sm font-semibold text-[#2c3f5f]">{indicator}</h3>
+                          <h3 className="text-sm font-semibold text-[var(--color-text)]">{indicator}</h3>
                           {points.length ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-[#6f80a0]">
+                              <span className="text-xs text-[var(--color-text-muted)]">
                                 Latest: {points[points.length - 1].actual} {points[points.length - 1].unit}
                               </span>
                               <Badge className={sloTone(points[points.length - 1].status)}>
@@ -404,14 +404,14 @@ export default function SuperAdminOpsPage() {
                           ) : null}
                         </div>
                         {points.length ? (
-                          <div className="mt-3 rounded-lg border border-[#eef3fb] bg-[#fbfdff] p-3">
+                          <div className="mt-3 rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface-alt)] p-3">
                             <svg viewBox="0 0 280 64" className="h-16 w-full">
                               <line
                                 x1={0}
                                 y1={targetLineY(points)}
                                 x2={280}
                                 y2={targetLineY(points)}
-                                stroke="#93a7c7"
+                                stroke="var(--color-border-strong)"
                                 strokeDasharray="4 4"
                                 strokeWidth="1"
                               />
@@ -422,7 +422,7 @@ export default function SuperAdminOpsPage() {
                                 points={toSparkline(points)}
                               />
                             </svg>
-                            <div className="mt-1 flex items-center justify-between text-[11px] text-[#6f80a0]">
+                            <div className="mt-1 flex items-center justify-between text-[11px] text-[var(--color-text-muted)]">
                               <span>{fmtDate(points[0].recorded_at)}</span>
                               <span>
                                 Target: {points[points.length - 1].target} {points[points.length - 1].unit}
@@ -434,7 +434,7 @@ export default function SuperAdminOpsPage() {
                         <div className="mt-2 overflow-x-auto">
                           <table className="w-full min-w-[680px] text-left text-sm">
                             <thead>
-                              <tr className="border-b border-[#eef3fb] text-[#6f80a0]">
+                              <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                                 <th className="py-2">Recorded At</th>
                                 <th className="py-2">Status</th>
                                 <th className="py-2">Actual</th>
@@ -443,13 +443,13 @@ export default function SuperAdminOpsPage() {
                             </thead>
                             <tbody>
                               {points.map((point, index) => (
-                                <tr key={`${indicator}-${point.recorded_at}-${index}`} className="border-b border-[#f2f5fa]">
-                                  <td className="py-2 text-[#4f6386]">{fmtDate(point.recorded_at)}</td>
+                                <tr key={`${indicator}-${point.recorded_at}-${index}`} className="border-b border-[var(--color-border-soft)]">
+                                  <td className="py-2 text-[var(--color-text-soft)]">{fmtDate(point.recorded_at)}</td>
                                   <td className="py-2">
                                     <Badge className={sloTone(point.status)}>{point.status.toUpperCase()}</Badge>
                                   </td>
-                                  <td className="py-2 text-[#334766]">{point.actual} {point.unit}</td>
-                                  <td className="py-2 text-[#334766]">{point.target} {point.unit}</td>
+                                  <td className="py-2 text-[var(--color-text)]">{point.actual} {point.unit}</td>
+                                  <td className="py-2 text-[var(--color-text)]">{point.target} {point.unit}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -458,7 +458,7 @@ export default function SuperAdminOpsPage() {
                       </div>
                     ))}
                     {!Object.keys(historyByIndicator).length ? (
-                      <div className="rounded-lg border border-dashed border-[#d9e4f5] bg-[#fbfdff] px-3 py-6 text-center text-sm text-[#7586a3]">
+                      <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-6 text-center text-sm text-[var(--color-text-soft)]">
                         No SLO history available yet. Run an alert evaluation to capture snapshots.
                       </div>
                     ) : null}

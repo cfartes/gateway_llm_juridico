@@ -284,7 +284,7 @@ export default function SuperAdminWebhooksPage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[#f7f9fc] text-[#4c5f82]">
+      <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
         Preparing your workspace...
       </div>
     );
@@ -293,14 +293,14 @@ export default function SuperAdminWebhooksPage() {
   const isSuperAdmin = me ? me.role === "superadmin" : true;
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">SuperAdmin Webhook Dead-Letter</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Webhook Dead-Letter</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 Monitor callback failures, inspect attempts, and trigger manual replay.
               </p>
             </Card>
@@ -314,29 +314,29 @@ export default function SuperAdminWebhooksPage() {
               <>
                 <Card className="rounded-xl p-4">
                   <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Dead-letter</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Dead-letter</p>
                       <p className="text-2xl font-bold text-red-600">{listData.total_dead_letter}</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Delivered</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Delivered</p>
                       <p className="text-2xl font-bold text-emerald-600">{listData.total_delivered}</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Discarded</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Discarded</p>
                       <p className="text-2xl font-bold text-slate-700">{listData.total_discarded}</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Visible rows</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{listData.total}</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Visible rows</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{listData.total}</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Success Rate ({metrics.window_days}d)</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Success Rate ({metrics.window_days}d)</p>
                       <p className="text-2xl font-bold text-emerald-700">{metrics.success_rate_percent}%</p>
                     </div>
-                    <div className="rounded-lg border border-[#e5ecf7] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">Avg Attempt Duration</p>
-                      <p className="text-2xl font-bold text-[#1f3f72]">{metrics.avg_attempt_duration_ms} ms</p>
+                    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">Avg Attempt Duration</p>
+                      <p className="text-2xl font-bold text-[var(--color-heading)]">{metrics.avg_attempt_duration_ms} ms</p>
                     </div>
                   </div>
                 </Card>
@@ -345,11 +345,11 @@ export default function SuperAdminWebhooksPage() {
                   <Card className="rounded-xl p-4">
                     <div className="mb-3 flex flex-wrap items-end gap-2">
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Status</label>
+                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Status</label>
                         <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
-                          className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                          className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                         >
                           <option value="dead_letter">Dead-letter</option>
                           <option value="delivered">Delivered</option>
@@ -358,7 +358,7 @@ export default function SuperAdminWebhooksPage() {
                         </select>
                       </div>
                       <div className="min-w-[220px] flex-1">
-                        <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Tenant ID (optional)</label>
+                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Tenant ID (optional)</label>
                         <Input
                           value={tenantFilter}
                           onChange={(e) => setTenantFilter(e.target.value)}
@@ -366,11 +366,11 @@ export default function SuperAdminWebhooksPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-[#4f6386]">Metrics window</label>
+                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Metrics window</label>
                         <select
                           value={windowDays}
                           onChange={(e) => setWindowDays(Number(e.target.value))}
-                          className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                          className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                         >
                           <option value={1}>1 day</option>
                           <option value={7}>7 days</option>
@@ -389,7 +389,7 @@ export default function SuperAdminWebhooksPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[860px] text-left text-sm">
                         <thead>
-                          <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                          <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                             <th className="py-2">Status</th>
                             <th className="py-2">Tenant</th>
                             <th className="py-2">Scan</th>
@@ -403,23 +403,23 @@ export default function SuperAdminWebhooksPage() {
                           {listData.items.map((item) => (
                             <tr
                               key={item.id}
-                              className={`cursor-pointer border-b border-[#eff3f8] ${selectedId === item.id ? "bg-[#f4f8ff]" : ""}`}
+                              className={`cursor-pointer border-b border-[var(--color-border-soft)] ${selectedId === item.id ? "bg-[var(--color-surface-alt)]" : ""}`}
                               onClick={() => setSelectedId(item.id)}
                             >
                               <td className="py-2">
                                 <Badge className={statusTone(item.status)}>{item.status.toUpperCase()}</Badge>
                               </td>
-                              <td className="py-2 text-[#4f6386]">{item.tenant_id}</td>
-                              <td className="py-2 text-[#4f6386]">{item.scan_job_id ?? "-"}</td>
-                              <td className="py-2 text-[#334766]">{item.attempt_count} / {item.max_attempts}</td>
-                              <td className="py-2 text-[#4f6386]">{formatDate(item.next_retry_at)}</td>
-                              <td className="py-2 text-[#334766]">{item.last_http_status ?? "-"}</td>
-                              <td className="py-2 text-[#4f6386]">{formatDate(item.updated_at)}</td>
+                              <td className="py-2 text-[var(--color-text-soft)]">{item.tenant_id}</td>
+                              <td className="py-2 text-[var(--color-text-soft)]">{item.scan_job_id ?? "-"}</td>
+                              <td className="py-2 text-[var(--color-text)]">{item.attempt_count} / {item.max_attempts}</td>
+                              <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.next_retry_at)}</td>
+                              <td className="py-2 text-[var(--color-text)]">{item.last_http_status ?? "-"}</td>
+                              <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.updated_at)}</td>
                             </tr>
                           ))}
                           {!listData.items.length ? (
                             <tr>
-                              <td colSpan={7} className="py-6 text-center text-[#7586a3]">
+                              <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">
                                 No webhook delivery records found for this filter.
                               </td>
                             </tr>
@@ -430,9 +430,9 @@ export default function SuperAdminWebhooksPage() {
                   </Card>
 
                   <Card className="rounded-xl p-4">
-                    <h2 className="text-xl font-semibold text-[#213552]">Delivery Detail</h2>
-                    <div className="mb-3 mt-2 rounded-lg border border-[#e5ecf7] bg-[#fbfdff] p-2 text-xs text-[#5f7393]">
-                      <p className="font-semibold text-[#2e4b77]">Top Failed Callbacks ({metrics.window_days}d)</p>
+                    <h2 className="text-xl font-semibold text-[var(--color-heading)]">Delivery Detail</h2>
+                    <div className="mb-3 mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-2 text-xs text-[var(--color-text-soft)]">
+                      <p className="font-semibold text-[var(--color-text)]">Top Failed Callbacks ({metrics.window_days}d)</p>
                       {metrics.top_failed_callbacks.length ? (
                         metrics.top_failed_callbacks.map((item) => (
                           <p key={item.callback_url} className="mt-1 truncate">
@@ -444,10 +444,10 @@ export default function SuperAdminWebhooksPage() {
                       )}
                     </div>
                     {!selected ? (
-                      <p className="mt-2 text-sm text-[#667896]">Select one delivery to inspect attempts.</p>
+                      <p className="mt-2 text-sm text-[var(--color-text-soft)]">Select one delivery to inspect attempts.</p>
                     ) : (
                       <div className="mt-3 space-y-3">
-                        <div className="rounded-lg border border-[#e5ecf7] bg-[#f9fbff] p-3 text-xs text-[#5f7393]">
+                        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3 text-xs text-[var(--color-text-soft)]">
                           <p><span className="font-semibold">ID:</span> {selected.id}</p>
                           <p className="mt-1"><span className="font-semibold">Callback:</span> {selected.callback_url}</p>
                           <p className="mt-1"><span className="font-semibold">Last Error:</span> {selected.last_error ?? "-"}</p>
@@ -471,28 +471,28 @@ export default function SuperAdminWebhooksPage() {
                           </Button>
                         </div>
 
-                        <div className="max-h-[420px] space-y-2 overflow-y-auto rounded-lg border border-[#e8edf5] bg-white p-2">
+                        <div className="max-h-[420px] space-y-2 overflow-y-auto rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-2">
                           {loadingDetail ? (
-                            <p className="px-2 py-4 text-sm text-[#667896]">Loading attempts...</p>
+                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">Loading attempts...</p>
                           ) : null}
                           {!loadingDetail && detail?.attempts.length ? (
                             detail.attempts.map((attempt) => (
-                              <div key={attempt.id} className="rounded-lg border border-[#edf2f9] bg-[#fbfdff] p-2 text-xs">
-                                <p className="font-semibold text-[#25416a]">
+                              <div key={attempt.id} className="rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface-alt)] p-2 text-xs">
+                                <p className="font-semibold text-[var(--color-text)]">
                                   Attempt #{attempt.attempt_number} - HTTP {attempt.http_status ?? "N/A"}
                                 </p>
-                                <p className="mt-1 text-[#5f7393]">
+                                <p className="mt-1 text-[var(--color-text-soft)]">
                                   Duration: {attempt.duration_ms ?? "-"} ms | {formatDate(attempt.created_at)}
                                 </p>
-                                <p className="mt-1 text-[#5f7393]">Error: {attempt.error_message ?? "-"}</p>
-                                <p className="mt-1 text-[#5f7393]">
+                                <p className="mt-1 text-[var(--color-text-soft)]">Error: {attempt.error_message ?? "-"}</p>
+                                <p className="mt-1 text-[var(--color-text-soft)]">
                                   Response: {(attempt.response_preview ?? "-").slice(0, 180)}
                                 </p>
                               </div>
                             ))
                           ) : null}
                           {!loadingDetail && !detail?.attempts.length ? (
-                            <p className="px-2 py-4 text-sm text-[#667896]">No attempt history available.</p>
+                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">No attempt history available.</p>
                           ) : null}
                         </div>
                       </div>

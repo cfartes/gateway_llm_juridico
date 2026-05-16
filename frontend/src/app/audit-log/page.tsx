@@ -164,14 +164,14 @@ export default function AuditLogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">Audit Log</h1>
-              <p className="mt-1 text-sm text-[#667896]">
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Audit Log</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">
                 Track all tenant actions with actor, source IP, resource and operation details.
               </p>
             </Card>
@@ -195,7 +195,7 @@ export default function AuditLogPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[960px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                    <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                       <th className="py-2">Time</th>
                       <th className="py-2">Action</th>
                       <th className="py-2">Resource</th>
@@ -207,19 +207,19 @@ export default function AuditLogPage() {
                     {items.map((item) => (
                       <tr
                         key={item.id}
-                        className={`cursor-pointer border-b border-[#eff3f8] ${selectedId === item.id ? "bg-[#f4f8ff]" : ""}`}
+                        className={`cursor-pointer border-b border-[var(--color-border-soft)] ${selectedId === item.id ? "bg-[var(--color-surface-alt)]" : ""}`}
                         onClick={() => setSelectedId(item.id)}
                       >
-                        <td className="py-2 text-[#4f6386]">{formatDate(item.created_at)}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.created_at)}</td>
                         <td className="py-2"><Badge className={toneForAction(item.action)}>{item.action}</Badge></td>
-                        <td className="py-2 text-[#334766]">{item.resource_type}</td>
-                        <td className="py-2 text-[#334766]">{item.actor_user_email ?? item.actor_user_id ?? "system"}</td>
-                        <td className="py-2 text-[#4f6386]">{item.source_ip ?? "-"}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.resource_type}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.actor_user_email ?? item.actor_user_id ?? "system"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.source_ip ?? "-"}</td>
                       </tr>
                     ))}
                     {!items.length ? (
                       <tr>
-                        <td colSpan={5} className="py-6 text-center text-[#7586a3]">
+                        <td colSpan={5} className="py-6 text-center text-[var(--color-text-soft)]">
                           No audit logs found for this filter.
                         </td>
                       </tr>
@@ -227,7 +227,7 @@ export default function AuditLogPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-3 flex items-center justify-between text-sm text-[#5f7393]">
+              <div className="mt-3 flex items-center justify-between text-sm text-[var(--color-text-soft)]">
                 <p>Total: {total} | Showing {offset + 1}-{Math.min(offset + items.length, total || 0)}</p>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={prevPage} disabled={offset <= 0}>Previous</Button>
@@ -237,20 +237,20 @@ export default function AuditLogPage() {
             </Card>
 
             <Card className="rounded-xl p-4">
-              <h2 className="text-lg font-semibold text-[#213552]">Details</h2>
+              <h2 className="text-lg font-semibold text-[var(--color-heading)]">Details</h2>
               {selected ? (
-                <div className="mt-2 space-y-2 text-sm text-[#4f6386]">
-                  <p><span className="font-semibold text-[#213552]">Action:</span> {selected.action}</p>
-                  <p><span className="font-semibold text-[#213552]">Resource:</span> {selected.resource_type} ({selected.resource_id ?? "-"})</p>
-                  <p><span className="font-semibold text-[#213552]">Actor User:</span> {selected.actor_user_email ?? selected.actor_user_id ?? "-"}</p>
-                  <p><span className="font-semibold text-[#213552]">Actor API Token:</span> {selected.actor_api_token_id ?? "-"}</p>
-                  <p><span className="font-semibold text-[#213552]">Source IP:</span> {selected.source_ip ?? "-"}</p>
-                  <pre className="overflow-x-auto rounded-lg bg-[#0f1729] p-3 text-xs text-[#d4e0ff]">
+                <div className="mt-2 space-y-2 text-sm text-[var(--color-text-soft)]">
+                  <p><span className="font-semibold text-[var(--color-heading)]">Action:</span> {selected.action}</p>
+                  <p><span className="font-semibold text-[var(--color-heading)]">Resource:</span> {selected.resource_type} ({selected.resource_id ?? "-"})</p>
+                  <p><span className="font-semibold text-[var(--color-heading)]">Actor User:</span> {selected.actor_user_email ?? selected.actor_user_id ?? "-"}</p>
+                  <p><span className="font-semibold text-[var(--color-heading)]">Actor API Token:</span> {selected.actor_api_token_id ?? "-"}</p>
+                  <p><span className="font-semibold text-[var(--color-heading)]">Source IP:</span> {selected.source_ip ?? "-"}</p>
+                  <pre className="overflow-x-auto rounded-lg bg-[var(--color-code-bg)] p-3 text-xs text-[var(--color-code-text)]">
                     {JSON.stringify(selected.details ?? {}, null, 2)}
                   </pre>
                 </div>
               ) : (
-                <p className="mt-2 text-sm text-[#667896]">Select one item to inspect details.</p>
+                <p className="mt-2 text-sm text-[var(--color-text-soft)]">Select one item to inspect details.</p>
               )}
             </Card>
           </div>

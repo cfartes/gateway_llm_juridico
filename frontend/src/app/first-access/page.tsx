@@ -81,11 +81,11 @@ export default function FirstAccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f6f9ff_0%,#fdfefe_100%)] p-4">
+    <div className="min-h-screen bg-[linear-gradient(180deg,var(--color-bg-app)_0%,var(--color-surface)_100%)] p-4">
       <div className="mx-auto flex min-h-[92vh] w-full max-w-[980px] items-center justify-center">
         <Card className="w-full max-w-[520px] rounded-2xl p-7">
-          <h1 className="text-2xl font-semibold text-[#213552]">First Access Password Update</h1>
-          <p className="mt-1 text-sm text-[#6f80a0]">
+          <h1 className="text-2xl font-semibold text-[var(--color-heading)]">First Access Password Update</h1>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             Your account uses a temporary password. Set a new password to continue.
           </p>
           <form onSubmit={submit} className="mt-5 space-y-3">

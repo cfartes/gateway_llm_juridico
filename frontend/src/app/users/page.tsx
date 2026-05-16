@@ -169,26 +169,26 @@ export default function UsersPage() {
   if (!ready || !token) return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">Tenant Users</h1>
-              <p className="mt-1 text-sm text-[#667896]">Create and manage tenant users. New users receive invitation email and must change the temporary password on first access.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Tenant Users</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Create and manage tenant users. New users receive invitation email and must change the temporary password on first access.</p>
             </Card>
 
             <form onSubmit={createUser}>
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Create User</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Create User</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-4">
                   <Input placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={!canManage} required />
                   <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!canManage} required />
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as "admin" | "analyst" | "viewer")}
-                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                     disabled={!canManage}
                   >
                     <option value="analyst">Analyst</option>
@@ -199,31 +199,31 @@ export default function UsersPage() {
                     {saving ? "Creating..." : "Create User"}
                   </Button>
                 </div>
-                <p className="mt-2 text-xs text-[#6f80a0]">Temporary password: <code>Mudar@123</code>. User can login only after email confirmation.</p>
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">Temporary password: <code>Mudar@123</code>. User can login only after email confirmation.</p>
               </Card>
             </form>
 
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-[#213552]">Users</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Users</h2>
                 <Button variant="outline" onClick={() => token && load(token, offset)} disabled={loading}>
                   {loading ? "Refreshing..." : "Refresh"}
                 </Button>
               </div>
               <div className="mb-3 grid gap-2 md:grid-cols-5">
                 <Input placeholder="Search name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
-                <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as "all" | "admin" | "analyst" | "viewer")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm">
+                <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as "all" | "admin" | "analyst" | "viewer")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm">
                   <option value="all">All roles</option>
                   <option value="admin">Admin</option>
                   <option value="analyst">Analyst</option>
                   <option value="viewer">Viewer</option>
                 </select>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm">
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm">
                   <option value="all">All status</option>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
-                <select value={emailFilter} onChange={(e) => setEmailFilter(e.target.value as "all" | "confirmed" | "pending")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm">
+                <select value={emailFilter} onChange={(e) => setEmailFilter(e.target.value as "all" | "confirmed" | "pending")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm">
                   <option value="all">All email states</option>
                   <option value="confirmed">Email confirmed</option>
                   <option value="pending">Email pending</option>
@@ -235,7 +235,7 @@ export default function UsersPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[980px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                    <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                       <th className="py-2">Name</th>
                       <th className="py-2">Email</th>
                       <th className="py-2">Role</th>
@@ -247,17 +247,17 @@ export default function UsersPage() {
                   </thead>
                   <tbody>
                     {users.map((item) => (
-                      <tr key={item.id} className="border-b border-[#eff3f8]">
-                        <td className="py-2 text-[#334766]">{item.full_name || "-"}</td>
-                        <td className="py-2 text-[#334766]">{item.email}</td>
-                        <td className="py-2 text-[#334766]">
+                      <tr key={item.id} className="border-b border-[var(--color-border-soft)]">
+                        <td className="py-2 text-[var(--color-text)]">{item.full_name || "-"}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.email}</td>
+                        <td className="py-2 text-[var(--color-text)]">
                           {item.role === "superadmin" ? (
                             <span>SUPERADMIN</span>
                           ) : (
                             <select
                               value={item.role}
                               onChange={(e) => void patchUser(item.id, { role: e.target.value as "admin" | "analyst" | "viewer" }, "User role updated.")}
-                              className="h-9 rounded-lg border border-[var(--color-border-strong)] bg-white px-2 text-xs"
+                              className="h-9 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-2 text-xs"
                               disabled={!canManage || rowSavingId === item.id}
                             >
                               <option value="analyst">Analyst</option>
@@ -266,9 +266,9 @@ export default function UsersPage() {
                             </select>
                           )}
                         </td>
-                        <td className="py-2 text-[#4f6386]">{item.email_verified_at ? "Yes" : "Pending"}</td>
-                        <td className="py-2 text-[#4f6386]">{item.must_change_password ? "Pending" : "Completed"}</td>
-                        <td className="py-2 text-[#4f6386]">{item.is_active ? "Active" : "Inactive"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.email_verified_at ? "Yes" : "Pending"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.must_change_password ? "Pending" : "Completed"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.is_active ? "Active" : "Inactive"}</td>
                         <td className="py-2">
                           <div className="flex gap-2">
                             <Button
@@ -303,7 +303,7 @@ export default function UsersPage() {
                     ))}
                     {!users.length ? (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-[#7586a3]">No users found for this tenant.</td>
+                        <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">No users found for this tenant.</td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -318,7 +318,7 @@ export default function UsersPage() {
                 >
                   Previous
                 </Button>
-                <span className="text-xs text-[#6f80a0]">Offset {offset}</span>
+                <span className="text-xs text-[var(--color-text-muted)]">Offset {offset}</span>
                 <Button
                   type="button"
                   variant="outline"

@@ -11,6 +11,7 @@ export function useAuthGuard() {
   const pathname = usePathname();
   const [token, setToken] = useState("");
   const [ready, setReady] = useState(false);
+  const [role, setRole] = useState("");
 
   useEffect(() => {
     async function bootstrap() {
@@ -31,9 +32,17 @@ export function useAuthGuard() {
           setReady(true);
           return;
         }
-        const me = (await response.json()) as { must_change_password?: boolean };
+        const me = (await response.json()) as { must_change_password?: boolean; role?: string };
+        const resolvedRole = (me.role ?? "").toLowerCase();
+        setRole(resolvedRole);
         if (me.must_change_password && pathname !== "/first-access") {
           router.replace("/first-access");
+          setToken(stored);
+          setReady(true);
+          return;
+        }
+        if (pathname.startsWith("/superadmin") && resolvedRole !== "superadmin") {
+          router.replace("/");
           setToken(stored);
           setReady(true);
           return;
@@ -49,5 +58,5 @@ export function useAuthGuard() {
     void bootstrap();
   }, [pathname, router]);
 
-  return { token, ready };
+  return { token, role, ready };
 }

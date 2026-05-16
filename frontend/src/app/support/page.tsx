@@ -218,26 +218,26 @@ export default function SupportPage() {
   if (!ready || !token) return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[#213552]">Support Tickets</h1>
-              <p className="mt-1 text-sm text-[#667896]">Open and track operational incidents from your tenant.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Support Tickets</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Open and track operational incidents from your tenant.</p>
             </Card>
 
             <form onSubmit={openTicket} className="space-y-4">
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Open New Ticket</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Open New Ticket</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" disabled={!canCreate} />
                   <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" disabled={!canCreate} />
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as SupportTicket["priority"])}
-                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                    className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                     disabled={!canCreate}
                   >
                     <option value="low">Low</option>
@@ -248,7 +248,7 @@ export default function SupportPage() {
                   <div />
                 </div>
                 <textarea
-                  className="mt-3 h-28 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                  className="mt-3 h-28 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the issue, impact, and steps to reproduce."
@@ -266,11 +266,11 @@ export default function SupportPage() {
             </form>
 
             <Card className="rounded-xl p-4">
-              <h2 className="text-lg font-semibold text-[#213552]">My Tenant Tickets</h2>
+              <h2 className="text-lg font-semibold text-[var(--color-heading)]">My Tenant Tickets</h2>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[900px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8edf5] text-[#6f80a0]">
+                    <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                       <th className="py-2">Created</th>
                       <th className="py-2">Subject</th>
                       <th className="py-2">Category</th>
@@ -282,13 +282,13 @@ export default function SupportPage() {
                   </thead>
                   <tbody>
                     {tickets.map((item) => (
-                      <tr key={item.id} className="border-b border-[#eff3f8]">
-                        <td className="py-2 text-[#4f6386]">{new Date(item.created_at).toLocaleString()}</td>
-                        <td className="py-2 text-[#334766]">{item.subject}</td>
-                        <td className="py-2 text-[#334766]">{item.category}</td>
-                        <td className="py-2 text-[#334766]">{item.priority.toUpperCase()}</td>
-                        <td className="py-2 text-[#334766]">{item.status.toUpperCase()}</td>
-                        <td className="py-2 text-[#4f6386]">{item.admin_note || "-"}</td>
+                      <tr key={item.id} className="border-b border-[var(--color-border-soft)]">
+                        <td className="py-2 text-[var(--color-text-soft)]">{new Date(item.created_at).toLocaleString()}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.subject}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.category}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.priority.toUpperCase()}</td>
+                        <td className="py-2 text-[var(--color-text)]">{item.status.toUpperCase()}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.admin_note || "-"}</td>
                         <td className="py-2">
                           <Button variant="outline" onClick={() => void loadThread(item.id)}>
                             Open
@@ -298,7 +298,7 @@ export default function SupportPage() {
                     ))}
                     {!tickets.length ? (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-[#7586a3]">No support tickets found.</td>
+                        <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">No support tickets found.</td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -308,29 +308,29 @@ export default function SupportPage() {
 
             {selectedTicketId ? (
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[#213552]">Ticket Thread</h2>
-                <p className="mt-1 text-xs text-[#667896]">Ticket: {selectedTicketId}</p>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Ticket Thread</h2>
+                <p className="mt-1 text-xs text-[var(--color-text-soft)]">Ticket: {selectedTicketId}</p>
                 <div className="mt-3 space-y-2">
                   {thread.map((msg) => (
-                    <div key={msg.id} className="rounded-lg border border-[#e6edf8] bg-white p-3">
-                      <p className="text-xs text-[#6f80a0]">
+                    <div key={msg.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                      <p className="text-xs text-[var(--color-text-muted)]">
                         {new Date(msg.created_at).toLocaleString()} | {msg.author_role}
                       </p>
-                      <p className="mt-1 text-sm text-[#2f4667] whitespace-pre-wrap">{msg.message}</p>
+                      <p className="mt-1 text-sm text-[var(--color-text)] whitespace-pre-wrap">{msg.message}</p>
                     </div>
                   ))}
                   {!thread.length ? (
-                    <div className="rounded-lg border border-dashed border-[#d9e4f5] bg-[#fbfdff] px-3 py-4 text-center text-sm text-[#7586a3]">
+                    <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-4 text-center text-sm text-[var(--color-text-soft)]">
                       No messages yet.
                     </div>
                   ) : null}
                 </div>
-                <div className="mt-4 rounded-lg border border-[#e6edf8] bg-[#fbfdff] p-3">
-                  <h3 className="text-sm font-semibold text-[#2c3f5f]">Attachments</h3>
+                <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">Attachments</h3>
                   <div className="mt-2 space-y-2">
                     {attachments.map((att) => (
-                      <div key={att.id} className="flex items-center justify-between rounded border border-[#e8edf6] bg-white px-3 py-2 text-sm">
-                        <span className="text-[#334766]">
+                      <div key={att.id} className="flex items-center justify-between rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm">
+                        <span className="text-[var(--color-text)]">
                           {att.original_name} ({Math.round(att.size_bytes / 1024)} KB)
                           {att.message_id ? ` | linked to message ${att.message_id.slice(0, 8)}` : ""}
                         </span>
@@ -339,14 +339,14 @@ export default function SupportPage() {
                         </Button>
                       </div>
                     ))}
-                    {!attachments.length ? <p className="text-xs text-[#7586a3]">No attachments yet.</p> : null}
+                    {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">No attachments yet.</p> : null}
                   </div>
                   <div className="mt-3">
-                    <label className="mb-1 block text-xs text-[#6f80a0]">Link attachment to message (optional)</label>
+                    <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Link attachment to message (optional)</label>
                     <select
                       value={attachmentMessageId}
                       onChange={(e) => setAttachmentMessageId(e.target.value)}
-                      className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 text-sm"
+                      className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                       disabled={!canCreate}
                     >
                       <option value="">No message link</option>
@@ -357,11 +357,11 @@ export default function SupportPage() {
                       ))}
                     </select>
                     <input type="file" onChange={uploadAttachment} disabled={!canCreate || uploadingAttachment} />
-                    <p className="mt-1 text-xs text-[#6f80a0]">Allowed formats follow secure upload policy. Max 20MB per attachment.</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">Allowed formats follow secure upload policy. Max 20MB per attachment.</p>
                   </div>
                 </div>
                 <textarea
-                  className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-white px-3 py-2 text-sm"
+                  className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                   placeholder="Write a reply"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
