@@ -46,6 +46,21 @@ export default function LoginPage() {
     return value.replace(/\D/g, "");
   }
 
+  function formatCnpj(value: string): string {
+    const digits = onlyDigits(value).slice(0, 14);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+    if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+    if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  }
+
+  function formatCep(value: string): string {
+    const digits = onlyDigits(value).slice(0, 8);
+    if (digits.length <= 5) return digits;
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  }
+
   async function lookupCep() {
     const cep = onlyDigits(postalCode);
     if (cep.length !== 8) return;
@@ -80,8 +95,8 @@ export default function LoginPage() {
           : {
               tenant_name: legalName,
               legal_name: legalName,
-              cnpj,
-              postal_code: postalCode,
+              cnpj: onlyDigits(cnpj),
+              postal_code: onlyDigits(postalCode),
               address_line: addressLine,
               address_number: addressNumber,
               address_complement: addressComplement || null,
@@ -164,7 +179,7 @@ export default function LoginPage() {
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <Input
                     value={cnpj}
-                    onChange={(e) => setCnpj(e.target.value)}
+                    onChange={(e) => setCnpj(formatCnpj(e.target.value))}
                     placeholder="CNPJ"
                     required
                   />
@@ -182,7 +197,7 @@ export default function LoginPage() {
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <Input
                     value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
+                    onChange={(e) => setPostalCode(formatCep(e.target.value))}
                     onBlur={() => void lookupCep()}
                     placeholder="CEP"
                     required
