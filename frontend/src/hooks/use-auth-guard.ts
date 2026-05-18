@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ensureAccessToken } from "@/lib/auth";
+import { AppLocale, setStoredLocale } from "@/lib/i18n";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -33,6 +34,22 @@ export function useAuthGuard() {
         const me = (await response.json()) as { must_change_password?: boolean; role?: string };
         const resolvedRole = (me.role ?? "").toLowerCase();
         setRole(resolvedRole);
+        try {
+          const settingsResponse = await fetch(`${API_BASE}/settings/current`, {
+            method: "GET",
+            credentials: "include",
+            headers: { Authorization: `Bearer ${stored}` },
+          });
+          if (settingsResponse.ok) {
+            const settings = (await settingsResponse.json()) as { ui?: { language?: AppLocale } };
+            const language = settings.ui?.language;
+            if (language === "pt-BR" || language === "en-US" || language === "es-ES") {
+              setStoredLocale(language);
+            }
+          }
+        } catch {
+          // Keep local/browser fallback locale if settings endpoint is unavailable.
+        }
         if (me.must_change_password && pathname !== "/first-access") {
           router.replace("/first-access");
           setToken(stored);

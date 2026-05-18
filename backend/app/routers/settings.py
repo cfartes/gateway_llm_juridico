@@ -7,10 +7,10 @@ from app.core.database import get_db
 from app.core.deps import get_request_ip, require_roles
 from app.core.types import UserRole
 from app.models.user import User
-from app.schemas.app_settings import SmtpTestRequest, SmtpTestResponse, TenantAppSettingsOut, TenantAppSettingsUpdateRequest
+from app.schemas.app_settings import SmtpTestRequest, SmtpTestResponse, TenantAppSettingsOut, TenantAppSettingsUpdateRequest, TenantLanguageUpdateRequest
 from app.services.audit_service import write_audit_log
 from app.services.email_service import is_smtp_configured, send_email
-from app.services.tenant_config_service import get_app_settings, update_app_settings
+from app.services.tenant_config_service import get_app_settings, update_app_settings, update_tenant_language
 
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -47,7 +47,30 @@ def update_current_settings(
             "reports_days": result.retention.reports_days,
             "files_days": result.retention.files_days,
             "emails_count": len(result.notifications.emails),
+            "ui_language": result.ui.language,
         },
+    )
+    return result
+
+
+@router.put("/current/language", response_model=TenantAppSettingsOut)
+def update_current_language(
+    payload: TenantLanguageUpdateRequest,
+    request: Request,
+    auth=Depends(require_roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.ANALYST, UserRole.VIEWER)),
+    db: Session = Depends(get_db),
+):
+    result = update_tenant_language(db, auth.tenant_id, payload.language)
+    write_audit_log(
+        db,
+        tenant_id=auth.tenant_id,
+        action="tenant.settings.language.update",
+        resource_type="tenant_app_settings",
+        resource_id=None,
+        actor_user_id=auth.user_id,
+        actor_api_token_id=auth.api_token_id,
+        source_ip=get_request_ip(request),
+        details={"ui_language": result.ui.language},
     )
     return result
 

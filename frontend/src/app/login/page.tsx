@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/hooks/use-i18n";
 import { ensureAccessToken, setSessionTokens } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -13,6 +14,7 @@ type Mode = "login" | "register";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -141,9 +143,9 @@ export default function LoginPage() {
           <div className="bg-[linear-gradient(145deg,var(--color-primary),var(--color-primary-strong))] p-8 text-white">
             <p className="text-3xl font-extrabold">NEXUS</p>
             <p className="text-sm font-semibold text-blue-100">GATEWAY LLM SHIELD</p>
-            <h1 className="mt-10 text-3xl font-bold">Secure AI Document Pipeline</h1>
+            <h1 className="mt-10 text-3xl font-bold">{t("login.title")}</h1>
             <p className="mt-3 text-sm text-blue-100">
-              Authenticate with your user email and start scanning files for prompt injections, hidden instructions, and exfiltration attempts.
+              {t("login.subtitle")}
             </p>
           </div>
 
@@ -154,14 +156,14 @@ export default function LoginPage() {
                 className="h-9"
                 onClick={() => setMode("login")}
               >
-                Login
+                {t("login.login")}
               </Button>
               <Button
                 variant={mode === "register" ? "default" : "outline"}
                 className="h-9"
                 onClick={() => setMode("register")}
               >
-                Register
+                {t("login.register")}
               </Button>
             </div>
 

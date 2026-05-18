@@ -150,6 +150,9 @@ def get_app_settings(db: Session, tenant_id: str) -> TenantAppSettingsOut:
             "notify_on_critical": settings.notify_on_critical,
             "notify_on_dead_letter": settings.notify_on_dead_letter,
         },
+        ui={
+            "language": settings.ui_language if settings.ui_language in {"pt-BR", "en-US", "es-ES"} else "pt-BR",
+        },
     )
 
 
@@ -168,7 +171,18 @@ def update_app_settings(db: Session, tenant_id: str, payload: TenantAppSettingsU
     settings.notify_on_warning = payload.notifications.notify_on_warning
     settings.notify_on_critical = payload.notifications.notify_on_critical
     settings.notify_on_dead_letter = payload.notifications.notify_on_dead_letter
+    if payload.ui is not None:
+        settings.ui_language = payload.ui.language
 
+    db.add(settings)
+    db.commit()
+    db.refresh(settings)
+    return get_app_settings(db, tenant_id)
+
+
+def update_tenant_language(db: Session, tenant_id: str, language: str) -> TenantAppSettingsOut:
+    settings = _ensure_app_settings(db, tenant_id)
+    settings.ui_language = language if language in {"pt-BR", "en-US", "es-ES"} else "pt-BR"
     db.add(settings)
     db.commit()
     db.refresh(settings)

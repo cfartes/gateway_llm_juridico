@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
+import { LocaleInit } from "@/components/locale-init";
 import { ThemeInit } from "@/components/theme-init";
 import "./globals.css";
 
@@ -19,9 +20,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${manrope.variable} h-full`}>
+    <html lang="pt-BR" className={`${manrope.variable} h-full`}>
       <body className="min-h-full antialiased">
         <ThemeInit />
+        <LocaleInit />
         {children}
       </body>
     </html>

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Literal
 
 
 class SecuritySettingsOut(BaseModel):
@@ -19,10 +20,15 @@ class NotificationSettingsOut(BaseModel):
     notify_on_dead_letter: bool
 
 
+class UISettingsOut(BaseModel):
+    language: Literal["pt-BR", "en-US", "es-ES"]
+
+
 class TenantAppSettingsOut(BaseModel):
     security: SecuritySettingsOut
     retention: RetentionSettingsOut
     notifications: NotificationSettingsOut
+    ui: UISettingsOut
 
 
 class SecuritySettingsUpdateRequest(BaseModel):
@@ -43,10 +49,19 @@ class NotificationSettingsUpdateRequest(BaseModel):
     notify_on_dead_letter: bool
 
 
+class UISettingsUpdateRequest(BaseModel):
+    language: Literal["pt-BR", "en-US", "es-ES"]
+
+
 class TenantAppSettingsUpdateRequest(BaseModel):
     security: SecuritySettingsUpdateRequest
     retention: RetentionSettingsUpdateRequest
     notifications: NotificationSettingsUpdateRequest
+    ui: UISettingsUpdateRequest | None = None
+
+
+class TenantLanguageUpdateRequest(BaseModel):
+    language: Literal["pt-BR", "en-US", "es-ES"]
 
 
 class SmtpTestRequest(BaseModel):
