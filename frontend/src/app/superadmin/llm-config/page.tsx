@@ -215,7 +215,7 @@ export default function LLMConfigPage() {
 
       setConfigs((prev) => ({ ...prev, [updated.provider_key]: updated }));
       setForm((prev) => ({ ...prev, api_token: "" }));
-      setSuccess("Provider configuration saved.");
+      setSuccess(t("common.saveProviderConfig"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save provider configuration");
     } finally {
@@ -257,9 +257,9 @@ export default function LLMConfigPage() {
             ) : (
               <div className="grid gap-4 xl:grid-cols-[0.9fr_1.7fr]">
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-xl font-semibold text-[var(--color-heading)]">Providers</h2>
+                  <h2 className="text-xl font-semibold text-[var(--color-heading)]">{t("common.providers")}</h2>
                   <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                    Select an LLM provider to configure.
+                    {t("common.selectProviderConfigure")}
                   </p>
 
                   <div className="mt-3 space-y-2">
@@ -299,7 +299,7 @@ export default function LLMConfigPage() {
                                   : "bg-slate-100 text-slate-700"
                               }
                             >
-                              {providerConfig?.token_configured ? "Token configured" : "No token"}
+                              {providerConfig?.token_configured ? t("common.tokenConfigured") : t("common.noToken")}
                             </Badge>
                           </div>
                         </button>
@@ -317,7 +317,7 @@ export default function LLMConfigPage() {
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-xl font-semibold text-[var(--color-heading)]">
-                      {selectedProvider ? selectedProvider.label : "Provider details"}
+                      {selectedProvider ? selectedProvider.label : t("common.providerDetails")}
                     </h2>
                     {selectedProvider ? (
                       <Badge className="bg-[var(--color-surface-alt)] text-[var(--color-primary)]">{selectedProvider.key}</Badge>
@@ -331,7 +331,7 @@ export default function LLMConfigPage() {
                       </p>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Provider label</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">{t("common.providerLabel")}</label>
                         <Input
                           value={form.provider_label}
                           onChange={(e) => setForm((prev) => ({ ...prev, provider_label: e.target.value }))}
@@ -340,7 +340,7 @@ export default function LLMConfigPage() {
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Base URL</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">{t("common.baseUrl")}</label>
                         <Input
                           value={form.base_url}
                           onChange={(e) => setForm((prev) => ({ ...prev, base_url: e.target.value }))}
@@ -370,7 +370,7 @@ export default function LLMConfigPage() {
                           onChange={(e) => setForm((prev) => ({ ...prev, selected_model: e.target.value }))}
                           className="h-11 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
                         >
-                          <option value="">Select a model</option>
+                          <option value="">{t("common.selectModel")}</option>
                           {models.map((model) => (
                             <option key={model.id} value={model.id}>
                               {model.label}
@@ -401,16 +401,16 @@ export default function LLMConfigPage() {
                           onClick={fetchModels}
                           disabled={loadingModels || saving || !form.base_url}
                         >
-                          {loadingModels ? "Fetching models..." : "Fetch available models"}
+                          {loadingModels ? t("common.fetchingModels") : t("common.fetchAvailableModels")}
                         </Button>
                         <Button type="button" onClick={saveConfig} disabled={saving || loadingModels}>
-                          {saving ? t("common.saving") : "Save provider configuration"}
+                          {saving ? t("common.saving") : t("common.saveProviderConfig")}
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <p className="rounded-lg border border-dashed border-[var(--color-border)] px-3 py-10 text-center text-sm text-[var(--color-text-soft)]">
-                      Select a provider to start configuration.
+                      {t("common.selectProviderToStart")}
                     </p>
                   )}
                 </Card>

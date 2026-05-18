@@ -248,7 +248,7 @@ export default function SuperAdminOpsPage() {
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex flex-wrap items-end gap-2">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Window</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">{t("common.window")}</label>
                       <select
                         value={windowHours}
                         onChange={(event) => setWindowHours(Number(event.target.value))}
@@ -266,14 +266,14 @@ export default function SuperAdminOpsPage() {
                       <Input
                         value={tenantFilter}
                         onChange={(event) => setTenantFilter(event.target.value)}
-                        placeholder="Filter by tenant UUID"
+                        placeholder={t("common.tenantIdFilter")}
                       />
                     </div>
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
                       {loading ? t("common.refreshing") : t("common.refresh")}
                     </Button>
                     <Button className="bg-[var(--color-primary-strong)] hover:bg-[var(--color-primary)]" onClick={() => void runAlertEvaluation()} disabled={evaluating}>
-                      {evaluating ? "Evaluating..." : "Run Alert Evaluation"}
+                      {evaluating ? t("common.evaluating") : t("common.runAlertEvaluation")}
                     </Button>
                   </div>
                 </Card>

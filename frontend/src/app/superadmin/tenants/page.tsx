@@ -285,7 +285,7 @@ export default function SuperAdminTenantsPage() {
                 <Card className="rounded-xl p-4">
                   <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Tenant Controls</h2>
                   {!selectedTenant ? (
-                    <p className="text-sm text-[var(--color-text-soft)]">Select one tenant to edit.</p>
+                    <p className="text-sm text-[var(--color-text-soft)]">{t("common.selectTenantToEdit")}</p>
                   ) : (
                     <div className="space-y-3">
                       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
@@ -328,7 +328,7 @@ export default function SuperAdminTenantsPage() {
                       </label>
 
                       <Button onClick={saveTenant} disabled={saving}>
-                        {saving ? t("common.saving") : "Save Changes"}
+                        {saving ? t("common.saving") : t("common.saveChanges")}
                       </Button>
                     </div>
                   )}

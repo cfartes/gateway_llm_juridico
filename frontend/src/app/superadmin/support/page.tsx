@@ -231,14 +231,14 @@ export default function SuperAdminSupportPage() {
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                   >
-                    <option value="all">All statuses</option>
+                    <option value="all">{t("common.allStatuses")}</option>
                     <option value="open">{t("common.open")}</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
+                    <option value="in_progress">{t("common.inProgress")}</option>
+                    <option value="resolved">{t("common.resolved")}</option>
                     <option value="closed">{t("common.close")}</option>
                   </select>
-                  <Input placeholder="Tenant ID filter" value={tenantFilter} onChange={(e) => setTenantFilter(e.target.value)} />
-                  <Input placeholder="Admin note for actions" value={note} onChange={(e) => setNote(e.target.value)} />
+                  <Input placeholder={t("common.tenantIdFilter")} value={tenantFilter} onChange={(e) => setTenantFilter(e.target.value)} />
+                  <Input placeholder={t("common.adminNoteActions")} value={note} onChange={(e) => setNote(e.target.value)} />
                   <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
                     {loading ? t("common.refreshing") : t("common.refresh")}
                   </Button>
@@ -253,7 +253,7 @@ export default function SuperAdminSupportPage() {
                         <th className="py-2">{t("common.priority")}</th>
                         <th className="py-2">{t("common.status")}</th>
                         <th className="py-2">Action</th>
-                        <th className="py-2">Thread</th>
+                        <th className="py-2">{t("common.thread")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -267,10 +267,10 @@ export default function SuperAdminSupportPage() {
                           <td className="py-2">
                             <div className="flex gap-2">
                               <Button variant="outline" onClick={() => void updateStatus(ticket.id, "in_progress")} disabled={savingId === ticket.id}>
-                                In Progress
+                                {t("common.inProgress")}
                               </Button>
                               <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => void updateStatus(ticket.id, "resolved")} disabled={savingId === ticket.id}>
-                                Resolve
+                                {t("common.resolved")}
                               </Button>
                             </div>
                           </td>
@@ -294,8 +294,8 @@ export default function SuperAdminSupportPage() {
 
             {isSuperAdmin && selectedTicketId ? (
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Ticket Thread</h2>
-                <p className="mt-1 text-xs text-[var(--color-text-soft)]">Ticket: {selectedTicketId}</p>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("support.thread")}</h2>
+                <p className="mt-1 text-xs text-[var(--color-text-soft)]">{t("common.ticket")}: {selectedTicketId}</p>
                 <div className="mt-3 space-y-2">
                   {thread.map((msg) => (
                     <div key={msg.id} className={`rounded-lg border p-3 ${msg.is_internal ? "border-amber-200 bg-amber-50" : "border-[var(--color-border)] bg-[var(--color-surface)]"}`}>
@@ -336,7 +336,7 @@ export default function SuperAdminSupportPage() {
                       onChange={(e) => setAttachmentMessageId(e.target.value)}
                       className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                     >
-                      <option value="">No message link</option>
+                      <option value="">{t("common.noMessageLink")}</option>
                       {thread.map((msg) => (
                         <option key={msg.id} value={msg.id}>
                           {new Date(msg.created_at).toLocaleString()} | {msg.author_role} | {msg.message.slice(0, 48)}
@@ -359,10 +359,10 @@ export default function SuperAdminSupportPage() {
                 </label>
                 <div className="mt-2 flex gap-2">
                   <Button type="button" onClick={() => void sendThreadMessage()} disabled={sendingThread}>
-                    {sendingThread ? t("common.sending") : "Send Message"}
+                    {sendingThread ? t("common.sending") : t("common.sendMessage")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => void loadThread(selectedTicketId)}>
-                    Refresh Thread
+                    {t("common.refreshThread")}
                   </Button>
                 </div>
               </Card>

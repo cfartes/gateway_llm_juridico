@@ -228,7 +228,7 @@ export default function SuperAdminQueuesPage() {
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex flex-wrap items-end gap-2">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Window</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">{t("common.window")}</label>
                       <select
                         value={windowHours}
                         onChange={(e) => setWindowHours(Number(e.target.value))}
@@ -246,7 +246,7 @@ export default function SuperAdminQueuesPage() {
                       <Input
                         value={tenantFilter}
                         onChange={(e) => setTenantFilter(e.target.value)}
-                        placeholder="Filter by tenant UUID"
+                        placeholder={t("common.tenantIdFilter")}
                       />
                     </div>
                     <label className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-sm text-[var(--color-text-soft)]">
@@ -256,7 +256,7 @@ export default function SuperAdminQueuesPage() {
                         onChange={(e) => setAutoRefresh(e.target.checked)}
                         className="h-4 w-4"
                       />
-                      Auto-refresh 15s
+                      {t("common.autoRefresh15s")}
                     </label>
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
                       {loading ? t("common.refreshing") : t("common.refresh")}

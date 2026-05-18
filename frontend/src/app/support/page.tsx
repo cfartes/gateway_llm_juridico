@@ -268,7 +268,7 @@ export default function SupportPage() {
             </form>
 
             <Card className="rounded-xl p-4">
-              <h2 className="text-lg font-semibold text-[var(--color-heading)]">My Tenant Tickets</h2>
+              <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("common.myTenantTickets")}</h2>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[900px] text-left text-sm">
                   <thead>
@@ -279,7 +279,7 @@ export default function SupportPage() {
                       <th className="py-2">{t("common.priority")}</th>
                       <th className="py-2">{t("common.status")}</th>
                       <th className="py-2">Admin Note</th>
-                      <th className="py-2">Thread</th>
+                      <th className="py-2">{t("common.thread")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -311,7 +311,7 @@ export default function SupportPage() {
             {selectedTicketId ? (
               <Card className="rounded-xl p-4">
                 <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("support.thread")}</h2>
-                <p className="mt-1 text-xs text-[var(--color-text-soft)]">Ticket: {selectedTicketId}</p>
+                <p className="mt-1 text-xs text-[var(--color-text-soft)]">{t("common.ticket")}: {selectedTicketId}</p>
                 <div className="mt-3 space-y-2">
                   {thread.map((msg) => (
                     <div key={msg.id} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
@@ -351,7 +351,7 @@ export default function SupportPage() {
                       className="mb-2 h-10 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                       disabled={!canCreate}
                     >
-                      <option value="">No message link</option>
+                      <option value="">{t("common.noMessageLink")}</option>
                       {thread.map((msg) => (
                         <option key={msg.id} value={msg.id}>
                           {new Date(msg.created_at).toLocaleString()} | {msg.author_role} | {msg.message.slice(0, 48)}
@@ -371,10 +371,10 @@ export default function SupportPage() {
                 />
                 <div className="mt-2 flex gap-2">
                   <Button type="button" onClick={() => void sendThreadMessage()} disabled={!canCreate || sendingMessage}>
-                    {sendingMessage ? t("common.sending") : "Send Message"}
+                    {sendingMessage ? t("common.sending") : t("common.sendMessage")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => void loadThread(selectedTicketId)}>
-                    Refresh Thread
+                    {t("common.refreshThread")}
                   </Button>
                 </div>
               </Card>

@@ -356,7 +356,7 @@ export default function SuperAdminWebhooksPage() {
                           <option value="dead_letter">Dead-letter</option>
                           <option value="delivered">Delivered</option>
                           <option value="discarded">Discarded</option>
-                          <option value="all">All</option>
+                          <option value="all">{t("quarantine.filter.all")}</option>
                         </select>
                       </div>
                       <div className="min-w-[220px] flex-1">
@@ -364,11 +364,11 @@ export default function SuperAdminWebhooksPage() {
                         <Input
                           value={tenantFilter}
                           onChange={(e) => setTenantFilter(e.target.value)}
-                          placeholder="Filter by tenant UUID"
+                          placeholder={t("common.tenantIdFilter")}
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Metrics window</label>
+                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">{t("common.metricsWindow")}</label>
                         <select
                           value={windowDays}
                           onChange={(e) => setWindowDays(Number(e.target.value))}
@@ -384,7 +384,7 @@ export default function SuperAdminWebhooksPage() {
                         {loading ? t("common.refreshing") : t("common.refresh")}
                       </Button>
                       <Button onClick={runDeadLetterCycle} disabled={runningCycle}>
-                        {runningCycle ? "Queueing..." : "Run Retry Cycle"}
+                        {runningCycle ? t("common.queueing") : t("common.runRetryCycle")}
                       </Button>
                     </div>
 
@@ -446,7 +446,7 @@ export default function SuperAdminWebhooksPage() {
                       )}
                     </div>
                     {!selected ? (
-                      <p className="mt-2 text-sm text-[var(--color-text-soft)]">Select one delivery to inspect attempts.</p>
+                      <p className="mt-2 text-sm text-[var(--color-text-soft)]">{t("common.details")}</p>
                     ) : (
                       <div className="mt-3 space-y-3">
                         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3 text-xs text-[var(--color-text-soft)]">
@@ -462,20 +462,20 @@ export default function SuperAdminWebhooksPage() {
                             onClick={retrySelected}
                             disabled={retrying || discarding || selected.status === "discarded"}
                           >
-                            {retrying ? "Retrying..." : "Retry Now"}
+                            {retrying ? t("common.retrying") : t("common.retryNow")}
                           </Button>
                           <Button
                             variant="outline"
                             onClick={discardSelected}
                             disabled={discarding || retrying || selected.status === "discarded"}
                           >
-                            {discarding ? "Discarding..." : "Discard"}
+                            {discarding ? t("common.discarding") : t("common.discard")}
                           </Button>
                         </div>
 
                         <div className="max-h-[420px] space-y-2 overflow-y-auto rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-2">
                           {loadingDetail ? (
-                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">{t("common.loading")}</p>
+                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">{t("common.loadingAttempts")}</p>
                           ) : null}
                           {!loadingDetail && detail?.attempts.length ? (
                             detail.attempts.map((attempt) => (
@@ -494,7 +494,7 @@ export default function SuperAdminWebhooksPage() {
                             ))
                           ) : null}
                           {!loadingDetail && !detail?.attempts.length ? (
-                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">{t("common.noData")}</p>
+                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">{t("common.noAttemptHistory")}</p>
                           ) : null}
                         </div>
                       </div>
