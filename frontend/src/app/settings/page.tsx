@@ -39,9 +39,14 @@ type QueuePolicyResponse = {
   async_requests_per_minute: number;
   url_requests_per_minute: number;
   max_files_per_batch: number;
+  max_file_size_mb: number;
+  max_daily_jobs: number;
+  max_monthly_jobs: number;
   current_running_jobs: number;
   current_pending_jobs: number;
   current_inflight_jobs: number;
+  current_daily_jobs: number;
+  current_monthly_jobs: number;
   inflight_usage_percent: number;
   pending_usage_percent: number;
   upgrade_recommended: boolean;
@@ -285,6 +290,22 @@ export default function SettingsPage() {
                     <p className="text-xs text-[var(--color-text-muted)]">In-flight usage</p>
                     <p className="text-lg font-semibold text-[var(--color-heading)]">
                       {queuePolicy.current_inflight_jobs}/{queuePolicy.max_inflight_jobs}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">Max file size</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">{queuePolicy.max_file_size_mb} MB</p>
+                  </div>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">Daily jobs</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">
+                      {queuePolicy.current_daily_jobs}/{queuePolicy.max_daily_jobs}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)]">Monthly jobs</p>
+                    <p className="text-lg font-semibold text-[var(--color-heading)]">
+                      {queuePolicy.current_monthly_jobs}/{queuePolicy.max_monthly_jobs}
                     </p>
                   </div>
                 </div>

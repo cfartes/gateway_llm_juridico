@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/hooks/use-i18n";
-import { ensureAccessToken, setSessionTokens } from "@/lib/auth";
+import { authenticatedJson, clearSessionTokens, ensureAccessToken, setSessionTokens } from "@/lib/auth";
 import { AppLocale, LOCALE_FLAGS, setStoredLocale } from "@/lib/i18n";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -40,7 +40,17 @@ export default function LoginPage() {
     async function checkSession() {
       const token = await ensureAccessToken(API_BASE);
       if (token) {
-        router.replace("/");
+        try {
+          await authenticatedJson(API_BASE, "/auth/me", token);
+          router.replace("/");
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "";
+          if (message.includes("Password change required")) {
+            router.replace("/first-access");
+            return;
+          }
+          clearSessionTokens();
+        }
       }
     }
     void checkSession();

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ensureAccessToken } from "@/lib/auth";
+import { authenticatedJson, clearSessionTokens, ensureAccessToken } from "@/lib/auth";
 import { AppLocale, setStoredLocale } from "@/lib/i18n";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -16,22 +16,19 @@ export function useAuthGuard() {
 
   useEffect(() => {
     async function bootstrap() {
+      let stored = "";
       try {
-        const stored = await ensureAccessToken(API_BASE);
+        stored = (await ensureAccessToken(API_BASE)) ?? "";
         if (!stored) {
+          clearSessionTokens();
           router.replace("/login");
           return;
         }
-        const response = await fetch(`${API_BASE}/auth/me`, {
-          method: "GET",
-          credentials: "include",
-          headers: { Authorization: `Bearer ${stored}` },
-        });
-        if (!response.ok) {
-          router.replace("/login");
-          return;
-        }
-        const me = (await response.json()) as { must_change_password?: boolean; role?: string };
+        const me = await authenticatedJson<{ must_change_password?: boolean; role?: string }>(
+          API_BASE,
+          "/auth/me",
+          stored,
+        );
         const resolvedRole = (me.role ?? "").toLowerCase();
         setRole(resolvedRole);
         try {
@@ -61,7 +58,14 @@ export function useAuthGuard() {
           return;
         }
         setToken(stored);
-      } catch {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "";
+        if (message.includes("Password change required")) {
+          router.replace("/first-access");
+          setToken(stored);
+          return;
+        }
+        clearSessionTokens();
         router.replace("/login");
       } finally {
         setReady(true);

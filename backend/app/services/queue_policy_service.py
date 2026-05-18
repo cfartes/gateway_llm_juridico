@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -19,6 +20,9 @@ class PlanQueuePolicy:
     async_requests_per_minute: int
     url_requests_per_minute: int
     max_files_per_batch: int
+    max_file_size_mb: int
+    max_daily_jobs: int
+    max_monthly_jobs: int
 
 
 PLAN_POLICIES: dict[TenantPlan, PlanQueuePolicy] = {
@@ -30,6 +34,9 @@ PLAN_POLICIES: dict[TenantPlan, PlanQueuePolicy] = {
         async_requests_per_minute=30,
         url_requests_per_minute=20,
         max_files_per_batch=3,
+        max_file_size_mb=25,
+        max_daily_jobs=300,
+        max_monthly_jobs=5000,
     ),
     TenantPlan.GROWTH: PlanQueuePolicy(
         max_inflight_jobs=5,
@@ -39,6 +46,9 @@ PLAN_POLICIES: dict[TenantPlan, PlanQueuePolicy] = {
         async_requests_per_minute=100,
         url_requests_per_minute=60,
         max_files_per_batch=8,
+        max_file_size_mb=50,
+        max_daily_jobs=1200,
+        max_monthly_jobs=20000,
     ),
     TenantPlan.BUSINESS: PlanQueuePolicy(
         max_inflight_jobs=12,
@@ -48,6 +58,9 @@ PLAN_POLICIES: dict[TenantPlan, PlanQueuePolicy] = {
         async_requests_per_minute=300,
         url_requests_per_minute=180,
         max_files_per_batch=20,
+        max_file_size_mb=100,
+        max_daily_jobs=6000,
+        max_monthly_jobs=100000,
     ),
     TenantPlan.ENTERPRISE: PlanQueuePolicy(
         max_inflight_jobs=30,
@@ -57,6 +70,9 @@ PLAN_POLICIES: dict[TenantPlan, PlanQueuePolicy] = {
         async_requests_per_minute=1200,
         url_requests_per_minute=600,
         max_files_per_batch=50,
+        max_file_size_mb=250,
+        max_daily_jobs=30000,
+        max_monthly_jobs=500000,
     ),
 }
 
@@ -117,10 +133,31 @@ def get_tenant_scan_counters(db: Session, tenant_id: str) -> tuple[int, int]:
     return pending_count, running_count
 
 
-def get_tenant_queue_policy_snapshot(db: Session, tenant_id: str, plan: TenantPlan | None = None) -> dict[str, int | str]:
+def get_tenant_scan_volume_counters(db: Session, tenant_id: str) -> tuple[int, int]:
+    now = datetime.now(timezone.utc)
+    day_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+
+    daily_count = (
+        db.query(func.count(ScanJob.id))
+        .filter(ScanJob.tenant_id == tenant_id, ScanJob.created_at >= day_start)
+        .scalar()
+        or 0
+    )
+    monthly_count = (
+        db.query(func.count(ScanJob.id))
+        .filter(ScanJob.tenant_id == tenant_id, ScanJob.created_at >= month_start)
+        .scalar()
+        or 0
+    )
+    return daily_count, monthly_count
+
+
+def get_tenant_queue_policy_snapshot(db: Session, tenant_id: str, plan: TenantPlan | None = None) -> dict[str, object]:
     resolved_plan = plan or resolve_tenant_plan(db, tenant_id)
     policy = PLAN_POLICIES.get(resolved_plan, PLAN_POLICIES[TenantPlan.STARTER])
     pending_count, running_count = get_tenant_scan_counters(db, tenant_id)
+    daily_count, monthly_count = get_tenant_scan_volume_counters(db, tenant_id)
     inflight = pending_count + running_count
     inflight_usage_percent = round((inflight / policy.max_inflight_jobs) * 100.0, 2) if policy.max_inflight_jobs else 0.0
     pending_usage_percent = round((pending_count / policy.max_pending_jobs) * 100.0, 2) if policy.max_pending_jobs else 0.0
@@ -151,9 +188,14 @@ def get_tenant_queue_policy_snapshot(db: Session, tenant_id: str, plan: TenantPl
         "async_requests_per_minute": policy.async_requests_per_minute,
         "url_requests_per_minute": policy.url_requests_per_minute,
         "max_files_per_batch": policy.max_files_per_batch,
+        "max_file_size_mb": policy.max_file_size_mb,
+        "max_daily_jobs": policy.max_daily_jobs,
+        "max_monthly_jobs": policy.max_monthly_jobs,
         "current_running_jobs": running_count,
         "current_pending_jobs": pending_count,
         "current_inflight_jobs": inflight,
+        "current_daily_jobs": daily_count,
+        "current_monthly_jobs": monthly_count,
         "inflight_usage_percent": inflight_usage_percent,
         "pending_usage_percent": pending_usage_percent,
         "upgrade_recommended": upgrade_recommended,
@@ -181,6 +223,45 @@ def enforce_batch_file_count(plan: TenantPlan, file_count: int) -> None:
             detail=(
                 f"Batch file limit reached for plan '{plan}'. "
                 f"Allowed: {policy.max_files_per_batch}, received: {file_count}."
+            ),
+        )
+
+
+def enforce_file_size_limit(plan: TenantPlan, *, file_size_bytes: int, filename: str | None = None) -> None:
+    policy = PLAN_POLICIES.get(plan, PLAN_POLICIES[TenantPlan.STARTER])
+    max_bytes = policy.max_file_size_mb * 1024 * 1024
+    if file_size_bytes > max_bytes:
+        suffix = f" for file '{filename}'" if filename else ""
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=(
+                f"File size limit reached for plan '{plan}'{suffix}. "
+                f"Allowed: {policy.max_file_size_mb}MB, received: {round(file_size_bytes / (1024 * 1024), 2)}MB."
+            ),
+        )
+
+
+def enforce_scan_volume_policy(db: Session, tenant_id: str, plan: TenantPlan, *, jobs_to_enqueue: int = 1) -> None:
+    policy = PLAN_POLICIES.get(plan, PLAN_POLICIES[TenantPlan.STARTER])
+    daily_count, monthly_count = get_tenant_scan_volume_counters(db, tenant_id)
+    next_daily = daily_count + max(0, jobs_to_enqueue)
+    next_monthly = monthly_count + max(0, jobs_to_enqueue)
+
+    if next_daily > policy.max_daily_jobs:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Daily scan volume limit reached for plan '{plan}'. "
+                f"Allowed: {policy.max_daily_jobs}, current: {daily_count}."
+            ),
+        )
+
+    if next_monthly > policy.max_monthly_jobs:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Monthly scan volume limit reached for plan '{plan}'. "
+                f"Allowed: {policy.max_monthly_jobs}, current: {monthly_count}."
             ),
         )
 

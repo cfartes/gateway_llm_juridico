@@ -21,7 +21,9 @@ from app.services.policy_enforcement import decide_policy_action, quarantine_sta
 from app.services.queue_policy_service import (
     classify_file_tier,
     enforce_batch_file_count,
+    enforce_file_size_limit,
     enforce_plan_request_rate,
+    enforce_scan_volume_policy,
     enforce_scan_enqueue_policy,
     resolve_tenant_plan,
     tier_to_queue,
@@ -103,10 +105,12 @@ async def scan_sync(
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
     enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="sync")
     enforce_batch_file_count(tenant_plan, len(files))
+    enforce_scan_volume_policy(db, auth.tenant_id, tenant_plan, jobs_to_enqueue=len(files))
 
     responses: list[ScanResponse] = []
     for upload in files:
         content = await upload.read()
+        enforce_file_size_limit(tenant_plan, file_size_bytes=len(content), filename=upload.filename or "file.bin")
         validate_file_metadata(upload.filename or "file.bin", upload.content_type, len(content))
 
         document = _save_document_record(
@@ -179,12 +183,14 @@ async def scan_async(
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
     enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="async")
     enforce_batch_file_count(tenant_plan, len(files))
+    enforce_scan_volume_policy(db, auth.tenant_id, tenant_plan, jobs_to_enqueue=len(files))
 
     responses: list[ScanResponse] = []
     for upload in files:
         enforce_scan_enqueue_policy(db, auth.tenant_id, tenant_plan)
 
         content = await upload.read()
+        enforce_file_size_limit(tenant_plan, file_size_bytes=len(content), filename=upload.filename or "file.bin")
         validate_file_metadata(upload.filename or "file.bin", upload.content_type, len(content))
 
         document = _save_document_record(
@@ -227,9 +233,11 @@ def scan_from_url(
     rate_limit_dependency(request, key=f"{auth.tenant_id}:scan-url")
     tenant_plan = resolve_tenant_plan(db, auth.tenant_id)
     enforce_plan_request_rate(auth.tenant_id, tenant_plan, operation="url")
+    enforce_scan_volume_policy(db, auth.tenant_id, tenant_plan, jobs_to_enqueue=1)
 
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
     content, filename, content_type = download_url_content(str(payload.url), max_bytes)
+    enforce_file_size_limit(tenant_plan, file_size_bytes=len(content), filename=filename)
 
     validate_file_metadata(filename, content_type, len(content))
 

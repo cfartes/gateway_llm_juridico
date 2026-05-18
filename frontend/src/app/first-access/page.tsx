@@ -34,6 +34,12 @@ export default function FirstAccessPage() {
         headers: { Authorization: `Bearer ${access}` },
       });
       if (!meResponse.ok) {
+        if (meResponse.status === 403) {
+          const bodyText = await meResponse.text();
+          if (bodyText.includes("Password change required")) {
+            return;
+          }
+        }
         router.replace("/login");
         return;
       }

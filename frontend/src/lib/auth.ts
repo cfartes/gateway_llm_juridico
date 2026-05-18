@@ -74,15 +74,8 @@ export async function authenticatedJson<T>(
   }
 
   if (!response.ok) {
-    if (response.status === 403) {
-      const bodyText = await response.text();
-      if (bodyText.includes("Password change required") && typeof window !== "undefined") {
-        window.location.href = "/first-access";
-        throw new Error("Password change required");
-      }
-      throw new Error(bodyText);
-    }
-    throw new Error(await response.text());
+    const bodyText = await response.text();
+    throw new Error(bodyText);
   }
 
   return (await response.json()) as T;

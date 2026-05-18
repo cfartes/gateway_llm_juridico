@@ -37,9 +37,14 @@ class TenantQueuePolicyOut(BaseModel):
     async_requests_per_minute: int
     url_requests_per_minute: int
     max_files_per_batch: int
+    max_file_size_mb: int
+    max_daily_jobs: int
+    max_monthly_jobs: int
     current_running_jobs: int
     current_pending_jobs: int
     current_inflight_jobs: int
+    current_daily_jobs: int
+    current_monthly_jobs: int
     inflight_usage_percent: float
     pending_usage_percent: float
     upgrade_recommended: bool
