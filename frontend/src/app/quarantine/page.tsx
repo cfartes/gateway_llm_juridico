@@ -56,14 +56,6 @@ type ReviewResponse = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
-const FILTERS = [
-  { value: "pending_review", label: "Pending Review" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-  { value: "not_required", label: "Not Required" },
-  { value: "all", label: "All" },
-];
-
 function formatDate(input?: string | null): string {
   if (!input) return "-";
   const date = new Date(input);
@@ -113,6 +105,13 @@ function severityTone(severity?: string): string {
 export default function QuarantinePage() {
   const { token, ready } = useAuthGuard();
   const { t } = useI18n();
+  const filters = [
+    { value: "pending_review", label: t("quarantine.filter.pendingReview") },
+    { value: "approved", label: t("quarantine.filter.approved") },
+    { value: "rejected", label: t("quarantine.filter.rejected") },
+    { value: "not_required", label: t("quarantine.filter.notRequired") },
+    { value: "all", label: t("quarantine.filter.all") },
+  ];
   const [statusFilter, setStatusFilter] = useState("pending_review");
   const [rows, setRows] = useState<QuarantineItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -229,7 +228,7 @@ export default function QuarantinePage() {
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="h-9 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)]"
                   >
-                    {FILTERS.map((filter) => (
+                    {filters.map((filter) => (
                       <option key={filter.value} value={filter.value}>
                         {filter.label}
                       </option>
@@ -244,16 +243,16 @@ export default function QuarantinePage() {
 
             <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
               <Card className="rounded-xl p-4">
-                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Queue Items</h2>
+                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">{t("quarantine.queueItems")}</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[760px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                        <th className="py-2">File</th>
-                        <th className="py-2">Risk</th>
-                        <th className="py-2">Score</th>
-                        <th className="py-2">Status</th>
-                        <th className="py-2">Updated</th>
+                        <th className="py-2">{t("quarantine.table.file")}</th>
+                        <th className="py-2">{t("quarantine.table.risk")}</th>
+                        <th className="py-2">{t("quarantine.table.score")}</th>
+                        <th className="py-2">{t("quarantine.table.status")}</th>
+                        <th className="py-2">{t("quarantine.table.updated")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -279,7 +278,7 @@ export default function QuarantinePage() {
                       {!rows.length ? (
                         <tr>
                           <td colSpan={5} className="py-6 text-center text-[var(--color-text-soft)]">
-                            No items for this filter.
+                            {t("quarantine.noItems")}
                           </td>
                         </tr>
                       ) : null}
@@ -289,26 +288,26 @@ export default function QuarantinePage() {
               </Card>
 
               <Card className="rounded-xl p-4">
-                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Review Detail</h2>
+                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">{t("quarantine.reviewDetail")}</h2>
                 {loadingDetail ? (
-                  <p className="text-sm text-[var(--color-text-soft)]">Loading detail...</p>
+                  <p className="text-sm text-[var(--color-text-soft)]">{t("quarantine.loadingDetail")}</p>
                 ) : !detail ? (
-                  <p className="text-sm text-[var(--color-text-soft)]">Select one item to review.</p>
+                  <p className="text-sm text-[var(--color-text-soft)]">{t("quarantine.selectToReview")}</p>
                 ) : (
                   <div className="space-y-3">
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
                       <p className="text-sm font-semibold text-[var(--color-text)]">{detail.file_name}</p>
-                      <p className="mt-1 text-xs text-[var(--color-text-soft)]">Scan ID: {detail.scan_id}</p>
-                      <p className="mt-1 text-xs text-[var(--color-text-soft)]">Policy: {detail.policy_action ?? "-"}</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-soft)]">{t("quarantine.scanId")}: {detail.scan_id}</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-soft)]">{t("quarantine.policy")}: {detail.policy_action ?? "-"}</p>
                       <p className="mt-1 text-xs text-[var(--color-text-soft)]">{detail.policy_reason ?? "-"}</p>
                     </div>
 
                     <div className="rounded-lg border border-[var(--color-border)] p-3">
-                      <p className="mb-2 text-sm font-semibold text-[var(--color-text)]">Review Note</p>
+                      <p className="mb-2 text-sm font-semibold text-[var(--color-text)]">{t("quarantine.reviewNote")}</p>
                       <Input
                         value={reviewNote}
                         onChange={(e) => setReviewNote(e.target.value)}
-                        placeholder="Reason for decision..."
+                        placeholder={t("quarantine.reasonPlaceholder")}
                         disabled={!canReview || reviewing}
                       />
                       <label className="mt-3 flex items-center gap-2 text-xs text-[var(--color-text-soft)]">
@@ -318,7 +317,7 @@ export default function QuarantinePage() {
                           onChange={(e) => setGenerateRag(e.target.checked)}
                           disabled={!canReview || reviewing}
                         />
-                        Generate `rag-md` when approving
+                        {t("quarantine.generateRagOnApprove")}
                       </label>
                       <div className="mt-3 flex gap-2">
                         <Button
@@ -326,21 +325,21 @@ export default function QuarantinePage() {
                           disabled={!canReview || reviewing}
                           onClick={() => review("approve")}
                         >
-                          Approve
+                          {t("quarantine.approve")}
                         </Button>
                         <Button
                           className="bg-red-600 hover:bg-red-700"
                           disabled={!canReview || reviewing}
                           onClick={() => review("reject")}
                         >
-                          Reject
+                          {t("quarantine.reject")}
                         </Button>
                       </div>
                     </div>
 
                     {detail.result?.evidences?.length ? (
                       <div className="space-y-2">
-                        <p className="text-sm font-semibold text-[var(--color-text)]">Top Evidences</p>
+                        <p className="text-sm font-semibold text-[var(--color-text)]">{t("quarantine.topEvidences")}</p>
                         {detail.result.evidences.slice(0, 5).map((ev, idx) => (
                           <div key={`${ev.category}-${idx}`} className={`rounded-lg border p-2 ${severityTone(ev.severity)}`}>
                             <p className="text-xs font-semibold text-[var(--color-heading)]">

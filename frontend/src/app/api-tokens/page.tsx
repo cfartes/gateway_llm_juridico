@@ -123,11 +123,11 @@ export default function ApiTokensPage() {
                 <table className="w-full min-w-[700px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                      <th className="py-2">Token Name</th>
-                      <th className="py-2">Prefix</th>
-                      <th className="py-2">Created</th>
-                      <th className="py-2">Last Used</th>
-                      <th className="py-2">Status</th>
+                      <th className="py-2">{t("apiTokens.table.tokenName")}</th>
+                      <th className="py-2">{t("apiTokens.table.prefix")}</th>
+                      <th className="py-2">{t("apiTokens.table.created")}</th>
+                      <th className="py-2">{t("apiTokens.table.lastUsed")}</th>
+                      <th className="py-2">{t("apiTokens.table.status")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -139,7 +139,7 @@ export default function ApiTokensPage() {
                         <td className="py-2 text-[var(--color-text-soft)]">{formatDate(item.last_used_at)}</td>
                         <td className="py-2">
                           <Badge className={item.revoked_at ? "bg-gray-100 text-gray-700" : "bg-emerald-100 text-emerald-700"}>
-                            {item.revoked_at ? "Revoked" : "Active"}
+                            {item.revoked_at ? t("apiTokens.status.revoked") : t("apiTokens.status.active")}
                           </Badge>
                         </td>
                       </tr>
@@ -157,7 +157,7 @@ export default function ApiTokensPage() {
 
               {generatedToken ? (
                 <div className="mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-2 text-xs text-[var(--color-text)]">
-                  <p className="font-semibold">Generated token (shown only once)</p>
+                  <p className="font-semibold">{t("apiTokens.generatedOnce")}</p>
                   <code className="break-all">{generatedToken}</code>
                 </div>
               ) : null}

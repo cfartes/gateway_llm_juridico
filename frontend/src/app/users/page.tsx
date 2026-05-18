@@ -141,7 +141,7 @@ export default function UsersPage() {
       await authenticatedJson<TenantUser>(API_BASE, `/users/${userId}/resend-invite`, token, {
         method: "POST",
       });
-      setSuccess("Invitation email resent and temporary password reset to Mudar@123.");
+      setSuccess(t("users.success.inviteResent"));
       await load(token, offset);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to resend invitation");
@@ -159,7 +159,7 @@ export default function UsersPage() {
       await authenticatedJson<TenantUser>(API_BASE, `/users/${userId}/reset-temp-password`, token, {
         method: "POST",
       });
-      setSuccess("Temporary password reset to Mudar@123. User must change password on next login.");
+      setSuccess(t("users.success.tempReset"));
       await load(token, offset);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reset temporary password");
@@ -185,23 +185,23 @@ export default function UsersPage() {
               <Card className="rounded-xl p-4">
                 <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("users.create")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-4">
-                  <Input placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={!canManage} required />
-                  <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!canManage} required />
+                  <Input placeholder={t("users.placeholder.fullName")} value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={!canManage} required />
+                  <Input type="email" placeholder={t("users.placeholder.email")} value={email} onChange={(e) => setEmail(e.target.value)} disabled={!canManage} required />
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as "admin" | "analyst" | "viewer")}
                     className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                     disabled={!canManage}
                   >
-                    <option value="analyst">Analyst</option>
-                    <option value="viewer">Viewer</option>
-                    <option value="admin">Admin</option>
+                    <option value="analyst">ANALYST</option>
+                    <option value="viewer">VIEWER</option>
+                    <option value="admin">ADMIN</option>
                   </select>
                   <Button type="submit" disabled={!canManage || saving}>
                     {saving ? `${t("users.create")}...` : t("users.create")}
                   </Button>
                 </div>
-                <p className="mt-2 text-xs text-[var(--color-text-muted)]">Temporary password: <code>Mudar@123</code>. User can login only after email confirmation.</p>
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">{t("users.tempPasswordNotice")}</p>
               </Card>
             </form>
 
@@ -209,42 +209,42 @@ export default function UsersPage() {
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("users.list")}</h2>
                 <Button variant="outline" onClick={() => token && load(token, offset)} disabled={loading}>
-                  {loading ? "Refreshing..." : t("common.refresh")}
+                  {loading ? t("users.refreshing") : t("common.refresh")}
                 </Button>
               </div>
               <div className="mb-3 grid gap-2 md:grid-cols-5">
-                <Input placeholder="Search name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <Input placeholder={t("users.placeholder.search")} value={query} onChange={(e) => setQuery(e.target.value)} />
                 <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as "all" | "admin" | "analyst" | "viewer")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm">
-                  <option value="all">All roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="analyst">Analyst</option>
-                  <option value="viewer">Viewer</option>
+                  <option value="all">{t("users.filter.allRoles")}</option>
+                  <option value="admin">ADMIN</option>
+                  <option value="analyst">ANALYST</option>
+                  <option value="viewer">VIEWER</option>
                 </select>
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm">
-                  <option value="all">All status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="all">{t("users.filter.allStatus")}</option>
+                  <option value="active">{t("users.value.active")}</option>
+                  <option value="inactive">{t("users.value.inactive")}</option>
                 </select>
                 <select value={emailFilter} onChange={(e) => setEmailFilter(e.target.value as "all" | "confirmed" | "pending")} className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm">
-                  <option value="all">All email states</option>
-                  <option value="confirmed">Email confirmed</option>
-                  <option value="pending">Email pending</option>
+                  <option value="all">{t("users.filter.allEmailStates")}</option>
+                  <option value="confirmed">{t("users.filter.emailConfirmed")}</option>
+                  <option value="pending">{t("users.filter.emailPending")}</option>
                 </select>
                 <Button type="button" variant="outline" onClick={() => token && load(token, 0)} disabled={loading}>
-                  Apply Filters
+                  {t("users.applyFilters")}
                 </Button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[980px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                      <th className="py-2">Name</th>
-                      <th className="py-2">Email</th>
-                      <th className="py-2">Role</th>
-                      <th className="py-2">Email Confirmed</th>
-                      <th className="py-2">First Access</th>
-                      <th className="py-2">Status</th>
-                      <th className="py-2">Actions</th>
+                      <th className="py-2">{t("users.table.name")}</th>
+                      <th className="py-2">{t("users.table.email")}</th>
+                      <th className="py-2">{t("users.table.role")}</th>
+                      <th className="py-2">{t("users.table.emailConfirmed")}</th>
+                      <th className="py-2">{t("users.table.firstAccess")}</th>
+                      <th className="py-2">{t("users.table.status")}</th>
+                      <th className="py-2">{t("users.table.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -258,28 +258,28 @@ export default function UsersPage() {
                           ) : (
                             <select
                               value={item.role}
-                              onChange={(e) => void patchUser(item.id, { role: e.target.value as "admin" | "analyst" | "viewer" }, "User role updated.")}
+                              onChange={(e) => void patchUser(item.id, { role: e.target.value as "admin" | "analyst" | "viewer" }, t("users.success.roleUpdated"))}
                               className="h-9 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-2 text-xs"
                               disabled={!canManage || rowSavingId === item.id}
                             >
-                              <option value="analyst">Analyst</option>
-                              <option value="viewer">Viewer</option>
-                              <option value="admin">Admin</option>
+                              <option value="analyst">ANALYST</option>
+                              <option value="viewer">VIEWER</option>
+                              <option value="admin">ADMIN</option>
                             </select>
                           )}
                         </td>
-                        <td className="py-2 text-[var(--color-text-soft)]">{item.email_verified_at ? "Yes" : "Pending"}</td>
-                        <td className="py-2 text-[var(--color-text-soft)]">{item.must_change_password ? "Pending" : "Completed"}</td>
-                        <td className="py-2 text-[var(--color-text-soft)]">{item.is_active ? "Active" : "Inactive"}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.email_verified_at ? t("users.value.yes") : t("users.value.pending")}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.must_change_password ? t("users.value.pending") : t("users.value.completed")}</td>
+                        <td className="py-2 text-[var(--color-text-soft)]">{item.is_active ? t("users.value.active") : t("users.value.inactive")}</td>
                         <td className="py-2">
                           <div className="flex gap-2">
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => void patchUser(item.id, { is_active: !item.is_active }, item.is_active ? "User disabled." : "User enabled.")}
+                              onClick={() => void patchUser(item.id, { is_active: !item.is_active }, item.is_active ? t("users.success.disabled") : t("users.success.enabled"))}
                               disabled={!canManage || rowSavingId === item.id}
                             >
-                              {item.is_active ? "Disable" : "Enable"}
+                              {item.is_active ? t("users.action.disable") : t("users.action.enable")}
                             </Button>
                             {!item.email_verified_at ? (
                               <Button
@@ -288,7 +288,7 @@ export default function UsersPage() {
                                 onClick={() => void resendInvite(item.id)}
                                 disabled={!canManage || rowSavingId === item.id}
                               >
-                                Resend Invite
+                                {t("users.action.resendInvite")}
                               </Button>
                             ) : null}
                             <Button
@@ -297,7 +297,7 @@ export default function UsersPage() {
                               onClick={() => void resetTemporaryPassword(item.id)}
                               disabled={!canManage || rowSavingId === item.id}
                             >
-                              Reset Temp Password
+                              {t("users.action.resetTempPassword")}
                             </Button>
                           </div>
                         </td>
@@ -305,7 +305,7 @@ export default function UsersPage() {
                     ))}
                     {!users.length ? (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">No users found for this tenant.</td>
+                        <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">{t("users.empty")}</td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -318,16 +318,16 @@ export default function UsersPage() {
                   onClick={() => token && load(token, Math.max(0, offset - pageSize))}
                   disabled={loading || offset === 0}
                 >
-                  Previous
+                  {t("users.pagination.previous")}
                 </Button>
-                <span className="text-xs text-[var(--color-text-muted)]">Offset {offset}</span>
+                <span className="text-xs text-[var(--color-text-muted)]">{t("users.pagination.offset")} {offset}</span>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => token && load(token, offset + pageSize)}
                   disabled={loading || !hasNextPage}
                 >
-                  Next
+                  {t("users.pagination.next")}
                 </Button>
               </div>
             </Card>
