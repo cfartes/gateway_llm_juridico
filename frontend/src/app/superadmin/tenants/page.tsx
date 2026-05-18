@@ -152,7 +152,7 @@ export default function SuperAdminTenantsPage() {
         },
       );
       setTenants((prev) => prev.map((tenant) => (tenant.id === updated.id ? updated : tenant)));
-      setSuccess("Tenant updated successfully.");
+      setSuccess(t("common.tenantUpdated"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update tenant");
     } finally {
@@ -176,7 +176,7 @@ export default function SuperAdminTenantsPage() {
         }),
       });
       setDecisionNote("");
-      setSuccess(`Upgrade request ${decision}.`);
+      setSuccess(t("common.upgradeRequestProcessed"));
       await bootstrap(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process upgrade request");
@@ -224,18 +224,18 @@ export default function SuperAdminTenantsPage() {
               <>
                 <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
                 <Card className="rounded-xl p-4">
-                  <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Tenants</h2>
+                  <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">{t("common.tenants")}</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[860px] text-left text-sm">
                       <thead>
                         <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                          <th className="py-2">Tenant</th>
+                          <th className="py-2">{t("common.tenant")}</th>
                           <th className="py-2">CNPJ</th>
-                          <th className="py-2">Slug</th>
-                          <th className="py-2">Plan</th>
-                          <th className="py-2">Status</th>
-                          <th className="py-2">Users</th>
-                          <th className="py-2">Documents</th>
+                          <th className="py-2">{t("common.slug")}</th>
+                          <th className="py-2">{t("common.plan")}</th>
+                          <th className="py-2">{t("common.status")}</th>
+                          <th className="py-2">{t("common.users")}</th>
+                          <th className="py-2">{t("common.documents")}</th>
                           <th className="py-2">Scans</th>
                           <th className="py-2">API Tokens</th>
                           <th className="py-2">Created</th>
@@ -283,7 +283,7 @@ export default function SuperAdminTenantsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Tenant Controls</h2>
+                  <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">{t("common.tenantControls")}</h2>
                   {!selectedTenant ? (
                     <p className="text-sm text-[var(--color-text-soft)]">{t("common.selectTenantToEdit")}</p>
                   ) : (
@@ -304,7 +304,7 @@ export default function SuperAdminTenantsPage() {
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Plan</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">{t("common.plan")}</label>
                         <select
                           value={selectedPlan}
                           onChange={(e) => setSelectedPlan(e.target.value as TenantPlan)}
@@ -336,11 +336,11 @@ export default function SuperAdminTenantsPage() {
                 </div>
 
                 <Card className="rounded-xl p-4">
-                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">Pending Upgrade Requests</h2>
+                <h2 className="mb-3 text-xl font-semibold text-[var(--color-heading)]">{t("common.pendingUpgradeRequestsTitle")}</h2>
                 <div className="mb-3">
                   <textarea
                     className="h-20 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-                    placeholder="Optional admin note for approve/reject actions"
+                    placeholder={t("common.optionalAdminNote")}
                     value={decisionNote}
                     onChange={(e) => setDecisionNote(e.target.value)}
                   />
@@ -349,10 +349,10 @@ export default function SuperAdminTenantsPage() {
                   <table className="w-full min-w-[860px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                        <th className="py-2">Tenant ID</th>
-                        <th className="py-2">From</th>
-                        <th className="py-2">To</th>
-                        <th className="py-2">Reason</th>
+                        <th className="py-2">{t("common.tenant")} ID</th>
+                        <th className="py-2">{t("common.from")}</th>
+                        <th className="py-2">{t("common.to")}</th>
+                        <th className="py-2">{t("common.reason")}</th>
                         <th className="py-2">{t("common.created")}</th>
                         <th className="py-2">{t("common.actions")}</th>
                       </tr>

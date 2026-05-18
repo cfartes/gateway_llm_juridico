@@ -233,7 +233,7 @@ export default function SuperAdminWebhooksPage() {
         token,
         { method: "POST" },
       );
-      setSuccess(`Retry finished with ${data.retried_attempts} attempt(s). Status: ${data.delivery.status}.`);
+      setSuccess(`Retry finished with ${data.retried_attempts} attempt(s). ${t("common.status")}: ${data.delivery.status}.`);
       await refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to retry webhook delivery");
@@ -254,7 +254,7 @@ export default function SuperAdminWebhooksPage() {
         token,
         { method: "POST" },
       );
-      setSuccess("Delivery moved to discarded state.");
+      setSuccess(t("common.discarded"));
       await refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to discard delivery");
@@ -275,7 +275,7 @@ export default function SuperAdminWebhooksPage() {
         token,
         { method: "POST" },
       );
-      setSuccess(`Dead-letter retry cycle queued. Task ID: ${result.task_id}`);
+      setSuccess(`${t("common.runRetryCycle")} queued. Task ID: ${result.task_id}`);
       await refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start dead-letter retry cycle");
@@ -317,27 +317,27 @@ export default function SuperAdminWebhooksPage() {
                 <Card className="rounded-xl p-4">
                   <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Dead-letter</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.deadLetter")}</p>
                       <p className="text-2xl font-bold text-red-600">{listData.total_dead_letter}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Delivered</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.delivered")}</p>
                       <p className="text-2xl font-bold text-emerald-600">{listData.total_delivered}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Discarded</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.discarded")}</p>
                       <p className="text-2xl font-bold text-slate-700">{listData.total_discarded}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Visible rows</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.visibleRows")}</p>
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{listData.total}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Success Rate ({metrics.window_days}d)</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.successRate")} ({metrics.window_days}d)</p>
                       <p className="text-2xl font-bold text-emerald-700">{metrics.success_rate_percent}%</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Avg Attempt Duration</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.avgAttemptDuration")}</p>
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{metrics.avg_attempt_duration_ms} ms</p>
                     </div>
                   </div>
@@ -347,20 +347,20 @@ export default function SuperAdminWebhooksPage() {
                   <Card className="rounded-xl p-4">
                     <div className="mb-3 flex flex-wrap items-end gap-2">
                       <div>
-                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Status</label>
+                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">{t("common.status")}</label>
                         <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
                           className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                         >
-                          <option value="dead_letter">Dead-letter</option>
-                          <option value="delivered">Delivered</option>
-                          <option value="discarded">Discarded</option>
+                          <option value="dead_letter">{t("common.deadLetter")}</option>
+                          <option value="delivered">{t("common.delivered")}</option>
+                          <option value="discarded">{t("common.discarded")}</option>
                           <option value="all">{t("quarantine.filter.all")}</option>
                         </select>
                       </div>
                       <div className="min-w-[220px] flex-1">
-                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Tenant ID (optional)</label>
+                        <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">{t("common.tenant")} ID (optional)</label>
                         <Input
                           value={tenantFilter}
                           onChange={(e) => setTenantFilter(e.target.value)}
@@ -394,11 +394,11 @@ export default function SuperAdminWebhooksPage() {
                           <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                             <th className="py-2">{t("common.status")}</th>
                             <th className="py-2">{t("common.tenant")}</th>
-                            <th className="py-2">Scan</th>
-                            <th className="py-2">Attempts</th>
-                            <th className="py-2">Next Retry</th>
+                            <th className="py-2">{t("common.scan")}</th>
+                            <th className="py-2">{t("common.attempts")}</th>
+                            <th className="py-2">{t("common.nextRetry")}</th>
                             <th className="py-2">HTTP</th>
-                            <th className="py-2">Updated</th>
+                            <th className="py-2">{t("common.updated")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -432,9 +432,9 @@ export default function SuperAdminWebhooksPage() {
                   </Card>
 
                   <Card className="rounded-xl p-4">
-                    <h2 className="text-xl font-semibold text-[var(--color-heading)]">Delivery Detail</h2>
+                    <h2 className="text-xl font-semibold text-[var(--color-heading)]">{t("common.deliveryDetail")}</h2>
                     <div className="mb-3 mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-2 text-xs text-[var(--color-text-soft)]">
-                      <p className="font-semibold text-[var(--color-text)]">Top Failed Callbacks ({metrics.window_days}d)</p>
+                      <p className="font-semibold text-[var(--color-text)]">{t("common.topFailedCallbacks")} ({metrics.window_days}d)</p>
                       {metrics.top_failed_callbacks.length ? (
                         metrics.top_failed_callbacks.map((item) => (
                           <p key={item.callback_url} className="mt-1 truncate">
@@ -446,15 +446,15 @@ export default function SuperAdminWebhooksPage() {
                       )}
                     </div>
                     {!selected ? (
-                      <p className="mt-2 text-sm text-[var(--color-text-soft)]">{t("common.details")}</p>
+                      <p className="mt-2 text-sm text-[var(--color-text-soft)]">{t("common.selectDeliveryToInspect")}</p>
                     ) : (
                       <div className="mt-3 space-y-3">
                         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3 text-xs text-[var(--color-text-soft)]">
                           <p><span className="font-semibold">ID:</span> {selected.id}</p>
-                          <p className="mt-1"><span className="font-semibold">Callback:</span> {selected.callback_url}</p>
-                          <p className="mt-1"><span className="font-semibold">Last Error:</span> {selected.last_error ?? "-"}</p>
-                          <p className="mt-1"><span className="font-semibold">Next Retry:</span> {formatDate(selected.next_retry_at)}</p>
-                          <p className="mt-1"><span className="font-semibold">Alerts Sent:</span> {selected.alert_count}</p>
+                          <p className="mt-1"><span className="font-semibold">{t("common.callback")}:</span> {selected.callback_url}</p>
+                          <p className="mt-1"><span className="font-semibold">{t("common.lastError")}:</span> {selected.last_error ?? "-"}</p>
+                          <p className="mt-1"><span className="font-semibold">{t("common.nextRetry")}:</span> {formatDate(selected.next_retry_at)}</p>
+                          <p className="mt-1"><span className="font-semibold">{t("common.alertsSent")}:</span> {selected.alert_count}</p>
                         </div>
 
                         <div className="flex flex-wrap gap-2">

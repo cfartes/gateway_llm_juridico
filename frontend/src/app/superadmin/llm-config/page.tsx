@@ -179,7 +179,7 @@ export default function LLMConfigPage() {
       if (data.models.length > 0 && !form.selected_model) {
         setForm((prev) => ({ ...prev, selected_model: data.models[0].id }));
       }
-      setSuccess(`${data.models.length} model(s) loaded.`);
+      setSuccess(`${data.models.length} ${t("common.modelsLoaded")}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch models");
     } finally {
@@ -335,7 +335,7 @@ export default function LLMConfigPage() {
                         <Input
                           value={form.provider_label}
                           onChange={(e) => setForm((prev) => ({ ...prev, provider_label: e.target.value }))}
-                          placeholder="Provider display name"
+                          placeholder={t("common.providerLabel")}
                         />
                       </div>
 
@@ -344,7 +344,7 @@ export default function LLMConfigPage() {
                         <Input
                           value={form.base_url}
                           onChange={(e) => setForm((prev) => ({ ...prev, base_url: e.target.value }))}
-                          placeholder="https://api.provider.com/v1"
+                          placeholder={t("common.baseUrl")}
                         />
                       </div>
 
@@ -356,15 +356,15 @@ export default function LLMConfigPage() {
                           type="password"
                           value={form.api_token}
                           onChange={(e) => setForm((prev) => ({ ...prev, api_token: e.target.value }))}
-                          placeholder="Enter token/API key"
+                          placeholder={t("common.enterToken")}
                         />
                         <p className="mt-1 text-xs text-[var(--color-text-soft)]">
-                          Leave blank to keep the stored token. Current: {selectedConfig?.token_preview ?? "none"}
+                          {t("common.keepStoredToken")} {selectedConfig?.token_preview ?? "none"}
                         </p>
                       </div>
 
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">Selected model</label>
+                        <label className="mb-1 block text-sm font-medium text-[var(--color-text-soft)]">{t("common.selectedModel")}</label>
                         <select
                           value={form.selected_model}
                           onChange={(e) => setForm((prev) => ({ ...prev, selected_model: e.target.value }))}
@@ -379,7 +379,7 @@ export default function LLMConfigPage() {
                         </select>
                         {selectedConfig?.selected_model ? (
                           <p className="mt-1 text-xs text-[var(--color-text-soft)]">
-                            Current model: <span className="font-semibold">{selectedConfig.selected_model}</span>
+                            {t("common.currentModel")}: <span className="font-semibold">{selectedConfig.selected_model}</span>
                           </p>
                         ) : null}
                       </div>
@@ -391,7 +391,7 @@ export default function LLMConfigPage() {
                           onChange={(e) => setForm((prev) => ({ ...prev, is_enabled: e.target.checked }))}
                           className="h-4 w-4"
                         />
-                        Enable this provider for app-wide analysis workflows
+                        {t("common.enableProvider")}
                       </label>
 
                       <div className="flex flex-wrap gap-2">

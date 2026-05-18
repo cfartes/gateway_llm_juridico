@@ -196,7 +196,7 @@ export default function SuperAdminOpsPage() {
         breaches_sent: number;
         recoveries_sent: number;
       }>(API_BASE, `/admin/ops/alerts/evaluate?${params.toString()}`, token, { method: "POST" });
-      setSuccess(`Alert evaluation completed. Breaches: ${result.breaches_sent}, Recoveries: ${result.recoveries_sent}.`);
+      setSuccess(`${t("common.runAlertEvaluation")} completed. Breaches: ${result.breaches_sent}, Recoveries: ${result.recoveries_sent}.`);
       await load(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to evaluate SLO alerts");
@@ -262,7 +262,7 @@ export default function SuperAdminOpsPage() {
                       </select>
                     </div>
                     <div className="min-w-[240px] flex-1">
-                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Tenant ID (optional)</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">{t("common.tenant")} ID (optional)</label>
                       <Input
                         value={tenantFilter}
                         onChange={(event) => setTenantFilter(event.target.value)}
@@ -285,7 +285,7 @@ export default function SuperAdminOpsPage() {
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{passCount}/{totalCount}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Scan Success</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.successRate")}</p>
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{overview?.scans.success_rate_percent ?? 0}%</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
@@ -293,24 +293,24 @@ export default function SuperAdminOpsPage() {
                       <p className="text-2xl font-bold text-[var(--color-warn-text)]">{overview?.scans.p95_processing_seconds ?? 0}s</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Generated At</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.generatedAt")}</p>
                       <p className="text-sm font-semibold text-[var(--color-text)]">{fmtDate(overview?.generated_at)}</p>
                     </div>
                   </div>
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">Operational SLAs</h2>
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("common.operationalSlas")}</h2>
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Pending Upgrade Requests</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.pendingUpgradeRequests")}</p>
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{overview?.upgrade_requests.pending_count ?? 0}</p>
                       <p className="mt-1 text-xs text-[var(--color-warn-text)]">
                         Over SLA ({overview?.upgrade_requests.sla_hours ?? 24}h): {overview?.upgrade_requests.pending_over_sla_count ?? 0}
                       </p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Open Support Tickets</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.openSupportTickets")}</p>
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{overview?.support_tickets.open_count ?? 0}</p>
                       <p className="mt-1 text-xs text-[var(--color-warn-text)]">
                         Waiting first response over {overview?.support_tickets.first_response_sla_hours ?? 8}h: {overview?.support_tickets.waiting_first_response_over_sla_count ?? 0}
@@ -320,14 +320,14 @@ export default function SuperAdminOpsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">SLO Indicators</h2>
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("common.sloIndicators")}</h2>
                   <div className="mt-3 overflow-x-auto">
                     <table className="w-full min-w-[760px] text-left text-sm">
                       <thead>
                         <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                          <th className="py-2">Indicator</th>
-                          <th className="py-2">Target</th>
-                          <th className="py-2">Actual</th>
+                          <th className="py-2">{t("common.indicator")}</th>
+                          <th className="py-2">{t("common.target")}</th>
+                          <th className="py-2">{t("common.actual")}</th>
                           <th className="py-2">{t("common.status")}</th>
                         </tr>
                       </thead>
@@ -348,17 +348,17 @@ export default function SuperAdminOpsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">Active Alerts</h2>
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("common.activeAlerts")}</h2>
                   <div className="mt-3 overflow-x-auto">
                     <table className="w-full min-w-[760px] text-left text-sm">
                       <thead>
                         <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                          <th className="py-2">Indicator</th>
+                          <th className="py-2">{t("common.indicator")}</th>
                           <th className="py-2">{t("common.status")}</th>
-                          <th className="py-2">Actual</th>
-                          <th className="py-2">Target</th>
-                          <th className="py-2">Alert Count</th>
-                          <th className="py-2">Last Sent</th>
+                          <th className="py-2">{t("common.actual")}</th>
+                          <th className="py-2">{t("common.target")}</th>
+                          <th className="py-2">{t("common.alertCount")}</th>
+                          <th className="py-2">{t("common.lastSent")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -385,9 +385,9 @@ export default function SuperAdminOpsPage() {
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">SLO History Timeline</h2>
+                  <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("common.sloHistoryTimeline")}</h2>
                   <p className="mt-1 text-xs text-[var(--color-text-soft)]">
-                    Recent snapshots per indicator for the selected scope and window.
+                    {t("common.recentSnapshots")}
                   </p>
                   <div className="mt-3 space-y-3">
                     {Object.entries(historyByIndicator).map(([indicator, points]) => (
@@ -437,10 +437,10 @@ export default function SuperAdminOpsPage() {
                           <table className="w-full min-w-[680px] text-left text-sm">
                             <thead>
                               <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                                <th className="py-2">Recorded At</th>
+                                <th className="py-2">{t("common.recordedAt")}</th>
                                 <th className="py-2">{t("common.status")}</th>
-                                <th className="py-2">Actual</th>
-                                <th className="py-2">Target</th>
+                                <th className="py-2">{t("common.actual")}</th>
+                                <th className="py-2">{t("common.target")}</th>
                               </tr>
                             </thead>
                             <tbody>

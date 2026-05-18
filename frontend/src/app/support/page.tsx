@@ -156,7 +156,7 @@ export default function SupportPage() {
         body: JSON.stringify({ message: newMessage.trim(), is_internal: false }),
       });
       setNewMessage("");
-      setSuccess("Message sent.");
+      setSuccess(t("common.messageSent"));
       await loadThread(selectedTicketId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
@@ -183,7 +183,7 @@ export default function SupportPage() {
         body: formData,
       });
       if (!response.ok) throw new Error(await response.text());
-      setSuccess("Attachment uploaded.");
+      setSuccess(t("common.attachmentUploaded"));
       await loadThread(selectedTicketId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload attachment");
@@ -234,8 +234,8 @@ export default function SupportPage() {
               <Card className="rounded-xl p-4">
                 <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("support.openNew")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={t("common.subject")} disabled={!canCreate} />
-                  <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t("common.category")} disabled={!canCreate} />
+                  <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={t("common.subjectPlaceholder")} disabled={!canCreate} />
+                  <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t("common.categoryPlaceholder")} disabled={!canCreate} />
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as SupportTicket["priority"])}
@@ -253,7 +253,7 @@ export default function SupportPage() {
                   className="mt-3 h-28 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe the issue, impact, and steps to reproduce."
+                  placeholder={t("common.descriptionPlaceholder")}
                   disabled={!canCreate}
                 />
                 <div className="mt-3 flex gap-2">
@@ -278,7 +278,7 @@ export default function SupportPage() {
                       <th className="py-2">{t("common.category")}</th>
                       <th className="py-2">{t("common.priority")}</th>
                       <th className="py-2">{t("common.status")}</th>
-                      <th className="py-2">Admin Note</th>
+                      <th className="py-2">{t("common.adminNote")}</th>
                       <th className="py-2">{t("common.thread")}</th>
                     </tr>
                   </thead>
@@ -344,7 +344,7 @@ export default function SupportPage() {
                     {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">{t("common.noAttachments")}</p> : null}
                   </div>
                   <div className="mt-3">
-                    <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Link attachment to message (optional)</label>
+                    <label className="mb-1 block text-xs text-[var(--color-text-muted)]">{t("common.linkAttachmentMessage")}</label>
                     <select
                       value={attachmentMessageId}
                       onChange={(e) => setAttachmentMessageId(e.target.value)}
@@ -359,12 +359,12 @@ export default function SupportPage() {
                       ))}
                     </select>
                     <input type="file" onChange={uploadAttachment} disabled={!canCreate || uploadingAttachment} />
-                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">Allowed formats follow secure upload policy. Max 20MB per attachment.</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{t("common.allowedFormatsNote")}</p>
                   </div>
                 </div>
                 <textarea
                   className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-                  placeholder="Write a reply"
+                  placeholder={t("common.replyPlaceholder")}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   disabled={!canCreate}

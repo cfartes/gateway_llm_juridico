@@ -146,7 +146,7 @@ export default function SuperAdminSupportPage() {
       });
       setThreadMessage("");
       setThreadInternal(false);
-      setSuccess("Message posted.");
+      setSuccess(t("common.messageSent"));
       await loadThread(selectedTicketId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to post message");
@@ -174,7 +174,7 @@ export default function SuperAdminSupportPage() {
         body: formData,
       });
       if (!response.ok) throw new Error(await response.text());
-      setSuccess("Attachment uploaded.");
+      setSuccess(t("common.attachmentUploaded"));
       await loadThread(selectedTicketId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload attachment");
@@ -252,7 +252,7 @@ export default function SuperAdminSupportPage() {
                         <th className="py-2">{t("common.subject")}</th>
                         <th className="py-2">{t("common.priority")}</th>
                         <th className="py-2">{t("common.status")}</th>
-                        <th className="py-2">Action</th>
+                        <th className="py-2">{t("common.actions")}</th>
                         <th className="py-2">{t("common.thread")}</th>
                       </tr>
                     </thead>
@@ -330,7 +330,7 @@ export default function SuperAdminSupportPage() {
                     {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">{t("common.noAttachments")}</p> : null}
                   </div>
                   <div className="mt-3">
-                    <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Link attachment to message (optional)</label>
+                    <label className="mb-1 block text-xs text-[var(--color-text-muted)]">{t("common.linkAttachmentMessage")}</label>
                     <select
                       value={attachmentMessageId}
                       onChange={(e) => setAttachmentMessageId(e.target.value)}
@@ -344,12 +344,12 @@ export default function SuperAdminSupportPage() {
                       ))}
                     </select>
                     <input type="file" onChange={uploadAttachment} disabled={uploadingAttachment} />
-                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">Internal flag follows checkbox below when uploading.</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{t("common.allowedFormatsNote")}</p>
                   </div>
                 </div>
                 <textarea
                   className="mt-3 h-24 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-                  placeholder="Write a reply"
+                  placeholder={t("common.replyPlaceholder")}
                   value={threadMessage}
                   onChange={(e) => setThreadMessage(e.target.value)}
                 />

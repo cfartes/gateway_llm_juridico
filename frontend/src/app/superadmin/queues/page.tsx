@@ -127,8 +127,8 @@ export default function SuperAdminQueuesPage() {
         const nextHistory = appendQueueAlertEvent(event);
         setHistory(nextHistory.slice(0, 12));
         setToast({
-          title: "Critical Queue Alert",
-          message: data.alerts[0] ?? "Queue pressure crossed critical threshold.",
+          title: t("common.queueAlertCritical"),
+          message: data.alerts[0] ?? t("common.queueAlertWarning"),
         });
       }
       previousLevelRef.current = data.alert_level;
@@ -137,7 +137,7 @@ export default function SuperAdminQueuesPage() {
     } finally {
       setLoading(false);
     }
-  }, [windowHours, tenantFilter]);
+  }, [windowHours, tenantFilter, t]);
 
   useEffect(() => {
     if (!toast) return;
@@ -242,7 +242,7 @@ export default function SuperAdminQueuesPage() {
                       </select>
                     </div>
                     <div className="min-w-[240px] flex-1">
-                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">Tenant ID (optional)</label>
+                      <label className="mb-1 block text-xs font-semibold text-[var(--color-text-soft)]">{t("common.tenant")} ID (optional)</label>
                       <Input
                         value={tenantFilter}
                         onChange={(e) => setTenantFilter(e.target.value)}
@@ -265,19 +265,19 @@ export default function SuperAdminQueuesPage() {
 
                   <div className="grid gap-3 md:grid-cols-4">
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Total Pending</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.totalPending")}</p>
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{overview.total_pending}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Total Running</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.totalRunning")}</p>
                       <p className="text-2xl font-bold text-[var(--color-heading)]">{overview.total_running}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Estimated Queue Wait</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.estimatedQueueWait")}</p>
                       <p className="text-2xl font-bold text-[var(--color-warn-text)]">{Math.round(totalEta)}s</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                      <p className="text-xs text-[var(--color-text-muted)]">Generated At</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{t("common.generatedAt")}</p>
                       <p className="text-sm font-semibold text-[var(--color-text)]">{formatDate(overview.generated_at)}</p>
                     </div>
                   </div>
@@ -292,7 +292,7 @@ export default function SuperAdminQueuesPage() {
                     }`}
                   >
                     <h2 className={`text-lg font-semibold ${overview.alert_level === "critical" ? "text-red-700" : "text-amber-700"}`}>
-                      {overview.alert_level === "critical" ? "Queue Alert: Critical" : "Queue Alert: Warning"}
+                      {overview.alert_level === "critical" ? t("common.queueAlertCritical") : t("common.queueAlertWarning")}
                     </h2>
                     <div className="mt-2 space-y-1 text-sm text-[var(--color-text-soft)]">
                       {overview.alerts.map((item, index) => (
@@ -300,16 +300,16 @@ export default function SuperAdminQueuesPage() {
                       ))}
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={() => void handleAcknowledge()} disabled={actionLoading}>Acknowledge</Button>
-                      <Button variant="outline" onClick={() => void handleSnooze(15)} disabled={actionLoading}>Snooze 15m</Button>
-                      <Button variant="outline" onClick={() => void handleSnooze(30)} disabled={actionLoading}>Snooze 30m</Button>
-                      <Button variant="outline" onClick={() => void handleSnooze(60)} disabled={actionLoading}>Snooze 60m</Button>
+                      <Button variant="outline" onClick={() => void handleAcknowledge()} disabled={actionLoading}>{t("common.acknowledge")}</Button>
+                      <Button variant="outline" onClick={() => void handleSnooze(15)} disabled={actionLoading}>{t("common.snooze15")}</Button>
+                      <Button variant="outline" onClick={() => void handleSnooze(30)} disabled={actionLoading}>{t("common.snooze30")}</Button>
+                      <Button variant="outline" onClick={() => void handleSnooze(60)} disabled={actionLoading}>{t("common.snooze60")}</Button>
                     </div>
                   </Card>
                 ) : null}
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-xl font-semibold text-[var(--color-heading)]">Queue Alert History</h2>
+                  <h2 className="text-xl font-semibold text-[var(--color-heading)]">{t("common.queueAlertHistory")}</h2>
                   <div className="mt-2 space-y-2">
                     {history.length ? (
                       history.map((item) => (
@@ -329,14 +329,14 @@ export default function SuperAdminQueuesPage() {
                     <table className="w-full min-w-[920px] text-left text-sm">
                       <thead>
                         <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                          <th className="py-2">Queue</th>
-                          <th className="py-2">Pending</th>
-                          <th className="py-2">Running</th>
-                          <th className="py-2">Completed ({overview.window_hours}h)</th>
-                          <th className="py-2">Failed ({overview.window_hours}h)</th>
-                          <th className="py-2">Avg Proc Time</th>
+                          <th className="py-2">{t("common.queue")}</th>
+                          <th className="py-2">{t("common.totalPending")}</th>
+                          <th className="py-2">{t("common.totalRunning")}</th>
+                          <th className="py-2">{t("common.completed")} ({overview.window_hours}h)</th>
+                          <th className="py-2">{t("common.failed")} ({overview.window_hours}h)</th>
+                          <th className="py-2">{t("common.avgProcTime")}</th>
                           <th className="py-2">ETA</th>
-                          <th className="py-2">Last Completed</th>
+                          <th className="py-2">{t("common.lastCompleted")}</th>
                         </tr>
                       </thead>
                       <tbody>
