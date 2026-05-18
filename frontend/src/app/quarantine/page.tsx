@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 type Evidence = {
@@ -111,6 +112,7 @@ function severityTone(severity?: string): string {
 
 export default function QuarantinePage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [statusFilter, setStatusFilter] = useState("pending_review");
   const [rows, setRows] = useState<QuarantineItem[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -201,8 +203,8 @@ export default function QuarantinePage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
-        Preparing your workspace...
+        <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
+        {t("common.preparing")}
       </div>
     );
   }
@@ -216,9 +218,9 @@ export default function QuarantinePage() {
             <Card className="rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Quarantine Queue</h1>
+                  <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("quarantine.title")}</h1>
                   <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                    Review and decide if suspicious documents can move forward to sanitized RAG ingestion.
+                    {t("quarantine.subtitle")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -234,7 +236,7 @@ export default function QuarantinePage() {
                     ))}
                   </select>
                   <Button variant="outline" onClick={() => token && loadList(token, statusFilter)} disabled={loadingList}>
-                    Refresh
+                    {t("common.refresh")}
                   </Button>
                 </div>
               </div>
@@ -359,7 +361,7 @@ export default function QuarantinePage() {
 
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
     </div>

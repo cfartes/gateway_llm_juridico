@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import {
   appendQueueAlertEvent,
   buildAlertSignature,
@@ -58,6 +59,7 @@ function queueTone(name: string): string {
 
 export default function QueuesPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [windowHours, setWindowHours] = useState(24);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -144,7 +146,7 @@ export default function QueuesPage() {
   }, [token, autoRefresh, load]);
 
   if (!ready || !token) {
-    return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+    return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
   }
 
   const alertSignature = buildAlertSignature(overview.alert_level, overview.tenant_id, overview.alerts);
@@ -191,8 +193,8 @@ export default function QueuesPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Queue Overview</h1>
-              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Monitor current queue pressure and estimated processing wait for your tenant.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("queues.title")}</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">{t("queues.subtitle")}</p>
             </Card>
 
             {showAlertBanner ? (
@@ -262,7 +264,7 @@ export default function QueuesPage() {
                   Auto-refresh 15s
                 </label>
                 <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                  {loading ? "Refreshing..." : "Refresh"}
+                  {loading ? "Refreshing..." : t("common.refresh")}
                 </Button>
               </div>
 
@@ -323,7 +325,7 @@ export default function QueuesPage() {
       </div>
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
       {toast ? (

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -55,6 +56,7 @@ type UserMe = { role: string };
 
 export default function SupportPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [subject, setSubject] = useState("");
@@ -118,7 +120,7 @@ export default function SupportPage() {
       setCategory("general");
       setPriority("medium");
       setDescription("");
-      setSuccess("Support ticket opened successfully.");
+      setSuccess(t("support.opened"));
       await load(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open support ticket");
@@ -215,7 +217,7 @@ export default function SupportPage() {
     }
   }
 
-  if (!ready || !token) return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+  if (!ready || !token) return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
@@ -224,13 +226,13 @@ export default function SupportPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Support Tickets</h1>
-              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Open and track operational incidents from your tenant.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("support.title")}</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">{t("support.subtitle")}</p>
             </Card>
 
             <form onSubmit={openTicket} className="space-y-4">
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Open New Ticket</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("support.openNew")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" disabled={!canCreate} />
                   <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" disabled={!canCreate} />
@@ -256,10 +258,10 @@ export default function SupportPage() {
                 />
                 <div className="mt-3 flex gap-2">
                   <Button type="submit" disabled={!canCreate || saving}>
-                    {saving ? "Opening..." : "Open Ticket"}
+                    {saving ? `${t("support.openNew")}...` : t("support.openNew")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                    {loading ? "Refreshing..." : "Refresh"}
+                    {loading ? "Refreshing..." : t("common.refresh")}
                   </Button>
                 </div>
               </Card>
@@ -308,7 +310,7 @@ export default function SupportPage() {
 
             {selectedTicketId ? (
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Ticket Thread</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("support.thread")}</h2>
                 <p className="mt-1 text-xs text-[var(--color-text-soft)]">Ticket: {selectedTicketId}</p>
                 <div className="mt-3 space-y-2">
                   {thread.map((msg) => (
@@ -380,7 +382,7 @@ export default function SupportPage() {
           </div>
         </main>
       </div>
-      {error ? <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">Error: {error}</div> : null}
+      {error ? <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{t("common.error")}: {error}</div> : null}
       {success ? <div className="fixed bottom-4 left-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
     </div>
   );

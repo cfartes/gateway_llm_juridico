@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 type UserMe = {
@@ -76,6 +77,7 @@ function planTone(plan: TenantPlan): string {
 
 export default function SuperAdminTenantsPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [tenants, setTenants] = useState<SuperAdminTenant[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -185,8 +187,8 @@ export default function SuperAdminTenantsPage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
-        Preparing your workspace...
+        <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
+        {t("common.preparing")}
       </div>
     );
   }
@@ -202,21 +204,21 @@ export default function SuperAdminTenantsPage() {
             <Card className="rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Tenant Management</h1>
+                  <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("superadmin.tenants.title")}</h1>
                   <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                    Global controls to manage tenant plan and account status across the SaaS platform.
+                    {t("superadmin.tenants.subtitle")}
                   </p>
                 </div>
                 <Button variant="outline" onClick={refreshTenants} disabled={loading}>
-                  Refresh
+                  {t("common.refresh")}
                 </Button>
               </div>
             </Card>
 
             {!isSuperAdmin ? (
               <Card className="rounded-xl border-red-200 bg-red-50 p-4">
-                <h2 className="text-lg font-semibold text-red-700">Access denied</h2>
-                <p className="mt-1 text-sm text-red-700">This page is available only for global superadmin users.</p>
+                <h2 className="text-lg font-semibold text-red-700">{t("common.error")}</h2>
+                <p className="mt-1 text-sm text-red-700">{t("superadmin.accessDenied")}</p>
               </Card>
             ) : (
               <>
@@ -402,7 +404,7 @@ export default function SuperAdminTenantsPage() {
 
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
 

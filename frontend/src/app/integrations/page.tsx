@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -114,6 +115,7 @@ const INITIAL_FORM: FormState = {
 
 export default function IntegrationsPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [config, setConfig] = useState<IntegrationConfig | null>(null);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -231,7 +233,7 @@ export default function IntegrationsPage() {
         slack_clear_bot_token: false,
         ops_alert_clear_webhook_auth_bearer: false,
       }));
-      setSuccess("Integrations updated successfully.");
+      setSuccess(t("integrations.updated"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update integrations");
     } finally {
@@ -265,7 +267,7 @@ export default function IntegrationsPage() {
   }
 
   if (!ready || !token) {
-    return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+    return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
   }
 
   return (
@@ -275,9 +277,9 @@ export default function IntegrationsPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Integrations</h1>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("integrations.title")}</h1>
               <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                Configure webhook, SIEM e Slack para integração operacional e de segurança.
+                {t("integrations.subtitle")}
               </p>
             </Card>
 
@@ -542,7 +544,7 @@ export default function IntegrationsPage() {
               <Card className="rounded-xl p-4">
                 <div className="flex items-center gap-2">
                   <Button type="submit" disabled={saving || !canEdit}>
-                    {saving ? "Saving..." : "Save Integrations"}
+                    {saving ? t("common.saving") : t("integrations.save")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => void sendTestAlert()} disabled={testingAlert || !canEdit}>
                     {testingAlert ? "Sending test..." : "Send Test Alert"}
@@ -558,7 +560,7 @@ export default function IntegrationsPage() {
       </div>
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
       {success ? (

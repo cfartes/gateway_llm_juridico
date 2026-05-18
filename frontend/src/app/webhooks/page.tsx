@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 type Delivery = {
@@ -63,6 +64,7 @@ function statusTone(status: string): string {
 
 export default function WebhooksPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [status, setStatus] = useState("all");
   const [data, setData] = useState<DeliveryListResponse>({
     items: [],
@@ -134,7 +136,7 @@ export default function WebhooksPage() {
   }, [token, selectedId, loadDetail]);
 
   if (!ready || !token) {
-    return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+    return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
   }
 
   return (
@@ -144,8 +146,8 @@ export default function WebhooksPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Webhook Deliveries</h1>
-              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Tenant-level callback delivery tracking and manual retry.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("webhooks.title")}</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">{t("webhooks.subtitle")}</p>
             </Card>
 
             <Card className="rounded-xl p-4">
@@ -164,7 +166,7 @@ export default function WebhooksPage() {
                   </select>
                 </div>
                 <Button variant="outline" onClick={() => token && loadList(token)} disabled={loading}>
-                  {loading ? "Refreshing..." : "Refresh"}
+                  {loading ? "Refreshing..." : t("common.refresh")}
                 </Button>
               </div>
 
@@ -231,7 +233,7 @@ export default function WebhooksPage() {
       </div>
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
     </div>

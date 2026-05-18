@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -142,6 +143,7 @@ function targetLineY(points: SLOHistoryPoint[], height = 64): number {
 
 export default function SuperAdminOpsPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [windowHours, setWindowHours] = useState(24);
   const [tenantFilter, setTenantFilter] = useState("");
@@ -221,7 +223,7 @@ export default function SuperAdminOpsPage() {
   }, [sloHistory]);
 
   if (!ready || !token) {
-    return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+    return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
   }
 
   return (
@@ -231,15 +233,15 @@ export default function SuperAdminOpsPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Operations</h1>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("superadmin.ops.title")}</h1>
               <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                SLO, fila, throughput e saude operacional para acompanhamento em tempo real.
+                {t("superadmin.ops.subtitle")}
               </p>
             </Card>
 
             {!isSuperAdmin ? (
               <Card className="rounded-xl border-red-200 bg-red-50 p-4 text-red-700">
-                Access denied. This page is available only for global superadmin users.
+                {t("superadmin.accessDenied")}
               </Card>
             ) : (
               <>
@@ -268,7 +270,7 @@ export default function SuperAdminOpsPage() {
                       />
                     </div>
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                      {loading ? "Refreshing..." : "Refresh"}
+                      {loading ? "Refreshing..." : t("common.refresh")}
                     </Button>
                     <Button className="bg-[var(--color-primary-strong)] hover:bg-[var(--color-primary)]" onClick={() => void runAlertEvaluation()} disabled={evaluating}>
                       {evaluating ? "Evaluating..." : "Run Alert Evaluation"}
@@ -471,7 +473,7 @@ export default function SuperAdminOpsPage() {
       </div>
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
       {success ? (

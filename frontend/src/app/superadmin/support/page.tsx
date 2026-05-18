@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -52,6 +53,7 @@ type UserMe = { role: string };
 
 export default function SuperAdminSupportPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -207,7 +209,7 @@ export default function SuperAdminSupportPage() {
   }
 
   const isSuperAdmin = me ? me.role === "superadmin" : true;
-  if (!ready || !token) return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+  if (!ready || !token) return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
@@ -216,11 +218,11 @@ export default function SuperAdminSupportPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Support Desk</h1>
-              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Triage and resolve customer support tickets.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("superadmin.support.title")}</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">{t("superadmin.support.subtitle")}</p>
             </Card>
             {!isSuperAdmin ? (
-              <Card className="rounded-xl border-red-200 bg-red-50 p-4 text-red-700">Access denied.</Card>
+              <Card className="rounded-xl border-red-200 bg-red-50 p-4 text-red-700">{t("superadmin.accessDenied")}</Card>
             ) : (
               <Card className="rounded-xl p-4">
                 <div className="mb-3 grid gap-2 md:grid-cols-4">
@@ -238,7 +240,7 @@ export default function SuperAdminSupportPage() {
                   <Input placeholder="Tenant ID filter" value={tenantFilter} onChange={(e) => setTenantFilter(e.target.value)} />
                   <Input placeholder="Admin note for actions" value={note} onChange={(e) => setNote(e.target.value)} />
                   <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                    {loading ? "Refreshing..." : "Refresh"}
+                    {loading ? "Refreshing..." : t("common.refresh")}
                   </Button>
                 </div>
                 <div className="overflow-x-auto">
@@ -368,7 +370,7 @@ export default function SuperAdminSupportPage() {
           </div>
         </main>
       </div>
-      {error ? <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">Error: {error}</div> : null}
+      {error ? <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{t("common.error")}: {error}</div> : null}
       {success ? <div className="fixed bottom-4 left-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
     </div>
   );

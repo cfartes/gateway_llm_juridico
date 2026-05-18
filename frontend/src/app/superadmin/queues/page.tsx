@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import {
   appendQueueAlertEvent,
   buildAlertSignature,
@@ -65,6 +66,7 @@ function queueTone(name: string): string {
 
 export default function SuperAdminQueuesPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [windowHours, setWindowHours] = useState(24);
   const [tenantFilter, setTenantFilter] = useState("");
@@ -159,8 +161,8 @@ export default function SuperAdminQueuesPage() {
 
   if (!ready || !token) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
-        Preparing your workspace...
+        <div className="min-h-screen grid place-items-center bg-[var(--color-bg-app)] text-[var(--color-text-soft)]">
+        {t("common.preparing")}
       </div>
     );
   }
@@ -210,16 +212,16 @@ export default function SuperAdminQueuesPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">SuperAdmin Queue Dashboard</h1>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("superadmin.queues.title")}</h1>
               <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                Real-time queue pressure, throughput window, and ETA estimation by processing tier.
+                {t("superadmin.queues.subtitle")}
               </p>
             </Card>
 
             {!isSuperAdmin ? (
               <Card className="rounded-xl border-red-200 bg-red-50 p-4">
-                <h2 className="text-lg font-semibold text-red-700">Access denied</h2>
-                <p className="mt-1 text-sm text-red-700">This page is available only for global superadmin users.</p>
+                <h2 className="text-lg font-semibold text-red-700">{t("common.error")}</h2>
+                <p className="mt-1 text-sm text-red-700">{t("superadmin.accessDenied")}</p>
               </Card>
             ) : (
               <>
@@ -257,7 +259,7 @@ export default function SuperAdminQueuesPage() {
                       Auto-refresh 15s
                     </label>
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                      {loading ? "Refreshing..." : "Refresh"}
+                      {loading ? "Refreshing..." : t("common.refresh")}
                     </Button>
                   </div>
 
@@ -371,7 +373,7 @@ export default function SuperAdminQueuesPage() {
 
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
       {toast ? (

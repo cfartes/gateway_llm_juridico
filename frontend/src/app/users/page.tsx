@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -28,6 +29,7 @@ type UpdatePayload = { full_name?: string; role?: "admin" | "analyst" | "viewer"
 
 export default function UsersPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [users, setUsers] = useState<TenantUser[]>([]);
   const [fullName, setFullName] = useState("");
@@ -101,7 +103,7 @@ export default function UsersPage() {
       setFullName("");
       setEmail("");
       setRole("analyst");
-      setSuccess("User created. Invitation email sent with confirmation link and temporary password.");
+      setSuccess(t("users.created"));
       await load(token, 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user");
@@ -166,7 +168,7 @@ export default function UsersPage() {
     }
   }
 
-  if (!ready || !token) return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+  if (!ready || !token) return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-app)] text-[var(--color-text)]">
@@ -175,13 +177,13 @@ export default function UsersPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Tenant Users</h1>
-              <p className="mt-1 text-sm text-[var(--color-text-soft)]">Create and manage tenant users. New users receive invitation email and must change the temporary password on first access.</p>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("users.title")}</h1>
+              <p className="mt-1 text-sm text-[var(--color-text-soft)]">{t("users.subtitle")}</p>
             </Card>
 
             <form onSubmit={createUser}>
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Create User</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("users.create")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-4">
                   <Input placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={!canManage} required />
                   <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!canManage} required />
@@ -196,7 +198,7 @@ export default function UsersPage() {
                     <option value="admin">Admin</option>
                   </select>
                   <Button type="submit" disabled={!canManage || saving}>
-                    {saving ? "Creating..." : "Create User"}
+                    {saving ? `${t("users.create")}...` : t("users.create")}
                   </Button>
                 </div>
                 <p className="mt-2 text-xs text-[var(--color-text-muted)]">Temporary password: <code>Mudar@123</code>. User can login only after email confirmation.</p>
@@ -205,9 +207,9 @@ export default function UsersPage() {
 
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Users</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("users.list")}</h2>
                 <Button variant="outline" onClick={() => token && load(token, offset)} disabled={loading}>
-                  {loading ? "Refreshing..." : "Refresh"}
+                  {loading ? "Refreshing..." : t("common.refresh")}
                 </Button>
               </div>
               <div className="mb-3 grid gap-2 md:grid-cols-5">
@@ -332,7 +334,7 @@ export default function UsersPage() {
           </div>
         </main>
       </div>
-      {error ? <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">Error: {error}</div> : null}
+      {error ? <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{t("common.error")}: {error}</div> : null}
       {success ? <div className="fixed bottom-4 left-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
     </div>
   );
