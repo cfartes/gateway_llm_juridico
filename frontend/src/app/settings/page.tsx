@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -95,6 +96,7 @@ const INITIAL_FORM: FormState = {
 
 export default function SettingsPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [me, setMe] = useState<UserMe | null>(null);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
@@ -239,7 +241,7 @@ export default function SettingsPage() {
   }
 
   if (!ready || !token) {
-    return <div className="min-h-screen grid place-items-center">Preparing your workspace...</div>;
+    return <div className="min-h-screen grid place-items-center">{t("common.preparing")}</div>;
   }
 
   return (
@@ -249,15 +251,15 @@ export default function SettingsPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">Settings</h1>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("settings.title")}</h1>
               <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                Configure security thresholds, retention policy e notificações do tenant.
+                {t("settings.subtitle")}
               </p>
             </Card>
 
             {queuePolicy ? (
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Current Plan Limits</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("settings.planLimits")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
                     <p className="text-xs text-[var(--color-text-muted)]">Plan</p>
@@ -317,7 +319,7 @@ export default function SettingsPage() {
             ) : null}
 
             <Card className="rounded-xl p-4">
-              <h2 className="text-lg font-semibold text-[var(--color-heading)]">Upgrade Requests</h2>
+              <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("settings.upgradeRequests")}</h2>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[760px] text-left text-sm">
                   <thead>
@@ -354,7 +356,7 @@ export default function SettingsPage() {
                     {!upgradeRequests.length ? (
                       <tr>
                         <td colSpan={6} className="py-6 text-center text-[var(--color-text-soft)]">
-                          No upgrade requests yet.
+                          {t("settings.noUpgradeRequests")}
                         </td>
                       </tr>
                     ) : null}
@@ -365,7 +367,7 @@ export default function SettingsPage() {
 
             <form onSubmit={onSubmit} className="space-y-4">
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Security</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("settings.security")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   <Input
                     type="number"
@@ -399,7 +401,7 @@ export default function SettingsPage() {
               </Card>
 
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Retention</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("settings.retention")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <Input
                     type="number"
@@ -423,7 +425,7 @@ export default function SettingsPage() {
               </Card>
 
               <Card className="rounded-xl p-4">
-                <h2 className="text-lg font-semibold text-[var(--color-heading)]">Notifications</h2>
+                <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("settings.notifications")}</h2>
                 <div className="mt-3 space-y-3">
                   <textarea
                     className="h-28 w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2 text-sm"
@@ -466,8 +468,8 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
-                  <p className="text-sm font-semibold text-[var(--color-text)]">SMTP Test</p>
-                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">Send a test email using current SMTP backend settings.</p>
+                  <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.smtpTest")}</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">{t("settings.smtpTestDesc")}</p>
                   <div className="mt-2 flex flex-col gap-2 md:flex-row">
                     <Input
                       type="email"
@@ -477,7 +479,7 @@ export default function SettingsPage() {
                       disabled={!canEdit}
                     />
                     <Button type="button" variant="outline" onClick={() => void testSmtp()} disabled={!canEdit || testingSmtp}>
-                      {testingSmtp ? "Sending..." : "Send SMTP Test"}
+                      {testingSmtp ? `${t("common.saving").replace("...", "")}...` : t("settings.sendTest")}
                     </Button>
                   </div>
                 </div>
@@ -486,10 +488,10 @@ export default function SettingsPage() {
               <Card className="rounded-xl p-4">
                 <div className="flex items-center gap-2">
                   <Button type="submit" disabled={saving || !canEdit}>
-                    {saving ? "Saving..." : "Save Settings"}
+                    {saving ? t("common.saving") : t("settings.save")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                    {loading ? "Refreshing..." : "Refresh"}
+                    {loading ? "Refreshing..." : t("common.refresh")}
                   </Button>
                 </div>
               </Card>
@@ -499,7 +501,7 @@ export default function SettingsPage() {
       </div>
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
       {success ? (

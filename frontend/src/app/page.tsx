@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 type Evidence = {
@@ -97,6 +98,7 @@ function formatDate(input?: string): string {
 
 export default function Home() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [files, setFiles] = useState<FileList | null>(null);
   const [scans, setScans] = useState<ScanResponse[]>([]);
   const [selectedScan, setSelectedScan] = useState<ScanResponse | null>(null);
@@ -211,7 +213,7 @@ export default function Home() {
   if (!ready || !token) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
-        Preparing your workspace...
+        {t("common.preparing")}
       </div>
     );
   }
@@ -225,7 +227,7 @@ export default function Home() {
           <div className="mx-auto w-full max-w-[1380px]">
             <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
               <div className="flex min-w-[300px] items-center gap-3">
-                <span className="text-sm font-semibold text-[var(--color-text-soft)]">Tenant</span>
+                <span className="text-sm font-semibold text-[var(--color-text-soft)]">{t("overview.tenant")}</span>
                 <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2 text-sm text-[var(--color-text)]">
                   Acme Corporation
                 </div>
@@ -235,14 +237,14 @@ export default function Home() {
             <Card className="mb-4 rounded-xl border-[var(--color-warn-border)] bg-[var(--color-warn-surface)] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-[var(--color-warn-text)]">Pending Quarantine Reviews</p>
+                  <p className="text-sm font-semibold text-[var(--color-warn-text)]">{t("overview.pendingReviews")}</p>
                   <p className="mt-1 text-3xl font-bold text-[var(--color-warn-text)]">{pendingQuarantineCount}</p>
                   <p className="mt-1 text-xs text-[var(--color-warn-soft)]">
-                    Documents waiting manual decision before secure RAG release.
+                    {t("overview.pendingReviewsDesc")}
                   </p>
                 </div>
                 <Link href="/quarantine">
-                  <Button className="bg-[var(--color-primary-strong)] hover:bg-[var(--color-primary)]">Open Quarantine Queue</Button>
+                  <Button className="bg-[var(--color-primary-strong)] hover:bg-[var(--color-primary)]">{t("overview.openQueue")}</Button>
                 </Link>
               </div>
             </Card>
@@ -251,21 +253,21 @@ export default function Home() {
               <section className="space-y-4">
                 <div className="grid gap-3 md:grid-cols-3">
                   <Card className="rounded-xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-text)]">Threat Score</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)]">{t("overview.threatScore")}</p>
                     <p className="mt-3 text-4xl font-bold text-[var(--color-primary)]">{stats.avg}</p>
                     <p className="text-xs text-[var(--color-text-soft)]">/ 100</p>
                   </Card>
                   <Card className="rounded-xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-text)]">Risk Level</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)]">{t("overview.riskLevel")}</p>
                     <Badge className={`mt-3 ${riskTone(stats.latestRisk)}`}>
                       {stats.latestRisk.toUpperCase()}
                     </Badge>
-                    <p className="mt-2 text-xs text-[var(--color-text-soft)]">Current environment risk status</p>
+                    <p className="mt-2 text-xs text-[var(--color-text-soft)]">{t("overview.environmentRisk")}</p>
                   </Card>
                   <Card className="rounded-xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-text)]">Files Scanned</p>
+                    <p className="text-sm font-semibold text-[var(--color-text)]">{t("overview.filesScanned")}</p>
                     <p className="mt-3 text-4xl font-bold text-[var(--color-text)]">{stats.total.toLocaleString()}</p>
-                    <p className="text-xs text-[var(--color-text-soft)]">Total analyzed files</p>
+                    <p className="text-xs text-[var(--color-text-soft)]">{t("overview.totalAnalyzedFiles")}</p>
                   </Card>
                 </div>
 
@@ -274,14 +276,14 @@ export default function Home() {
                     <label className="flex min-h-[145px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-alt)] px-4 text-center">
                       <span className="text-2xl text-[var(--color-primary)]">+</span>
                       <span className="mt-2 text-2xl font-semibold text-[var(--color-primary)]">
-                        Drag and drop files to scan
+                        {t("overview.dragDrop")}
                       </span>
                       <span className="mt-1 text-sm text-[var(--color-text-soft)]">
-                        Supports PDF, DOCX, TXT, MD, HTML, CSV, and images
+                        {t("overview.supportedFormats")}
                       </span>
                       <input type="file" className="hidden" multiple onChange={(e) => setFiles(e.target.files)} />
                       <Button type="submit" className="mt-4" disabled={loading || !files || files.length === 0}>
-                        Choose Files
+                        {t("overview.chooseFiles")}
                       </Button>
                     </label>
                   </form>
@@ -289,9 +291,9 @@ export default function Home() {
 
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Recent Scans</h2>
+                    <h2 className="text-2xl font-semibold text-[var(--color-heading)]">{t("overview.recentScans")}</h2>
                     <Button variant="outline" onClick={loadScans} disabled={loading}>
-                      Refresh
+                      {t("common.refresh")}
                     </Button>
                   </div>
                   <div className="overflow-x-auto">
@@ -321,7 +323,7 @@ export default function Home() {
                             <td className="py-2">
                               <div className="flex items-center gap-1">
                                 <Button variant="ghost" onClick={() => setSelectedScan(scan)}>
-                                  View Report
+                                  {t("overview.viewReport")}
                                 </Button>
                                 {scan.scan.status === "failed" ? (
                                   <Button
@@ -329,7 +331,7 @@ export default function Home() {
                                     disabled={retryingScanId === scan.scan.id}
                                     onClick={() => void retryScan(scan.scan.id)}
                                   >
-                                    {retryingScanId === scan.scan.id ? "Retrying..." : "Retry"}
+                                    {retryingScanId === scan.scan.id ? t("overview.retrying") : t("overview.retry")}
                                   </Button>
                                 ) : null}
                               </div>
@@ -339,7 +341,7 @@ export default function Home() {
                         {!scans.length ? (
                           <tr>
                             <td colSpan={5} className="py-6 text-center text-[var(--color-text-soft)]">
-                              No scan data yet. Upload files and press refresh to see history.
+                              {t("overview.noScans")}
                             </td>
                           </tr>
                         ) : null}
@@ -352,7 +354,7 @@ export default function Home() {
               <section className="space-y-4">
                 <Card className="rounded-xl p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Analysis Evidence</h2>
+                    <h2 className="text-2xl font-semibold text-[var(--color-heading)]">{t("overview.analysisEvidence")}</h2>
                   </div>
                   <div className="space-y-3">
                     {evidenceBlocks.length ? (
@@ -367,16 +369,16 @@ export default function Home() {
                       ))
                     ) : (
                       <p className="rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface-alt)] p-3 text-sm text-[var(--color-text-soft)]">
-                        No evidence found yet. Select a scan report with findings to display this panel.
+                        {t("overview.noEvidence")}
                       </p>
                     )}
                   </div>
                 </Card>
 
                 <Card className="rounded-xl p-4">
-                  <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Sanitized Export</h2>
+                  <h2 className="text-2xl font-semibold text-[var(--color-heading)]">{t("overview.sanitizedExport")}</h2>
                   <p className="mt-2 text-sm text-[var(--color-text-soft)]">
-                    Export a sanitized text version with sensitive instructions removed.
+                    {t("overview.sanitizedDesc")}
                   </p>
                   <Button
                     className="mt-4 w-full bg-[var(--color-emerald)] hover:bg-[var(--color-emerald-strong)]"
@@ -386,7 +388,7 @@ export default function Home() {
                       window.open(`${API_BASE}/scans/${selectedScan.scan.id}/sanitized.txt`, "_blank")
                     }
                   >
-                    Export Sanitized File
+                    {t("overview.exportSanitized")}
                   </Button>
                 </Card>
               </section>
@@ -397,7 +399,7 @@ export default function Home() {
 
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
     </div>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useI18n } from "@/hooks/use-i18n";
 import { authenticatedJson } from "@/lib/auth";
 
 type ApiToken = {
@@ -30,6 +31,7 @@ function formatDate(input?: string | null): string {
 
 export default function ApiTokensPage() {
   const { token, ready } = useAuthGuard();
+  const { t } = useI18n();
   const [tokenName, setTokenName] = useState("SIEM Integration");
   const [generatedToken, setGeneratedToken] = useState("");
   const [tokens, setTokens] = useState<ApiToken[]>([]);
@@ -81,7 +83,7 @@ export default function ApiTokensPage() {
   if (!ready || !token) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
-        Preparing your workspace...
+        {t("common.preparing")}
       </div>
     );
   }
@@ -93,18 +95,18 @@ export default function ApiTokensPage() {
         <main className="flex-1 p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1380px] space-y-4">
             <Card className="rounded-xl p-4">
-              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">API Tokens</h1>
+              <h1 className="text-2xl font-semibold text-[var(--color-heading)]">{t("apiTokens.title")}</h1>
               <p className="mt-1 text-sm text-[var(--color-text-soft)]">
-                Create and manage integration bearer tokens. Use these tokens only in API calls.
+                {t("apiTokens.subtitle")}
               </p>
               <div className="mt-3 rounded-lg bg-[var(--color-surface-alt)] px-3 py-2 text-xs text-[var(--color-text-soft)]">
-                API token usage only via endpoint (Bearer header)
+                {t("apiTokens.usageBanner")}
               </div>
             </Card>
 
             <Card className="rounded-xl p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-2xl font-semibold text-[var(--color-heading)]">Token Management</h2>
+                <h2 className="text-2xl font-semibold text-[var(--color-heading)]">{t("apiTokens.management")}</h2>
                 <form onSubmit={generateToken} className="flex items-center gap-2">
                   <Input
                     value={tokenName}
@@ -112,7 +114,7 @@ export default function ApiTokensPage() {
                     className="h-9 w-[220px]"
                   />
                   <Button type="submit" className="h-9" disabled={loading}>
-                    Generate New Token
+                    {t("apiTokens.generate")}
                   </Button>
                 </form>
               </div>
@@ -145,7 +147,7 @@ export default function ApiTokensPage() {
                     {!tokens.length ? (
                       <tr>
                         <td colSpan={5} className="py-5 text-center text-[var(--color-text-muted)]">
-                          No tokens yet.
+                          {t("apiTokens.none")}
                         </td>
                       </tr>
                     ) : null}
@@ -162,7 +164,7 @@ export default function ApiTokensPage() {
             </Card>
 
             <Card className="rounded-xl p-4">
-              <h3 className="text-lg font-semibold text-[var(--color-heading)]">API usage example</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-heading)]">{t("apiTokens.example")}</h3>
               <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--color-code-bg)] p-3 text-xs text-[var(--color-code-text)]">
 {`curl -X POST ${API_BASE}/uploads/scan-sync \
   -H "Authorization: Bearer <API_TOKEN>" \
@@ -175,7 +177,7 @@ export default function ApiTokensPage() {
 
       {error ? (
         <div className="fixed bottom-4 right-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          Error: {error}
+          {t("common.error")}: {error}
         </div>
       ) : null}
     </div>
