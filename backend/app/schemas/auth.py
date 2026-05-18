@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from typing import Literal
 
 from app.core.types import UserRole
 from app.core.types import TenantPlan
@@ -55,6 +56,7 @@ class RegisterRequest(BaseModel):
     city: str
     invoice_email: EmailStr
     plan: TenantPlan = TenantPlan.STARTER
+    language: Literal["pt-BR", "en-US", "es-ES"] = "pt-BR"
     tenant_slug: str | None = None
     email: EmailStr
     full_name: str | None = None

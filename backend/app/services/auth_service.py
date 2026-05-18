@@ -24,6 +24,7 @@ from app.models.email_verification_token import EmailVerificationToken
 from app.models.password_reset_token import PasswordResetToken
 from app.models.refresh_token import RefreshToken
 from app.models.tenant import Tenant
+from app.models.tenant_app_settings import TenantAppSettings
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest
 from app.utils.br_docs import is_valid_cnpj, only_digits
@@ -89,6 +90,9 @@ def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
     )
     db.add(tenant)
     db.add(user)
+    db.flush()
+    tenant_settings = TenantAppSettings(tenant_id=tenant.id, ui_language=payload.language)
+    db.add(tenant_settings)
     db.commit()
     db.refresh(user)
     return user

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/hooks/use-i18n";
 import { ensureAccessToken, setSessionTokens } from "@/lib/auth";
+import { AppLocale, LOCALE_FLAGS, setStoredLocale } from "@/lib/i18n";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -32,6 +33,7 @@ export default function LoginPage() {
   const [city, setCity] = useState("");
   const [invoiceEmail, setInvoiceEmail] = useState("financeiro@acme.com");
   const [plan, setPlan] = useState<"starter" | "growth" | "business" | "enterprise">("starter");
+  const [language, setLanguage] = useState<AppLocale>("pt-BR");
   const [fullName, setFullName] = useState("Acme Admin");
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export default function LoginPage() {
               city,
               invoice_email: invoiceEmail,
               plan,
+              language,
               email,
               full_name: fullName,
               password,
@@ -124,6 +127,9 @@ export default function LoginPage() {
 
       const data = (await response.json()) as { access_token: string; must_change_password?: boolean };
       setSessionTokens(data.access_token);
+      if (mode === "register") {
+        setStoredLocale(language);
+      }
       if (data.must_change_password) {
         router.replace("/first-access");
         return;
@@ -214,6 +220,23 @@ export default function LoginPage() {
                     <option value="business">Business</option>
                     <option value="enterprise">Enterprise</option>
                   </select>
+                </div>
+              ) : null}
+
+              {mode === "register" ? (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <label className="flex flex-col gap-1 text-sm text-[var(--color-text-soft)]">
+                    Idioma do tenant
+                    <select
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value as AppLocale)}
+                      className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)]"
+                    >
+                      <option value="pt-BR">{LOCALE_FLAGS["pt-BR"]} Português (Brasil)</option>
+                      <option value="en-US">{LOCALE_FLAGS["en-US"]} English (US)</option>
+                      <option value="es-ES">{LOCALE_FLAGS["es-ES"]} Español</option>
+                    </select>
+                  </label>
                 </div>
               ) : null}
 
