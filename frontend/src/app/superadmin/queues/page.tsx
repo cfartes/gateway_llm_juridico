@@ -259,7 +259,7 @@ export default function SuperAdminQueuesPage() {
                       Auto-refresh 15s
                     </label>
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                      {loading ? "Refreshing..." : t("common.refresh")}
+                      {loading ? t("common.refreshing") : t("common.refresh")}
                     </Button>
                   </div>
 
@@ -319,7 +319,7 @@ export default function SuperAdminQueuesPage() {
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-[var(--color-text-soft)]">No alert history yet.</p>
+                      <p className="text-sm text-[var(--color-text-soft)]">{t("common.noData")}</p>
                     )}
                   </div>
                 </Card>
@@ -357,7 +357,7 @@ export default function SuperAdminQueuesPage() {
                         {!overview.items.length ? (
                           <tr>
                             <td colSpan={8} className="py-6 text-center text-[var(--color-text-soft)]">
-                              No queue data available for this filter.
+                              {t("common.noData")}
                             </td>
                           </tr>
                         ) : null}

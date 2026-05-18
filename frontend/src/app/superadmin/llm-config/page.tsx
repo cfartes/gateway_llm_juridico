@@ -290,7 +290,7 @@ export default function LLMConfigPage() {
                                   : "bg-slate-100 text-slate-700"
                               }
                             >
-                              {providerConfig?.is_enabled ? "Enabled" : "Disabled"}
+                              {providerConfig?.is_enabled ? t("common.enabled") : t("common.disabled")}
                             </Badge>
                             <Badge
                               className={
@@ -308,7 +308,7 @@ export default function LLMConfigPage() {
 
                     {!providers.length && !loading ? (
                       <p className="rounded-lg border border-dashed border-[var(--color-border)] px-3 py-6 text-center text-sm text-[var(--color-text-soft)]">
-                        No providers found.
+                        {t("common.noData")}
                       </p>
                     ) : null}
                   </div>
@@ -404,7 +404,7 @@ export default function LLMConfigPage() {
                           {loadingModels ? "Fetching models..." : "Fetch available models"}
                         </Button>
                         <Button type="button" onClick={saveConfig} disabled={saving || loadingModels}>
-                          {saving ? "Saving..." : "Save provider configuration"}
+                          {saving ? t("common.saving") : "Save provider configuration"}
                         </Button>
                       </div>
                     </div>

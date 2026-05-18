@@ -270,7 +270,7 @@ export default function SuperAdminOpsPage() {
                       />
                     </div>
                     <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                      {loading ? "Refreshing..." : t("common.refresh")}
+                      {loading ? t("common.refreshing") : t("common.refresh")}
                     </Button>
                     <Button className="bg-[var(--color-primary-strong)] hover:bg-[var(--color-primary)]" onClick={() => void runAlertEvaluation()} disabled={evaluating}>
                       {evaluating ? "Evaluating..." : "Run Alert Evaluation"}
@@ -328,7 +328,7 @@ export default function SuperAdminOpsPage() {
                           <th className="py-2">Indicator</th>
                           <th className="py-2">Target</th>
                           <th className="py-2">Actual</th>
-                          <th className="py-2">Status</th>
+                          <th className="py-2">{t("common.status")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -354,7 +354,7 @@ export default function SuperAdminOpsPage() {
                       <thead>
                         <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                           <th className="py-2">Indicator</th>
-                          <th className="py-2">Status</th>
+                          <th className="py-2">{t("common.status")}</th>
                           <th className="py-2">Actual</th>
                           <th className="py-2">Target</th>
                           <th className="py-2">Alert Count</th>
@@ -375,7 +375,7 @@ export default function SuperAdminOpsPage() {
                         {!(overview?.active_alerts?.length) ? (
                           <tr>
                             <td colSpan={6} className="py-6 text-center text-[var(--color-text-soft)]">
-                              No active SLO alerts.
+                              {t("common.noData")}
                             </td>
                           </tr>
                         ) : null}
@@ -438,7 +438,7 @@ export default function SuperAdminOpsPage() {
                             <thead>
                               <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
                                 <th className="py-2">Recorded At</th>
-                                <th className="py-2">Status</th>
+                                <th className="py-2">{t("common.status")}</th>
                                 <th className="py-2">Actual</th>
                                 <th className="py-2">Target</th>
                               </tr>
@@ -461,7 +461,7 @@ export default function SuperAdminOpsPage() {
                     ))}
                     {!Object.keys(historyByIndicator).length ? (
                       <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-6 text-center text-sm text-[var(--color-text-soft)]">
-                        No SLO history available yet. Run an alert evaluation to capture snapshots.
+                        {t("common.noData")}
                       </div>
                     ) : null}
                   </div>

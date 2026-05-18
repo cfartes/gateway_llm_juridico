@@ -234,8 +234,8 @@ export default function SupportPage() {
               <Card className="rounded-xl p-4">
                 <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("support.openNew")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" disabled={!canCreate} />
-                  <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" disabled={!canCreate} />
+                  <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={t("common.subject")} disabled={!canCreate} />
+                  <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t("common.category")} disabled={!canCreate} />
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as SupportTicket["priority"])}
@@ -261,7 +261,7 @@ export default function SupportPage() {
                     {saving ? `${t("support.openNew")}...` : t("support.openNew")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                    {loading ? "Refreshing..." : t("common.refresh")}
+                    {loading ? t("common.refreshing") : t("common.refresh")}
                   </Button>
                 </div>
               </Card>
@@ -273,11 +273,11 @@ export default function SupportPage() {
                 <table className="w-full min-w-[900px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                      <th className="py-2">Created</th>
-                      <th className="py-2">Subject</th>
-                      <th className="py-2">Category</th>
-                      <th className="py-2">Priority</th>
-                      <th className="py-2">Status</th>
+                      <th className="py-2">{t("common.created")}</th>
+                      <th className="py-2">{t("common.subject")}</th>
+                      <th className="py-2">{t("common.category")}</th>
+                      <th className="py-2">{t("common.priority")}</th>
+                      <th className="py-2">{t("common.status")}</th>
                       <th className="py-2">Admin Note</th>
                       <th className="py-2">Thread</th>
                     </tr>
@@ -293,14 +293,14 @@ export default function SupportPage() {
                         <td className="py-2 text-[var(--color-text-soft)]">{item.admin_note || "-"}</td>
                         <td className="py-2">
                           <Button variant="outline" onClick={() => void loadThread(item.id)}>
-                            Open
+                            {t("common.open")}
                           </Button>
                         </td>
                       </tr>
                     ))}
                     {!tickets.length ? (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">No support tickets found.</td>
+                        <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">{t("common.noData")}</td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -323,12 +323,12 @@ export default function SupportPage() {
                   ))}
                   {!thread.length ? (
                     <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-4 text-center text-sm text-[var(--color-text-soft)]">
-                      No messages yet.
+                      {t("common.noMessages")}
                     </div>
                   ) : null}
                 </div>
                 <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
-                  <h3 className="text-sm font-semibold text-[var(--color-text)]">Attachments</h3>
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">{t("common.attachments")}</h3>
                   <div className="mt-2 space-y-2">
                     {attachments.map((att) => (
                       <div key={att.id} className="flex items-center justify-between rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm">
@@ -337,11 +337,11 @@ export default function SupportPage() {
                           {att.message_id ? ` | linked to message ${att.message_id.slice(0, 8)}` : ""}
                         </span>
                         <Button type="button" variant="outline" onClick={() => void downloadAttachment(att.id, att.original_name)}>
-                          Download
+                          {t("common.download")}
                         </Button>
                       </div>
                     ))}
-                    {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">No attachments yet.</p> : null}
+                    {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">{t("common.noAttachments")}</p> : null}
                   </div>
                   <div className="mt-3">
                     <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Link attachment to message (optional)</label>
@@ -371,7 +371,7 @@ export default function SupportPage() {
                 />
                 <div className="mt-2 flex gap-2">
                   <Button type="button" onClick={() => void sendThreadMessage()} disabled={!canCreate || sendingMessage}>
-                    {sendingMessage ? "Sending..." : "Send Message"}
+                    {sendingMessage ? t("common.sending") : "Send Message"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => void loadThread(selectedTicketId)}>
                     Refresh Thread

@@ -273,7 +273,7 @@ export default function SuperAdminTenantsPage() {
                         {!tenants.length ? (
                           <tr>
                             <td colSpan={10} className="py-6 text-center text-[var(--color-text-soft)]">
-                              No tenants found.
+                              {t("common.noData")}
                             </td>
                           </tr>
                         ) : null}
@@ -328,7 +328,7 @@ export default function SuperAdminTenantsPage() {
                       </label>
 
                       <Button onClick={saveTenant} disabled={saving}>
-                        {saving ? "Saving..." : "Save Changes"}
+                        {saving ? t("common.saving") : "Save Changes"}
                       </Button>
                     </div>
                   )}
@@ -353,8 +353,8 @@ export default function SuperAdminTenantsPage() {
                         <th className="py-2">From</th>
                         <th className="py-2">To</th>
                         <th className="py-2">Reason</th>
-                        <th className="py-2">Created</th>
-                        <th className="py-2">Actions</th>
+                        <th className="py-2">{t("common.created")}</th>
+                        <th className="py-2">{t("common.actions")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -372,14 +372,14 @@ export default function SuperAdminTenantsPage() {
                                 onClick={() => void processUpgradeRequest(item.id, "approved")}
                                 disabled={processingRequestId === item.id}
                               >
-                                Approve
+                                {t("common.approve")}
                               </Button>
                               <Button
                                 variant="outline"
                                 onClick={() => void processUpgradeRequest(item.id, "rejected")}
                                 disabled={processingRequestId === item.id}
                               >
-                                Reject
+                                {t("common.reject")}
                               </Button>
                             </div>
                           </td>
@@ -388,7 +388,7 @@ export default function SuperAdminTenantsPage() {
                       {!upgradeRequests.length ? (
                         <tr>
                           <td colSpan={6} className="py-6 text-center text-[var(--color-text-soft)]">
-                            No pending upgrade requests.
+                            {t("common.noData")}
                           </td>
                         </tr>
                       ) : null}

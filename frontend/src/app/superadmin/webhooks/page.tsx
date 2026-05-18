@@ -381,7 +381,7 @@ export default function SuperAdminWebhooksPage() {
                         </select>
                       </div>
                       <Button variant="outline" onClick={refreshAll} disabled={loading}>
-                        {loading ? "Refreshing..." : t("common.refresh")}
+                        {loading ? t("common.refreshing") : t("common.refresh")}
                       </Button>
                       <Button onClick={runDeadLetterCycle} disabled={runningCycle}>
                         {runningCycle ? "Queueing..." : "Run Retry Cycle"}
@@ -392,8 +392,8 @@ export default function SuperAdminWebhooksPage() {
                       <table className="w-full min-w-[860px] text-left text-sm">
                         <thead>
                           <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                            <th className="py-2">Status</th>
-                            <th className="py-2">Tenant</th>
+                            <th className="py-2">{t("common.status")}</th>
+                            <th className="py-2">{t("common.tenant")}</th>
                             <th className="py-2">Scan</th>
                             <th className="py-2">Attempts</th>
                             <th className="py-2">Next Retry</th>
@@ -422,7 +422,7 @@ export default function SuperAdminWebhooksPage() {
                           {!listData.items.length ? (
                             <tr>
                               <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">
-                                No webhook delivery records found for this filter.
+                                {t("common.noData")}
                               </td>
                             </tr>
                           ) : null}
@@ -442,7 +442,7 @@ export default function SuperAdminWebhooksPage() {
                           </p>
                         ))
                       ) : (
-                        <p className="mt-1">No failed callbacks in this window.</p>
+                      <p className="mt-1">{t("common.noData")}</p>
                       )}
                     </div>
                     {!selected ? (
@@ -475,7 +475,7 @@ export default function SuperAdminWebhooksPage() {
 
                         <div className="max-h-[420px] space-y-2 overflow-y-auto rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-2">
                           {loadingDetail ? (
-                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">Loading attempts...</p>
+                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">{t("common.loading")}</p>
                           ) : null}
                           {!loadingDetail && detail?.attempts.length ? (
                             detail.attempts.map((attempt) => (
@@ -494,7 +494,7 @@ export default function SuperAdminWebhooksPage() {
                             ))
                           ) : null}
                           {!loadingDetail && !detail?.attempts.length ? (
-                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">No attempt history available.</p>
+                            <p className="px-2 py-4 text-sm text-[var(--color-text-soft)]">{t("common.noData")}</p>
                           ) : null}
                         </div>
                       </div>

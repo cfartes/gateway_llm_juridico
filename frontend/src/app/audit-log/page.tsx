@@ -180,15 +180,15 @@ export default function AuditLogPage() {
 
             <Card className="rounded-xl p-4">
               <div className="grid gap-2 md:grid-cols-6">
-                <Input placeholder="Search (q)" value={q} onChange={(e) => setQ(e.target.value)} />
+                <Input placeholder={`${t("common.search")} (q)`} value={q} onChange={(e) => setQ(e.target.value)} />
                 <Input placeholder="Action" value={action} onChange={(e) => setAction(e.target.value)} />
                 <Input placeholder="Resource type" value={resourceType} onChange={(e) => setResourceType(e.target.value)} />
                 <Input placeholder="Source IP" value={sourceIp} onChange={(e) => setSourceIp(e.target.value)} />
                 <Button onClick={() => token && load(token, 0)} disabled={loading}>
-                  {loading ? "Loading..." : "Apply Filters"}
+                  {loading ? t("common.loading") : t("common.applyFilters")}
                 </Button>
                 <Button variant="outline" onClick={() => void exportCsv()} disabled={exporting}>
-                  {exporting ? "Exporting..." : "Export CSV"}
+                  {exporting ? t("common.exporting") : t("common.exportCsv")}
                 </Button>
               </div>
             </Card>
@@ -222,7 +222,7 @@ export default function AuditLogPage() {
                     {!items.length ? (
                       <tr>
                         <td colSpan={5} className="py-6 text-center text-[var(--color-text-soft)]">
-                          No audit logs found for this filter.
+                          {t("common.noData")}
                         </td>
                       </tr>
                     ) : null}
@@ -232,14 +232,14 @@ export default function AuditLogPage() {
               <div className="mt-3 flex items-center justify-between text-sm text-[var(--color-text-soft)]">
                 <p>Total: {total} | Showing {offset + 1}-{Math.min(offset + items.length, total || 0)}</p>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={prevPage} disabled={offset <= 0}>Previous</Button>
-                  <Button variant="outline" onClick={nextPage} disabled={offset + limit >= total}>Next</Button>
+                  <Button variant="outline" onClick={prevPage} disabled={offset <= 0}>{t("common.previous")}</Button>
+                  <Button variant="outline" onClick={nextPage} disabled={offset + limit >= total}>{t("common.next")}</Button>
                 </div>
               </div>
             </Card>
 
             <Card className="rounded-xl p-4">
-              <h2 className="text-lg font-semibold text-[var(--color-heading)]">Details</h2>
+              <h2 className="text-lg font-semibold text-[var(--color-heading)]">{t("common.details")}</h2>
               {selected ? (
                 <div className="mt-2 space-y-2 text-sm text-[var(--color-text-soft)]">
                   <p><span className="font-semibold text-[var(--color-heading)]">Action:</span> {selected.action}</p>

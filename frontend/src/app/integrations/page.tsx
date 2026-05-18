@@ -295,7 +295,7 @@ export default function IntegrationsPage() {
                       onChange={(e) => update("webhook_enabled", e.target.checked)}
                       disabled={!canEdit}
                     />
-                    Enabled
+                    {t("common.enabled")}
                   </label>
                 </div>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -356,7 +356,7 @@ export default function IntegrationsPage() {
                       onChange={(e) => update("siem_enabled", e.target.checked)}
                       disabled={!canEdit}
                     />
-                    Enabled
+                    {t("common.enabled")}
                   </label>
                 </div>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -405,7 +405,7 @@ export default function IntegrationsPage() {
                       onChange={(e) => update("slack_enabled", e.target.checked)}
                       disabled={!canEdit}
                     />
-                    Enabled
+                    {t("common.enabled")}
                   </label>
                 </div>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -454,7 +454,7 @@ export default function IntegrationsPage() {
                       onChange={(e) => update("ops_alerts_enabled", e.target.checked)}
                       disabled={!canEdit}
                     />
-                    Enabled
+                    {t("common.enabled")}
                   </label>
                 </div>
                 <p className="mt-1 text-xs text-[var(--color-text-soft)]">
@@ -547,10 +547,10 @@ export default function IntegrationsPage() {
                     {saving ? t("common.saving") : t("integrations.save")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => void sendTestAlert()} disabled={testingAlert || !canEdit}>
-                    {testingAlert ? "Sending test..." : "Send Test Alert"}
+                    {testingAlert ? t("common.sending") : "Send Test Alert"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                    {loading ? "Refreshing..." : "Refresh"}
+                    {loading ? t("common.refreshing") : t("common.refresh")}
                   </Button>
                 </div>
               </Card>

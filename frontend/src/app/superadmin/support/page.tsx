@@ -232,58 +232,58 @@ export default function SuperAdminSupportPage() {
                     className="h-10 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
                   >
                     <option value="all">All statuses</option>
-                    <option value="open">Open</option>
+                    <option value="open">{t("common.open")}</option>
                     <option value="in_progress">In Progress</option>
                     <option value="resolved">Resolved</option>
-                    <option value="closed">Closed</option>
+                    <option value="closed">{t("common.close")}</option>
                   </select>
                   <Input placeholder="Tenant ID filter" value={tenantFilter} onChange={(e) => setTenantFilter(e.target.value)} />
                   <Input placeholder="Admin note for actions" value={note} onChange={(e) => setNote(e.target.value)} />
                   <Button variant="outline" onClick={() => token && load(token)} disabled={loading}>
-                    {loading ? "Refreshing..." : t("common.refresh")}
+                    {loading ? t("common.refreshing") : t("common.refresh")}
                   </Button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1000px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-[var(--color-border-soft)] text-[var(--color-text-muted)]">
-                        <th className="py-2">Created</th>
-                        <th className="py-2">Tenant</th>
-                        <th className="py-2">Subject</th>
-                        <th className="py-2">Priority</th>
-                        <th className="py-2">Status</th>
+                        <th className="py-2">{t("common.created")}</th>
+                        <th className="py-2">{t("common.tenant")}</th>
+                        <th className="py-2">{t("common.subject")}</th>
+                        <th className="py-2">{t("common.priority")}</th>
+                        <th className="py-2">{t("common.status")}</th>
                         <th className="py-2">Action</th>
                         <th className="py-2">Thread</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {tickets.map((t) => (
-                        <tr key={t.id} className="border-b border-[var(--color-border-soft)]">
-                          <td className="py-2 text-[var(--color-text-soft)]">{new Date(t.created_at).toLocaleString()}</td>
-                          <td className="py-2 text-[var(--color-text)]">{t.tenant_id}</td>
-                          <td className="py-2 text-[var(--color-text)]">{t.subject}</td>
-                          <td className="py-2 text-[var(--color-text)]">{t.priority.toUpperCase()}</td>
-                          <td className="py-2 text-[var(--color-text)]">{t.status.toUpperCase()}</td>
+                      {tickets.map((ticket) => (
+                        <tr key={ticket.id} className="border-b border-[var(--color-border-soft)]">
+                          <td className="py-2 text-[var(--color-text-soft)]">{new Date(ticket.created_at).toLocaleString()}</td>
+                          <td className="py-2 text-[var(--color-text)]">{ticket.tenant_id}</td>
+                          <td className="py-2 text-[var(--color-text)]">{ticket.subject}</td>
+                          <td className="py-2 text-[var(--color-text)]">{ticket.priority.toUpperCase()}</td>
+                          <td className="py-2 text-[var(--color-text)]">{ticket.status.toUpperCase()}</td>
                           <td className="py-2">
                             <div className="flex gap-2">
-                              <Button variant="outline" onClick={() => void updateStatus(t.id, "in_progress")} disabled={savingId === t.id}>
+                              <Button variant="outline" onClick={() => void updateStatus(ticket.id, "in_progress")} disabled={savingId === ticket.id}>
                                 In Progress
                               </Button>
-                              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => void updateStatus(t.id, "resolved")} disabled={savingId === t.id}>
+                              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => void updateStatus(ticket.id, "resolved")} disabled={savingId === ticket.id}>
                                 Resolve
                               </Button>
                             </div>
                           </td>
                           <td className="py-2">
-                            <Button variant="outline" onClick={() => void loadThread(t.id)}>
-                              Open
+                            <Button variant="outline" onClick={() => void loadThread(ticket.id)}>
+                              {t("common.open")}
                             </Button>
                           </td>
                         </tr>
                       ))}
                       {!tickets.length ? (
                         <tr>
-                          <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">No tickets found.</td>
+                          <td colSpan={7} className="py-6 text-center text-[var(--color-text-soft)]">{t("common.noData")}</td>
                         </tr>
                       ) : null}
                     </tbody>
@@ -308,12 +308,12 @@ export default function SuperAdminSupportPage() {
                   ))}
                   {!thread.length ? (
                     <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-4 text-center text-sm text-[var(--color-text-soft)]">
-                      No messages yet.
+                      {t("common.noMessages")}
                     </div>
                   ) : null}
                 </div>
                 <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-3">
-                  <h3 className="text-sm font-semibold text-[var(--color-text)]">Attachments</h3>
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">{t("common.attachments")}</h3>
                   <div className="mt-2 space-y-2">
                     {attachments.map((att) => (
                       <div key={att.id} className={`flex items-center justify-between rounded border px-3 py-2 text-sm ${att.is_internal ? "border-amber-200 bg-amber-50" : "border-[var(--color-border)] bg-[var(--color-surface)]"}`}>
@@ -323,11 +323,11 @@ export default function SuperAdminSupportPage() {
                           {att.message_id ? ` | linked to message ${att.message_id.slice(0, 8)}` : ""}
                         </span>
                         <Button type="button" variant="outline" onClick={() => void downloadAttachment(att.id, att.original_name)}>
-                          Download
+                          {t("common.download")}
                         </Button>
                       </div>
                     ))}
-                    {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">No attachments yet.</p> : null}
+                    {!attachments.length ? <p className="text-xs text-[var(--color-text-soft)]">{t("common.noAttachments")}</p> : null}
                   </div>
                   <div className="mt-3">
                     <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Link attachment to message (optional)</label>
@@ -359,7 +359,7 @@ export default function SuperAdminSupportPage() {
                 </label>
                 <div className="mt-2 flex gap-2">
                   <Button type="button" onClick={() => void sendThreadMessage()} disabled={sendingThread}>
-                    {sendingThread ? "Sending..." : "Send Message"}
+                    {sendingThread ? t("common.sending") : "Send Message"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => void loadThread(selectedTicketId)}>
                     Refresh Thread
