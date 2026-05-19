@@ -16,6 +16,7 @@ from app.pipelines.analysis_graph import analyze_document_bytes
 from app.schemas.analysis import AnalysisResult, EvidenceItem, ScanJobOut, ScanResponse
 from app.schemas.document import DocumentOut
 from app.services.audit_service import write_audit_log
+from app.services.crawl_settings_service import resolve_crawl_runtime_config
 from app.services.file_validation import detect_office_macro, inspect_zip_for_blocked_files, validate_file_metadata
 from app.services.policy_enforcement import decide_policy_action, quarantine_status_from_action
 from app.services.queue_policy_service import (
@@ -236,7 +237,15 @@ def scan_from_url(
     enforce_scan_volume_policy(db, auth.tenant_id, tenant_plan, jobs_to_enqueue=1)
 
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
-    content, filename, content_type = download_url_content(str(payload.url), max_bytes)
+    crawl_cfg = resolve_crawl_runtime_config()
+    content, filename, content_type = download_url_content(
+        str(payload.url),
+        max_bytes,
+        crawl_internal_links=crawl_cfg.internal_links_enabled,
+        crawl_max_pages=crawl_cfg.max_pages,
+        crawl_max_depth=crawl_cfg.max_depth,
+        crawl_timeout_seconds=crawl_cfg.timeout_seconds,
+    )
     enforce_file_size_limit(tenant_plan, file_size_bytes=len(content), filename=filename)
 
     validate_file_metadata(filename, content_type, len(content))

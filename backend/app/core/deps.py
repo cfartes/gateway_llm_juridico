@@ -88,6 +88,8 @@ def require_roles(*roles: UserRole):
             }
             if request.url.path not in allowed_paths:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Password change required")
+        if auth.role == str(UserRole.SUPERADMIN):
+            return auth
         if roles and auth.role not in {str(r) for r in roles}:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
         return auth

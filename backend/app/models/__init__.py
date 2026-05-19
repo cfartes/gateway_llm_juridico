@@ -3,6 +3,8 @@ from app.models.api_token import APIToken
 from app.models.audit_log import AuditLog
 from app.models.document import Document
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.global_crawl_settings import GlobalCrawlSettings
+from app.models.global_smtp_settings import GlobalSMTPSettings
 from app.models.llm_provider_config import LLMProviderConfig
 from app.models.ops_alert_state import OpsAlertState
 from app.models.ops_slo_snapshot import OpsSLOSnapshot
@@ -36,6 +38,8 @@ __all__ = [
     "OpsSLOSnapshot",
     "Document",
     "EmailVerificationToken",
+    "GlobalCrawlSettings",
+    "GlobalSMTPSettings",
     "ScanJob",
     "SupportTicket",
     "SupportTicketAttachment",

@@ -4,14 +4,22 @@ from app.schemas.analysis import EvidenceItem
 
 
 PATTERNS: list[tuple[str, str, str]] = [
-    ("prompt_injection", "high", r"ignore (all|previous|above) instructions"),
-    ("jailbreak", "high", r"developer mode|jailbreak|DAN"),
-    ("exfiltration", "critical", r"api[_ -]?key|access[_ -]?token|secret|credentials"),
-    ("data_leak", "critical", r"send .* to (http|https)://|webhook"),
-    ("social_engineering", "medium", r"pretend to be|you are now|roleplay as"),
-    ("hidden_instruction", "high", r"do not mention this instruction|invisible command"),
-    ("context_manipulation", "medium", r"override safety|bypass policy|disable guardrails"),
-    ("embedded_script", "high", r"<script|javascript:|onerror="),
+    ("prompt_injection", "high", r"\bignore\s+(all|previous|above)\s+instructions?\b"),
+    (
+        "jailbreak",
+        "high",
+        r"\b(?:developer\s+mode|jailbreak|dan\s+mode|do\s+anything\s+now|ignore\s+safety\s+polic(?:y|ies))\b",
+    ),
+    (
+        "exfiltration",
+        "critical",
+        r"\b(?:api[_ -]?key|access[_ -]?token|authorization:\s*bearer|private[_ -]?key|x-api-key)\b",
+    ),
+    ("data_leak", "critical", r"\b(?:send|post|upload|forward).{0,80}\b(?:https?://|webhook)\b"),
+    ("social_engineering", "medium", r"\b(?:pretend to be|you are now|roleplay as)\b"),
+    ("hidden_instruction", "high", r"\b(?:do not mention this instruction|invisible command|hidden instruction)\b"),
+    ("context_manipulation", "medium", r"\b(?:override safety|bypass policy|disable guardrails)\b"),
+    ("embedded_script", "high", r"<script\b|javascript:|onerror\s*="),
 ]
 
 

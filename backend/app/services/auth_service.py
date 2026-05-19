@@ -27,6 +27,7 @@ from app.models.tenant import Tenant
 from app.models.tenant_app_settings import TenantAppSettings
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest
+from app.services.email_service import send_email
 from app.utils.br_docs import is_valid_cnpj, only_digits
 
 
@@ -36,7 +37,7 @@ def _slugify(value: str) -> str:
     return base or "tenant"
 
 
-def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
+def register_tenant_admin(db: Session, payload: RegisterRequest) -> tuple[User, str]:
     validate_password_strength(payload.password)
     if not is_valid_cnpj(payload.cnpj):
         raise ValueError("CNPJ inválido")
@@ -85,7 +86,7 @@ def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
         hashed_password=hash_password(payload.password),
         role=UserRole.ADMIN,
         is_active=True,
-        email_verified_at=datetime.now(timezone.utc),
+        email_verified_at=None,
         must_change_password=False,
     )
     db.add(tenant)
@@ -95,7 +96,28 @@ def register_tenant_admin(db: Session, payload: RegisterRequest) -> User:
     db.add(tenant_settings)
     db.commit()
     db.refresh(user)
-    return user
+    verification_token = create_email_verification_flow(db, user)
+    return user, verification_token
+
+
+def send_tenant_admin_verification_email(*, recipient_email: str, full_name: str | None, verification_token: str) -> None:
+    confirm_link = f"{settings.frontend_base_url.rstrip('/')}/confirm-email?token={verification_token}"
+    display_name = (full_name or "").strip() or recipient_email
+    subject = "Nexus Gateway LLM Shield - Confirm your account"
+    text_body = (
+        f"Hello {display_name},\n\n"
+        "Your tenant was created in Nexus Gateway LLM Shield.\n"
+        "Before signing in, confirm your email using this link:\n"
+        f"{confirm_link}\n\n"
+        "After confirmation, login with the password set during registration.\n"
+    )
+    html_body = (
+        f"<p>Hello {display_name},</p>"
+        "<p>Your tenant was created in <b>Nexus Gateway LLM Shield</b>.</p>"
+        f"<p>Before signing in, confirm your email: <a href=\"{confirm_link}\">{confirm_link}</a></p>"
+        "<p>After confirmation, login with the password set during registration.</p>"
+    )
+    send_email(subject=subject, recipients=[recipient_email], body_text=text_body, body_html=html_body)
 
 
 def authenticate_user(db: Session, payload: LoginRequest) -> User | None:

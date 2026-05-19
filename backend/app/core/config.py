@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 120
     api_token_gateway_rate_limit_per_minute: int = 180
     user_gateway_rate_limit_per_minute: int = 90
+    url_crawl_internal_links_enabled: bool = True
+    url_crawl_max_pages: int = 40
+    url_crawl_max_depth: int = 3
+    url_crawl_timeout_seconds: float = 90.0
 
     cors_origins: str = "http://localhost:3000,http://localhost:3010"
     allowed_hosts: str = "localhost,127.0.0.1"

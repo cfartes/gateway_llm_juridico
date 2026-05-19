@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +31,13 @@ function formatDate(input?: string | null): string {
 }
 
 export default function ApiTokensPage() {
-  const { token, ready } = useAuthGuard();
+  const { token, ready, role } = useAuthGuard();
   const { t } = useI18n();
   const [tokenName, setTokenName] = useState("SIEM Integration");
   const [generatedToken, setGeneratedToken] = useState("");
   const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [loading, setLoading] = useState(false);
+  const [revokingTokenId, setRevokingTokenId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -80,6 +82,29 @@ export default function ApiTokensPage() {
     }
   }
 
+  async function revokeToken(tokenId: string) {
+    if (!token) return;
+    if (role !== "admin") {
+      setError("Apenas admin do tenant pode revogar token.");
+      return;
+    }
+    const confirmed = window.confirm("Confirma revogar este token?");
+    if (!confirmed) return;
+
+    setRevokingTokenId(tokenId);
+    setError("");
+    try {
+      await authenticatedJson<ApiToken>(API_BASE, `/tokens/${tokenId}/revoke`, token, {
+        method: "POST",
+      });
+      await loadTokens(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to revoke token");
+    } finally {
+      setRevokingTokenId(null);
+    }
+  }
+
   if (!ready || !token) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-app)] grid place-items-center text-[var(--color-text-soft)]">
@@ -101,6 +126,14 @@ export default function ApiTokensPage() {
               </p>
               <div className="mt-3 rounded-lg bg-[var(--color-surface-alt)] px-3 py-2 text-xs text-[var(--color-text-soft)]">
                 {t("apiTokens.usageBanner")}
+              </div>
+              <div className="mt-2 rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface-alt)] px-3 py-2 text-xs text-[var(--color-text-soft)]">
+                Ao gerar novo token, o secret j&aacute; &eacute; criado automaticamente e exibido uma &uacute;nica vez abaixo.
+              </div>
+              <div className="mt-2">
+                <Link href="/integrations" className="text-xs text-[var(--color-primary)] underline">
+                  Configurar Webhook, SIEM e Slack em Integra&ccedil;&otilde;es
+                </Link>
               </div>
             </Card>
 
@@ -128,6 +161,7 @@ export default function ApiTokensPage() {
                       <th className="py-2">{t("apiTokens.table.created")}</th>
                       <th className="py-2">{t("apiTokens.table.lastUsed")}</th>
                       <th className="py-2">{t("apiTokens.table.status")}</th>
+                      <th className="py-2">{t("common.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -142,11 +176,25 @@ export default function ApiTokensPage() {
                             {item.revoked_at ? t("apiTokens.status.revoked") : t("apiTokens.status.active")}
                           </Badge>
                         </td>
+                        <td className="py-2">
+                          {!item.revoked_at ? (
+                            <Button
+                              variant="outline"
+                              className="h-8"
+                              disabled={revokingTokenId === item.id || role !== "admin"}
+                              onClick={() => void revokeToken(item.id)}
+                            >
+                              {revokingTokenId === item.id ? "Revogando..." : "Excluir"}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-[var(--color-text-muted)]">-</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                     {!tokens.length ? (
                       <tr>
-                        <td colSpan={5} className="py-5 text-center text-[var(--color-text-muted)]">
+                        <td colSpan={6} className="py-5 text-center text-[var(--color-text-muted)]">
                           {t("apiTokens.none")}
                         </td>
                       </tr>
@@ -159,6 +207,9 @@ export default function ApiTokensPage() {
                 <div className="mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] p-2 text-xs text-[var(--color-text)]">
                   <p className="font-semibold">{t("apiTokens.generatedOnce")}</p>
                   <code className="break-all">{generatedToken}</code>
+                  <p className="mt-1 text-[11px] text-[var(--color-text-soft)]">
+                    Formato: <code>prefixo.secret</code> (use inteiro no header Bearer).
+                  </p>
                 </div>
               ) : null}
             </Card>

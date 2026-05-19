@@ -13,6 +13,11 @@ class TokenResponse(BaseModel):
     must_change_password: bool = False
 
 
+class RegisterResponse(BaseModel):
+    message: str
+    verification_token: str | None = None
+
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
 

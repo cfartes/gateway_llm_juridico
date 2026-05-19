@@ -32,14 +32,14 @@ export function useAuthGuard() {
         const resolvedRole = (me.role ?? "").toLowerCase();
         setRole(resolvedRole);
         try {
-          const settingsResponse = await fetch(`${API_BASE}/settings/current`, {
+          const settingsResponse = await fetch(`${API_BASE}/settings/current/language`, {
             method: "GET",
             credentials: "include",
             headers: { Authorization: `Bearer ${stored}` },
           });
           if (settingsResponse.ok) {
-            const settings = (await settingsResponse.json()) as { ui?: { language?: AppLocale } };
-            const language = settings.ui?.language;
+            const settings = (await settingsResponse.json()) as { language?: AppLocale };
+            const language = settings.language;
             if (language === "pt-BR" || language === "en-US" || language === "es-ES") {
               setStoredLocale(language);
             }

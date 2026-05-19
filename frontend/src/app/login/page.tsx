@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [email, setEmail] = useState("admin@acme.com");
   const [password, setPassword] = useState("StrongPass#2026");
@@ -100,6 +101,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess("");
 
     try {
       const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
@@ -132,14 +134,25 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const raw = await response.text();
+        try {
+          const parsed = JSON.parse(raw) as { detail?: string };
+          throw new Error(parsed.detail || raw || "Authentication failed");
+        } catch {
+          throw new Error(raw || "Authentication failed");
+        }
+      }
+
+      if (mode === "register") {
+        const data = (await response.json()) as { message?: string };
+        setStoredLocale(language);
+        setSuccess(data.message || "Conta criada. Confirme seu e-mail para fazer login.");
+        setMode("login");
+        return;
       }
 
       const data = (await response.json()) as { access_token: string; must_change_password?: boolean };
       setSessionTokens(data.access_token);
-      if (mode === "register") {
-        setStoredLocale(language);
-      }
       if (data.must_change_password) {
         router.replace("/first-access");
         return;
@@ -310,13 +323,18 @@ export default function LoginPage() {
               />
 
               <Button type="submit" className="h-10 w-full" disabled={loading}>
-                {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create tenant and sign in"}
+                {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create tenant"}
               </Button>
             </form>
 
             {error ? (
               <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                 {error}
+              </div>
+            ) : null}
+            {success ? (
+              <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                {success}
               </div>
             ) : null}
           </div>

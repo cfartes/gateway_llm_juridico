@@ -1,7 +1,5 @@
 import json
-import smtplib
 from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
 from typing import Any
 
 import httpx
@@ -13,6 +11,7 @@ from app.core.database import SessionLocal
 from app.models.scan_job import ScanJob
 from app.models.tenant_integration_config import TenantIntegrationConfig
 from app.models.webhook_delivery import WebhookDelivery, WebhookDeliveryAttempt
+from app.services.email_service import send_email
 from app.services.webhook_security_service import validate_callback_url_security
 from app.utils.crypto import decrypt_text, encrypt_text
 
@@ -376,39 +375,20 @@ def _post_ops_alert(url: str, body: dict[str, Any], *, bearer: str | None = None
 
 
 def _send_ops_alert_email(event_type: str, payload: dict[str, Any], recipients: list[str]) -> None:
-    smtp_host = settings.smtp_host.strip()
-    if not smtp_host or not recipients:
+    clean_recipients = [str(item).strip() for item in recipients if str(item).strip()]
+    if not clean_recipients:
         return
     try:
-        msg = EmailMessage()
-        msg["Subject"] = f"[Nexus LLM Shield] {event_type}"
-        msg["From"] = settings.smtp_from_email
-        msg["To"] = ", ".join(recipients)
-        msg.set_content(
+        text_body = (
             "Operational alert from Nexus Gateway LLM Shield\n\n"
             f"Event: {event_type}\n\n"
             f"Payload:\n{json.dumps(payload, ensure_ascii=False, indent=2)}"
         )
-        if settings.smtp_use_ssl:
-            with smtplib.SMTP_SSL(
-                smtp_host,
-                int(settings.smtp_port),
-                timeout=float(settings.smtp_timeout_seconds),
-            ) as smtp:
-                if settings.smtp_username:
-                    smtp.login(settings.smtp_username, settings.smtp_password)
-                smtp.send_message(msg)
-        else:
-            with smtplib.SMTP(
-                smtp_host,
-                int(settings.smtp_port),
-                timeout=float(settings.smtp_timeout_seconds),
-            ) as smtp:
-                if settings.smtp_use_tls:
-                    smtp.starttls()
-                if settings.smtp_username:
-                    smtp.login(settings.smtp_username, settings.smtp_password)
-                smtp.send_message(msg)
+        send_email(
+            subject=f"[Nexus LLM Shield] {event_type}",
+            recipients=clean_recipients,
+            body_text=text_body,
+        )
     except Exception:
         return
 

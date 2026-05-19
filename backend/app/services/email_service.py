@@ -1,45 +1,47 @@
 import smtplib
 from email.message import EmailMessage
 
-from app.core.config import settings
+from app.services.smtp_settings_service import resolve_smtp_runtime_config
 
 
 def is_smtp_configured() -> bool:
-    return bool(settings.smtp_host.strip() and settings.smtp_from_email.strip())
+    cfg = resolve_smtp_runtime_config()
+    return bool(cfg.enabled and cfg.host and cfg.from_email)
 
 
 def send_email(*, subject: str, recipients: list[str], body_text: str, body_html: str | None = None) -> None:
-    smtp_host = settings.smtp_host.strip()
+    cfg = resolve_smtp_runtime_config()
+    smtp_host = cfg.host
     clean_recipients = [item.strip() for item in recipients if item and item.strip()]
-    if not smtp_host or not clean_recipients:
+    if not cfg.enabled or not smtp_host or not clean_recipients or not cfg.from_email:
         return
 
     msg = EmailMessage()
     msg["Subject"] = subject
-    msg["From"] = settings.smtp_from_email
+    msg["From"] = cfg.from_email
     msg["To"] = ", ".join(clean_recipients)
     msg.set_content(body_text)
     if body_html:
         msg.add_alternative(body_html, subtype="html")
 
-    if settings.smtp_use_ssl:
+    if cfg.use_ssl:
         with smtplib.SMTP_SSL(
             smtp_host,
-            int(settings.smtp_port),
-            timeout=float(settings.smtp_timeout_seconds),
+            int(cfg.port),
+            timeout=float(cfg.timeout_seconds),
         ) as smtp:
-            if settings.smtp_username:
-                smtp.login(settings.smtp_username, settings.smtp_password)
+            if cfg.username:
+                smtp.login(cfg.username, cfg.password)
             smtp.send_message(msg)
         return
 
     with smtplib.SMTP(
         smtp_host,
-        int(settings.smtp_port),
-        timeout=float(settings.smtp_timeout_seconds),
+        int(cfg.port),
+        timeout=float(cfg.timeout_seconds),
     ) as smtp:
-        if settings.smtp_use_tls:
+        if cfg.use_tls:
             smtp.starttls()
-        if settings.smtp_username:
-            smtp.login(settings.smtp_username, settings.smtp_password)
+        if cfg.username:
+            smtp.login(cfg.username, cfg.password)
         smtp.send_message(msg)

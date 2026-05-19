@@ -98,6 +98,7 @@ def report_node(state: AnalysisState) -> AnalysisState:
         evidences=[EvidenceItem(**item) for item in state.get("evidences", [])],
         suspicious_segments=state.get("suspicious_segments", []),
         sanitized_text_preview=state.get("sanitized_text", "")[:1200],
+        sanitized_text_full=state.get("sanitized_text", ""),
         exfiltration_indicators=state.get("exfiltration_indicators", []),
     )
     if state.get("llm_skip_reason"):

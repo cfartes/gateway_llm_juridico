@@ -20,6 +20,7 @@ class AnalysisResult(BaseModel):
     evidences: list[EvidenceItem]
     suspicious_segments: list[str]
     sanitized_text_preview: str
+    sanitized_text_full: str | None = None
     exfiltration_indicators: list[str]
 
 

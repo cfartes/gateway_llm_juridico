@@ -31,9 +31,10 @@ const ITEMS: NavItem[] = [
   { labelKey: "sidebar.superadminSupport", href: "/superadmin/support", superadminOnly: true },
   { labelKey: "sidebar.webhookDeliveries", href: "/webhooks" },
   { labelKey: "sidebar.integrations", href: "/integrations" },
+  { labelKey: "sidebar.apiDocs", href: "/api-docs" },
   { labelKey: "sidebar.auditLog", href: "/audit-log" },
   { labelKey: "sidebar.support", href: "/support" },
-  { labelKey: "sidebar.settings", href: "/settings" },
+  { labelKey: "sidebar.settings", href: "/settings", superadminOnly: true },
 ];
 
 export function Sidebar() {

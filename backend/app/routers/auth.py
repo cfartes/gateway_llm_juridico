@@ -14,6 +14,7 @@ from app.schemas.auth import (
     PasswordResetConfirmRequest,
     PasswordResetRequest,
     PasswordResetResponse,
+    RegisterResponse,
     RefreshTokenRequest,
     RegisterRequest,
     TokenResponse,
@@ -30,7 +31,9 @@ from app.services.auth_service import (
     register_tenant_admin,
     revoke_refresh_token,
     rotate_refresh_token,
+    send_tenant_admin_verification_email,
 )
+from app.services.email_service import is_smtp_configured
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -66,16 +69,25 @@ def _resolve_refresh_token(request: Request, payload_token: str | None) -> str |
     return payload_token or request.cookies.get(settings.refresh_cookie_name)
 
 
-@router.post("/register", response_model=TokenResponse)
+@router.post("/register", response_model=RegisterResponse)
 def register(payload: RegisterRequest, response: Response, request: Request, db: Session = Depends(get_db)):
     _rate_limit(request, "register")
+    if not settings.debug and not is_smtp_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SMTP is not configured. SuperAdmin must configure SMTP before new registrations.",
+        )
     try:
-        user = register_tenant_admin(db, payload)
+        user, verification_token = register_tenant_admin(db, payload)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-    access, refresh = issue_token_pair(db, user)
-    _set_refresh_cookie(response, refresh)
+    send_tenant_admin_verification_email(
+        recipient_email=user.email,
+        full_name=user.full_name,
+        verification_token=verification_token,
+    )
+    _clear_refresh_cookie(response)
     write_audit_log(
         db,
         tenant_id=user.tenant_id,
@@ -87,7 +99,11 @@ def register(payload: RegisterRequest, response: Response, request: Request, db:
         source_ip=request.client.host if request.client else None,
         details={"email": user.email},
     )
-    return TokenResponse(access_token=access, must_change_password=bool(user.must_change_password))
+    verification_for_debug = verification_token if settings.debug else None
+    return RegisterResponse(
+        message="Registration completed. Please confirm your email before login.",
+        verification_token=verification_for_debug,
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -95,6 +111,16 @@ def login(payload: LoginRequest, response: Response, request: Request, db: Sessi
     _rate_limit(request, "login")
     user = authenticate_user(db, payload)
     if not user:
+        pending = (
+            db.query(User)
+            .filter(User.email == payload.email, User.is_active.is_(True), User.email_verified_at.is_(None))
+            .first()
+        )
+        if pending:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email not verified. Please confirm your invitation link first.",
+            )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     access, refresh = issue_token_pair(db, user)

@@ -4,6 +4,8 @@ import hmac
 import json
 import mimetypes
 import time
+import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +18,7 @@ from app.models.document import Document
 from app.models.scan_job import ScanJob
 from app.schemas.analysis import AnalysisResult
 from app.schemas.analyze_gateway import AnalyzeRequest, AnalyzeResultPayload, AnalyzeReturnMode, ThreatItem
+from app.services.crawl_settings_service import resolve_crawl_runtime_config
 from app.services.document_parser import parse_document_bytes
 from app.services.ocr_service import extract_ocr_text
 from app.services.policy_enforcement import PolicyDecision, decide_policy_action
@@ -50,7 +53,15 @@ def load_source_content(req: AnalyzeRequest, upload_file: UploadFile | None) -> 
         from app.services.remote_fetch import download_url_content
 
         max_bytes = 100 * 1024 * 1024
-        data, filename, content_type = download_url_content(str(req.url), max_bytes)
+        crawl_cfg = resolve_crawl_runtime_config()
+        data, filename, content_type = download_url_content(
+            str(req.url),
+            max_bytes,
+            crawl_internal_links=crawl_cfg.internal_links_enabled,
+            crawl_max_pages=crawl_cfg.max_pages,
+            crawl_max_depth=crawl_cfg.max_depth,
+            crawl_timeout_seconds=crawl_cfg.timeout_seconds,
+        )
         return data, filename, content_type
 
     if req.source_type == "text":
@@ -184,6 +195,178 @@ def build_chunks(sanitized_text: str) -> list[dict[str, Any]]:
     return chunks
 
 
+def _normalize_ascii(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"\s+", " ", ascii_text).strip().lower()
+
+
+def extract_contract_outline(text: str) -> list[dict[str, Any]]:
+    lines = [re.sub(r"\s+", " ", line).strip() for line in text.splitlines()]
+    lines = [line for line in lines if line]
+    clauses: list[dict[str, Any]] = []
+    current_clause: dict[str, Any] | None = None
+    current_sub: dict[str, Any] | None = None
+
+    sub_clause_re = re.compile(r"^(?:subcl[aá]usula\s+)?(\d+(?:\.\d+){1,4})\.?\s*(.*)$", re.IGNORECASE)
+
+    for line in lines:
+        normalized = _normalize_ascii(line)
+        if normalized.startswith("clausula "):
+            pieces = re.split(r"\s[-–:]\s", line, maxsplit=1)
+            head = pieces[0].strip()
+            tail = pieces[1].strip() if len(pieces) > 1 else ""
+            current_clause = {"title": head, "body": [tail] if tail else [], "subclauses": []}
+            clauses.append(current_clause)
+            current_sub = None
+            continue
+
+        sub_match = sub_clause_re.match(line)
+        if sub_match and current_clause is not None:
+            current_sub = {
+                "id": sub_match.group(1),
+                "text": [sub_match.group(2).strip()] if sub_match.group(2).strip() else [],
+            }
+            current_clause["subclauses"].append(current_sub)
+            continue
+
+        if current_sub is not None:
+            current_sub["text"].append(line)
+        elif current_clause is not None:
+            current_clause["body"].append(line)
+
+    for clause in clauses:
+        clause["body"] = " ".join([part for part in clause["body"] if part]).strip()
+        for sub in clause["subclauses"]:
+            sub["text"] = " ".join([part for part in sub["text"] if part]).strip()
+    return clauses
+
+
+def build_structured_sanitized_markdown(
+    *,
+    document_id: str,
+    source_file: str,
+    source_type: str,
+    analysis_date: str,
+    risk_level: str,
+    risk_score: int,
+    content_classification: str,
+    technical_explanation: str,
+    sanitized_text: str,
+    evidences: list[dict[str, Any]],
+    safe_for_rag: bool,
+) -> str:
+    outline = extract_contract_outline(sanitized_text)
+    has_contract_outline = len(outline) > 0
+
+    tags: list[str] = []
+    if has_contract_outline:
+        tags.append("contract")
+        tags.append("clauses_detected")
+        if any(clause.get("subclauses") for clause in outline):
+            tags.append("subclauses_detected")
+        for clause in outline[:10]:
+            title = _normalize_ascii(str(clause.get("title", ""))).replace(" ", "_")
+            if title:
+                tags.append(f"clause:{title[:50]}")
+
+    frontmatter = [
+        "---",
+        f'document_id: "{document_id}"',
+        f'source_file: "{source_file}"',
+        f'analysis_date: "{analysis_date}"',
+        f'risk_level: "{risk_level.upper()}"',
+        f"risk_score: {risk_score}",
+        f"safe_for_rag: {'true' if safe_for_rag else 'false'}",
+        "sanitized: true",
+        f'content_type: "{content_classification}"',
+        f'tags: [{", ".join([f"{json.dumps(tag)}" for tag in tags])}]' if tags else "tags: []",
+        "---",
+        "",
+        f"# {source_file}",
+        "",
+        "## Resumo Executivo",
+        "",
+        technical_explanation.strip() or "Resumo indisponível.",
+        "",
+        "## Metadados",
+        "",
+        f"- Origem: {source_type}",
+        f"- Classificação: {content_classification}",
+        f"- Status de segurança: {'aprovado para RAG' if safe_for_rag else 'revisão necessária'}",
+        f"- Score de risco: {risk_score}",
+        "",
+    ]
+
+    body: list[str] = []
+    if has_contract_outline:
+        body.extend(
+            [
+                "## Estrutura Contratual",
+                "",
+                "Conteúdo segmentado automaticamente por cláusulas e subcláusulas.",
+                "",
+            ]
+        )
+        for clause in outline:
+            title = str(clause.get("title", "")).strip() or "Cláusula"
+            body.append(f"### {title}")
+            body.append("")
+            clause_body = str(clause.get("body", "")).strip()
+            if clause_body:
+                body.append(clause_body)
+                body.append("")
+
+            for sub in clause.get("subclauses", []):
+                sub_id = str(sub.get("id", "")).strip()
+                sub_text = str(sub.get("text", "")).strip()
+                body.append(f"#### Subcláusula {sub_id}")
+                body.append("")
+                body.append(sub_text or "Conteúdo não identificado.")
+                body.append("")
+    else:
+        body.extend(
+            [
+                "## Conteúdo Sanitizado",
+                "",
+                sanitized_text,
+                "",
+            ]
+        )
+
+    evidence_section: list[str] = ["## Trechos Removidos/Marcados por Segurança", ""]
+    if evidences:
+        for idx, ev in enumerate(evidences, start=1):
+            evidence_section.extend(
+                [
+                    f"### Achado {idx}",
+                    "",
+                    f"- Tipo: {ev.get('category', 'unknown')}",
+                    f"- Severidade: {str(ev.get('severity', 'unknown')).upper()}",
+                    f"- Trecho: {ev.get('snippet', '')}",
+                    f"- Motivo: {ev.get('explanation', '')}",
+                    "",
+                ]
+            )
+    else:
+        evidence_section.extend(["Nenhum trecho suspeito identificado.", ""])
+
+    recommendation = (
+        "Documento liberado para ingestão em RAG após sanitização."
+        if safe_for_rag
+        else "Documento requer revisão adicional antes de ingestão em RAG."
+    )
+
+    ending = [
+        "## Recomendações",
+        "",
+        recommendation,
+        "",
+    ]
+
+    return "\n".join(frontmatter + body + evidence_section + ending).strip() + "\n"
+
+
 def generate_rag_markdown(document: Document, result: AnalysisResult) -> tuple[str, list[dict[str, Any]]]:
     raw_bytes = Path(document.storage_path).read_bytes()
     parsed = parse_document_bytes(document.original_name, raw_bytes)
@@ -195,78 +378,19 @@ def generate_rag_markdown(document: Document, result: AnalysisResult) -> tuple[s
     policy = decide_policy_action(result)
     safe_for_rag = policy.safe_for_rag
 
-    frontmatter = {
-        "document_id": document.id,
-        "source_file": document.original_name,
-        "analysis_date": document.updated_at.date().isoformat(),
-        "risk_level": result.risk_level.upper(),
-        "risk_score": int(round(result.threat_score)),
-        "safe_for_rag": safe_for_rag,
-        "sanitized": True,
-        "language": infer_language(sanitized_text),
-        "content_type": result.content_classification,
-    }
-
-    front = "\n".join([f"{key}: \"{value}\"" for key, value in frontmatter.items()])
-
-    suspicious_section = "\n".join(
-        [
-            f"### Remocao {idx + 1}\n\nTipo: {ev.category}  \nSeveridade: {ev.severity.upper()}  \nMotivo: {ev.explanation}."
-            for idx, ev in enumerate(result.evidences)
-        ]
+    markdown = build_structured_sanitized_markdown(
+        document_id=document.id,
+        source_file=document.original_name,
+        source_type=document.source_type,
+        analysis_date=document.updated_at.date().isoformat(),
+        risk_level=result.risk_level,
+        risk_score=int(round(result.threat_score)),
+        content_classification=result.content_classification,
+        technical_explanation=result.technical_explanation,
+        sanitized_text=sanitized_text,
+        evidences=[item.model_dump() for item in result.evidences],
+        safe_for_rag=safe_for_rag,
     )
-
-    chunks_md = "\n\n".join(
-        [
-            f"### {chunk['title']}\n\n{chunk['content']}\n\nMetadados:\n- secao: {chunk['metadata']['section']}\n- tokens_estimados: {chunk['metadata']['tokens_estimados']}\n- risco: {chunk['metadata']['risco']}"
-            for chunk in chunks
-        ]
-    )
-
-    markdown = f"""---
-{front}
----
-
-# {document.original_name}
-
-## Resumo Executivo
-
-{result.technical_explanation}
-
-## Metadados
-
-- Origem: {document.source_type}
-- Idioma: {infer_language(sanitized_text)}
-- Classificacao: {result.content_classification}
-- Status de seguranca: {'aprovado para RAG' if safe_for_rag else 'revisao necessaria'}
-
-## Conteudo Sanitizado
-
-{sanitized_text[:12000]}
-
-## Tabelas Extraidas
-
-| Campo | Valor |
-|---|---|
-| source_file | {document.original_name} |
-| size_bytes | {document.size_bytes} |
-
-## Imagens e OCR
-
-{ocr_text[:2000] if ocr_text else 'Nenhum bloco OCR adicional detectado.'}
-
-## Chunks sugeridos para RAG
-
-{chunks_md if chunks_md else 'Sem chunks sugeridos.'}
-
-## Trechos Removidos por Seguranca
-
-{suspicious_section if suspicious_section else 'Nenhum trecho removido.'}
-
-## Recomendacoes
-
-{build_recommendation(safe_for_rag, policy)}
-"""
 
     rag_path = Path(document.storage_path).with_suffix(Path(document.storage_path).suffix + ".rag.md")
     rag_path.write_text(markdown, encoding="utf-8")
