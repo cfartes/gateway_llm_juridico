@@ -11,8 +11,6 @@ from app.schemas.cnpj_validation import (
     SecurityGateResult,
 )
 from app.services.br_data_provider_service import fetch_cnpj_signals, fetch_nfe_status
-from app.services.document_parser import parse_document_bytes
-from app.services.ocr_service import extract_ocr_text
 from app.services.policy_enforcement import decide_policy_action
 from app.utils.br_docs import is_valid_cnpj, only_digits
 
@@ -34,6 +32,9 @@ def build_security_gate(result: AnalysisResult) -> SecurityGateResult:
 
 
 def extract_document_text(filename: str, content: bytes) -> str:
+    from app.services.document_parser import parse_document_bytes
+    from app.services.ocr_service import extract_ocr_text
+
     parsed = parse_document_bytes(filename, content)
     ocr_text = extract_ocr_text(filename, content)
     return "\n".join(part for part in [parsed.text, ocr_text] if part).strip()

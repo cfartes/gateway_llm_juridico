@@ -64,3 +64,13 @@ class InvoiceValidationResponse(BaseModel):
     sefaz_status: str
     recommendation: str
     summary: str
+
+
+class CNPJLookupResponse(BaseModel):
+    cnpj: str
+    cnpj_valid: bool
+    score: float | None = Field(default=None, ge=0, le=100)
+    recommendation: str | None = None
+    registration_status: str | None = None
+    criteria: list[DueDiligenceCriterion] = []
+    summary: str

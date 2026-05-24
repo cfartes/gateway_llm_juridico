@@ -1,27 +1,3 @@
-from app.routers import (
-    analyze,
-    api,
-    audit_logs,
-    auth,
-    cnpj_validation,
-    integrations,
-    llm_admin,
-    queues,
-    quarantine,
-    scans,
-    settings,
-    support,
-    superadmin_tenants,
-    superadmin_ops,
-    superadmin_support,
-    superadmin_webhooks,
-    tenants,
-    tokens,
-    uploads,
-    users,
-    webhooks,
-)
-
 __all__ = [
     "analyze",
     "api",

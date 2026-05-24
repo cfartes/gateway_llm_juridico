@@ -3,7 +3,12 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from app.core.deps import require_roles
 from app.core.types import UserRole
 from app.pipelines.analysis_graph import analyze_document_bytes
-from app.schemas.cnpj_validation import DueDiligenceResponse, BulkUpdateResponse, InvoiceValidationResponse
+from app.schemas.cnpj_validation import (
+    BulkUpdateResponse,
+    CNPJLookupResponse,
+    DueDiligenceResponse,
+    InvoiceValidationResponse,
+)
 from app.services.cnpj_validation_service import (
     build_security_gate,
     evaluate_bulk_cnpjs,
@@ -16,7 +21,7 @@ from app.services.cnpj_validation_service import (
     validate_nfe_access_key,
 )
 from app.services.file_validation import validate_file_metadata
-from app.utils.br_docs import is_valid_cnpj
+from app.utils.br_docs import is_valid_cnpj, only_digits
 
 
 router = APIRouter(prefix="/cnpj-validation", tags=["cnpj-validation"])
@@ -25,6 +30,34 @@ router = APIRouter(prefix="/cnpj-validation", tags=["cnpj-validation"])
 def _run_security_gate(filename: str, content: bytes):
     result = analyze_document_bytes(filename, content)
     return result, build_security_gate(result)
+
+
+@router.get("/lookup/{cnpj}", response_model=CNPJLookupResponse)
+def lookup_cnpj(
+    cnpj: str,
+    _auth=Depends(require_roles(UserRole.ADMIN, UserRole.ANALYST, UserRole.VIEWER)),
+):
+    normalized = only_digits(cnpj)
+    if not is_valid_cnpj(normalized):
+        return CNPJLookupResponse(
+            cnpj=normalized or cnpj,
+            cnpj_valid=False,
+            summary="CNPJ invalido. Verifique os 14 digitos e tente novamente.",
+        )
+
+    score, criteria, recommendation, registration_status = evaluate_cnpj_due_diligence(normalized)
+    return CNPJLookupResponse(
+        cnpj=normalized,
+        cnpj_valid=True,
+        score=score,
+        recommendation=recommendation,
+        registration_status=registration_status,
+        criteria=criteria,
+        summary=(
+            f"CNPJ {normalized} consultado com score {score}/100. "
+            f"Recomendacao: {recommendation}."
+        ),
+    )
 
 
 @router.post("/due-diligence", response_model=DueDiligenceResponse)

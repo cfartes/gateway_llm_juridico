@@ -110,12 +110,17 @@ def fetch_cnpj_signals(cnpj: str) -> CNPJProviderSignals:
 
 
 def _fetch_cnpj_receitaws(cnpj: str) -> CNPJProviderSignals:
-    url = f"https://www.receitaws.com.br/v1/cnpj/{cnpj}"
+    base_url = (settings.br_cnpj_provider_base_url or "").strip() or "https://www.receitaws.com.br/v1/cnpj"
+    url = f"{base_url.rstrip('/')}/{cnpj}"
     headers: dict[str, str] = {"Accept": "application/json"}
+    params: dict[str, str] = {}
+    if settings.br_cnpj_provider_token:
+        params["token"] = settings.br_cnpj_provider_token
+        headers["x_api_token"] = settings.br_cnpj_provider_token
 
     try:
         with httpx.Client(timeout=settings.br_cnpj_provider_timeout_seconds) as client:
-            response = client.get(url, headers=headers)
+            response = client.get(url, headers=headers, params=params)
             response.raise_for_status()
             payload = response.json()
     except Exception:

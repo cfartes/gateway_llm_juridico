@@ -55,6 +55,7 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - `GET /api/v1/files/{file_id}/report`
   - `GET /api/v1/files/{file_id}/rag-md`
 - Módulo de validação CNPJ/NF (com gate anti-injection obrigatório):
+  - `GET /api/v1/cnpj-validation/lookup/{cnpj}`
   - `POST /api/v1/cnpj-validation/due-diligence`
   - `POST /api/v1/cnpj-validation/bulk-update`
   - `POST /api/v1/cnpj-validation/invoice-validation`
