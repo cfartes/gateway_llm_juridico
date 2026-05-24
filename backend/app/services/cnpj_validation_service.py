@@ -10,6 +10,7 @@ from app.schemas.cnpj_validation import (
     DueDiligenceCriterion,
     SecurityGateResult,
 )
+from app.services.br_data_provider_service import fetch_cnpj_signals, fetch_nfe_status
 from app.services.document_parser import parse_document_bytes
 from app.services.ocr_service import extract_ocr_text
 from app.services.policy_enforcement import decide_policy_action
@@ -99,10 +100,15 @@ def _recommendation(score: float, registration_status: str) -> str:
 
 
 def evaluate_cnpj_due_diligence(cnpj: str) -> tuple[float, list[DueDiligenceCriterion], str, str]:
-    registration_status = _registration_status(cnpj)
-    debt = _debt_signal(cnpj)
-    lawsuits = _lawsuit_signal(cnpj)
-    sintegra_ok = _sintegra_signal(cnpj)
+    provider_signals = fetch_cnpj_signals(cnpj)
+    registration_status = provider_signals.registration_status or _registration_status(cnpj)
+    debt = provider_signals.debt_level or _debt_signal(cnpj)
+    lawsuits = provider_signals.lawsuit_level or _lawsuit_signal(cnpj)
+    sintegra_ok = (
+        provider_signals.sintegra_enabled
+        if provider_signals.sintegra_enabled is not None
+        else _sintegra_signal(cnpj)
+    )
 
     if registration_status == "active":
         registration_points = 40.0
@@ -134,6 +140,12 @@ def evaluate_cnpj_due_diligence(cnpj: str) -> tuple[float, list[DueDiligenceCrit
         if sintegra_ok
         else "Inscricao estadual nao habilitada para operacoes de fornecimento."
     )
+
+    if provider_signals.source != "mock":
+        registration_note = f"{registration_note} Fonte: {provider_signals.source}."
+        debt_note = f"{debt_note} Fonte: {provider_signals.source}."
+        lawsuits_note = f"{lawsuits_note} Fonte: {provider_signals.source}."
+        sintegra_note = f"{sintegra_note} Fonte: {provider_signals.source}."
 
     score = registration_points + debt_points + lawsuits_points + sintegra_points
     score = max(0.0, min(100.0, round(score, 2)))
@@ -243,6 +255,10 @@ def validate_nfe_access_key(access_key: str | None) -> bool:
 
 
 def simulate_sefaz_status(access_key: str) -> str:
+    provider_result = fetch_nfe_status(access_key)
+    if provider_result.sefaz_status:
+        return provider_result.sefaz_status
+
     bucket = _simulate_signal(access_key, "sefaz")
     if bucket < 70:
         return "Autorizada"

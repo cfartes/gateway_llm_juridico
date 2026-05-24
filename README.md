@@ -54,6 +54,11 @@ Plataforma SaaS multi-tenant para detecção de Prompt Injection, Jailbreaks e a
   - `GET /api/v1/analyze/jobs/{job_id}`
   - `GET /api/v1/files/{file_id}/report`
   - `GET /api/v1/files/{file_id}/rag-md`
+- Módulo de validação CNPJ/NF (com gate anti-injection obrigatório):
+  - `POST /api/v1/cnpj-validation/due-diligence`
+  - `POST /api/v1/cnpj-validation/bulk-update`
+  - `POST /api/v1/cnpj-validation/invoice-validation`
+  - Suporte a provedor externo em modo `custom` com fallback automático para `mock`
 - Observabilidade/SLO SuperAdmin:
   - `GET /api/v1/admin/ops/overview`
   - `POST /api/v1/admin/ops/alerts/evaluate`
@@ -159,6 +164,31 @@ python tests/load_gateway.py --base-url http://localhost:8000/api/v1 --email sup
 - Mover storage para S3/GCS/Azure Blob
 - Usar KMS/HSM para chaves
 - Ativar observabilidade (logs, métricas, traces)
+
+### Provedores BR (CNPJ/NF)
+
+As integrações de consulta fiscal/cadastral podem operar em dois modos:
+
+- `mock`: usa simulação determinística local (default)
+- `custom`: chama API externa via HTTP GET
+
+Variáveis de ambiente:
+
+- `BR_CNPJ_PROVIDER_MODE=mock|custom`
+- `BR_CNPJ_PROVIDER_BASE_URL=`
+- `BR_CNPJ_PROVIDER_TOKEN=`
+- `BR_CNPJ_PROVIDER_TIMEOUT_SECONDS=8.0`
+- `BR_NFE_PROVIDER_MODE=mock|custom`
+- `BR_NFE_PROVIDER_BASE_URL=`
+- `BR_NFE_PROVIDER_TOKEN=`
+- `BR_NFE_PROVIDER_TIMEOUT_SECONDS=8.0`
+
+Contrato esperado no modo `custom`:
+
+- Consulta CNPJ: `GET <BR_CNPJ_PROVIDER_BASE_URL>?cnpj=...`
+  - JSON: `registration_status`, `debt_level`, `lawsuit_level`, `sintegra_enabled`
+- Consulta NF-e: `GET <BR_NFE_PROVIDER_BASE_URL>?access_key=...`
+  - JSON: `sefaz_status` (`Autorizada`, `Cancelada`, `Denegada`, `Inexistente`)
 
 ## Operação
 

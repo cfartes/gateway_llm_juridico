@@ -81,6 +81,14 @@ class Settings(BaseSettings):
     policy_llm_skip_high_hits_threshold: int = 2
     policy_quarantine_score_threshold: float = 55.0
     policy_block_score_threshold: float = 80.0
+    br_cnpj_provider_mode: str = "mock"
+    br_cnpj_provider_base_url: str = ""
+    br_cnpj_provider_token: str = ""
+    br_cnpj_provider_timeout_seconds: float = 8.0
+    br_nfe_provider_mode: str = "mock"
+    br_nfe_provider_base_url: str = ""
+    br_nfe_provider_token: str = ""
+    br_nfe_provider_timeout_seconds: float = 8.0
     refresh_cookie_name: str = "nexus_refresh_token"
     refresh_cookie_secure: bool = False
     refresh_cookie_samesite: str = "lax"
