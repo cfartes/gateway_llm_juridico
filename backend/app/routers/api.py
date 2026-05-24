@@ -1,6 +1,27 @@
 from fastapi import APIRouter
 
-from app.routers import analyze, audit_logs, auth, integrations, llm_admin, quarantine, queues, scans, settings, superadmin_ops, superadmin_support, superadmin_tenants, superadmin_webhooks, support, tenants, tokens, uploads, users, webhooks
+from app.routers import (
+    analyze,
+    audit_logs,
+    auth,
+    cnpj_validation,
+    integrations,
+    llm_admin,
+    quarantine,
+    queues,
+    scans,
+    settings,
+    superadmin_ops,
+    superadmin_support,
+    superadmin_tenants,
+    superadmin_webhooks,
+    support,
+    tenants,
+    tokens,
+    uploads,
+    users,
+    webhooks,
+)
 
 
 router = APIRouter()
@@ -33,4 +54,5 @@ router.include_router(analyze.webhook_router)
 router.include_router(webhooks.router)
 router.include_router(queues.router)
 router.include_router(support.router)
+router.include_router(cnpj_validation.router)
 

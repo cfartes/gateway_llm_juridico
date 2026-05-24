@@ -1,4 +1,12 @@
 from app.schemas.analysis import AnalysisResult, ScanJobOut, ScanResponse
+from app.schemas.cnpj_validation import (
+    BulkItemResult,
+    BulkUpdateResponse,
+    DueDiligenceCriterion,
+    DueDiligenceResponse,
+    InvoiceValidationResponse,
+    SecurityGateResult,
+)
 from app.schemas.auth import (
     EmailVerificationConfirmRequest,
     FirstAccessPasswordChangeRequest,
@@ -19,6 +27,12 @@ from app.schemas.user_management import TenantUserCreateRequest, TenantUserOut, 
 
 __all__ = [
     "AnalysisResult",
+    "BulkItemResult",
+    "BulkUpdateResponse",
+    "DueDiligenceCriterion",
+    "DueDiligenceResponse",
+    "InvoiceValidationResponse",
+    "SecurityGateResult",
     "ScanJobOut",
     "ScanResponse",
     "LoginRequest",
