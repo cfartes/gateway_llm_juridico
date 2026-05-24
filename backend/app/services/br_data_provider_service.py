@@ -77,6 +77,8 @@ def fetch_cnpj_signals(cnpj: str) -> CNPJProviderSignals:
     mode = (settings.br_cnpj_provider_mode or "mock").strip().lower()
     if mode == "mock":
         return CNPJProviderSignals(source="mock")
+    if mode == "receitaws":
+        return _fetch_cnpj_receitaws(cnpj)
     if mode != "custom":
         return CNPJProviderSignals(source=f"unsupported:{mode}")
     if not settings.br_cnpj_provider_base_url:
@@ -107,6 +109,37 @@ def fetch_cnpj_signals(cnpj: str) -> CNPJProviderSignals:
     )
 
 
+def _fetch_cnpj_receitaws(cnpj: str) -> CNPJProviderSignals:
+    url = f"https://www.receitaws.com.br/v1/cnpj/{cnpj}"
+    headers: dict[str, str] = {"Accept": "application/json"}
+
+    try:
+        with httpx.Client(timeout=settings.br_cnpj_provider_timeout_seconds) as client:
+            response = client.get(url, headers=headers)
+            response.raise_for_status()
+            payload = response.json()
+    except Exception:
+        return CNPJProviderSignals(source="receitaws:error")
+
+    if not isinstance(payload, dict):
+        return CNPJProviderSignals(source="receitaws:invalid_payload")
+
+    status_text = str(payload.get("status", "")).strip().upper()
+    if status_text in {"ERROR", "ERRO"}:
+        return CNPJProviderSignals(source="receitaws:not_available")
+
+    situacao = payload.get("situacao")
+    registration_status = _normalize_registration_status(situacao)
+    sintegra_enabled = True if registration_status == "active" else (False if registration_status else None)
+    return CNPJProviderSignals(
+        registration_status=registration_status,
+        debt_level=None,
+        lawsuit_level=None,
+        sintegra_enabled=sintegra_enabled,
+        source="receitaws",
+    )
+
+
 def _normalize_sefaz_status(value: str | None) -> str | None:
     if not value:
         return None
@@ -128,6 +161,8 @@ def fetch_nfe_status(access_key: str) -> NFEProviderResult:
     mode = (settings.br_nfe_provider_mode or "mock").strip().lower()
     if mode == "mock":
         return NFEProviderResult(source="mock")
+    if mode == "focusnfe":
+        return _fetch_nfe_focusnfe(access_key)
     if mode != "custom":
         return NFEProviderResult(source=f"unsupported:{mode}")
     if not settings.br_nfe_provider_base_url:
@@ -152,4 +187,54 @@ def fetch_nfe_status(access_key: str) -> NFEProviderResult:
     return NFEProviderResult(
         sefaz_status=_normalize_sefaz_status(payload.get("sefaz_status")),
         source="custom",
+    )
+
+
+def _fetch_nfe_focusnfe(access_key: str) -> NFEProviderResult:
+    if not settings.br_nfe_provider_token:
+        return NFEProviderResult(source="focusnfe:missing_token")
+
+    url = f"https://api.focusnfe.com.br/v2/nfes_recebidas/{access_key}.json"
+    headers = {"Accept": "application/json"}
+    auth = httpx.BasicAuth(settings.br_nfe_provider_token, "")
+
+    try:
+        with httpx.Client(timeout=settings.br_nfe_provider_timeout_seconds, auth=auth) as client:
+            response = client.get(url, headers=headers, params={"completa": "0"})
+            if response.status_code == 404:
+                return NFEProviderResult(sefaz_status="Inexistente", source="focusnfe")
+            response.raise_for_status()
+            payload = response.json()
+    except Exception:
+        return NFEProviderResult(source="focusnfe:error")
+
+    if not isinstance(payload, dict):
+        return NFEProviderResult(source="focusnfe:invalid_payload")
+
+    candidates: list[str | None] = [
+        payload.get("sefaz_status"),
+        payload.get("status"),
+        payload.get("situacao"),
+        payload.get("descricao_status"),
+        payload.get("descricao_situacao"),
+    ]
+    normalized = None
+    for candidate in candidates:
+        normalized = _normalize_sefaz_status(str(candidate) if candidate is not None else None)
+        if normalized:
+            break
+        lowered = str(candidate or "").lower()
+        if "cancel" in lowered:
+            normalized = "Cancelada"
+            break
+        if "deneg" in lowered:
+            normalized = "Denegada"
+            break
+        if "autor" in lowered or "aprov" in lowered:
+            normalized = "Autorizada"
+            break
+
+    return NFEProviderResult(
+        sefaz_status=normalized,
+        source="focusnfe",
     )

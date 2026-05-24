@@ -167,23 +167,32 @@ python tests/load_gateway.py --base-url http://localhost:8000/api/v1 --email sup
 
 ### Provedores BR (CNPJ/NF)
 
-As integrações de consulta fiscal/cadastral podem operar em dois modos:
+As integrações de consulta fiscal/cadastral podem operar nos modos:
 
-- `mock`: usa simulação determinística local (default)
-- `custom`: chama API externa via HTTP GET
+- CNPJ: `mock`, `receitaws`, `custom`
+- NF-e: `mock`, `focusnfe`, `custom`
 
 Variáveis de ambiente:
 
-- `BR_CNPJ_PROVIDER_MODE=mock|custom`
+- `BR_CNPJ_PROVIDER_MODE=mock|receitaws|custom`
 - `BR_CNPJ_PROVIDER_BASE_URL=`
 - `BR_CNPJ_PROVIDER_TOKEN=`
 - `BR_CNPJ_PROVIDER_TIMEOUT_SECONDS=8.0`
-- `BR_NFE_PROVIDER_MODE=mock|custom`
+- `BR_NFE_PROVIDER_MODE=mock|focusnfe|custom`
 - `BR_NFE_PROVIDER_BASE_URL=`
 - `BR_NFE_PROVIDER_TOKEN=`
 - `BR_NFE_PROVIDER_TIMEOUT_SECONDS=8.0`
 
-Contrato esperado no modo `custom`:
+Contratos suportados:
+
+- `receitaws` (CNPJ):
+  - `GET https://www.receitaws.com.br/v1/cnpj/{cnpj}`
+  - Campo usado: `situacao` para mapear status cadastral
+- `focusnfe` (NF-e):
+  - `GET https://api.focusnfe.com.br/v2/nfes_recebidas/{chave}.json?completa=0`
+  - Auth: HTTP Basic (`username=BR_NFE_PROVIDER_TOKEN`, `password=""`)
+  - Campos tentados para status: `sefaz_status`, `status`, `situacao`, `descricao_status`, `descricao_situacao`
+- `custom`:
 
 - Consulta CNPJ: `GET <BR_CNPJ_PROVIDER_BASE_URL>?cnpj=...`
   - JSON: `registration_status`, `debt_level`, `lawsuit_level`, `sintegra_enabled`
